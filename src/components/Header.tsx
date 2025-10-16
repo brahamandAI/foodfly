@@ -41,10 +41,12 @@ export default function Header() {
     // Check authentication status
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
+    const userType = localStorage.getItem('userType');
     const isGuest = localStorage.getItem('guest') === 'true';
     const authStatus = localStorage.getItem('isLoggedIn') === 'true';
     
-    if ((token && userData) || (isGuest && userData && authStatus)) {
+    // Treat as logged in ONLY for customer sessions, not restaurant_admin
+    if (userType !== 'restaurant_admin' && ((token && userData) || (isGuest && userData && authStatus))) {
       setIsLoggedIn(true);
       setUser(JSON.parse(userData));
     }
@@ -54,13 +56,14 @@ export default function Header() {
 
     // Listen for storage changes (for auth state sync)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'isLoggedIn' || e.key === 'token' || e.key === 'user' || e.key === 'guest') {
+      if (e.key === 'isLoggedIn' || e.key === 'token' || e.key === 'user' || e.key === 'guest' || e.key === 'userType') {
         const newToken = localStorage.getItem('token');
         const newUserData = localStorage.getItem('user');
+        const newUserType = localStorage.getItem('userType');
         const newIsGuest = localStorage.getItem('guest') === 'true';
         const newAuthStatus = localStorage.getItem('isLoggedIn') === 'true';
         
-        if ((newToken && newUserData) || (newIsGuest && newUserData && newAuthStatus)) {
+        if (newUserType !== 'restaurant_admin' && ((newToken && newUserData) || (newIsGuest && newUserData && newAuthStatus))) {
           setIsLoggedIn(true);
           setUser(JSON.parse(newUserData));
         } else {

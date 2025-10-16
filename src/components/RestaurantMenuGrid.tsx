@@ -1,16 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Minus, ShoppingCart, ArrowLeft, Search, X } from 'lucide-react';
 import { Cormorant_Garamond } from 'next/font/google';
 import { toast } from 'react-hot-toast';
 import { unifiedCartService } from '@/lib/api';
+import Image from 'next/image';
+import getSymposiumAdminMenu from '@/lib/menus/admin/symposium';
+import getPanacheAdminMenu from '@/lib/menus/admin/panache';
+import getCafeAdminMenu from '@/lib/menus/admin/cafe';
 
 const cormorant = Cormorant_Garamond({ 
   weight: ['400', '600'],
   subsets: ['latin'] 
 });
+
+// Category image mapping function
+const getCategoryImage = (categoryName: string): string => {
+  const categoryImageMap: { [key: string]: string } = {
+    "Bar Tidbits": "/images/categories/Bar Munchies.jpg",
+    "Soups": "/images/categories/soups.jpg", 
+    "Gourmet Healthy Salads": "/images/categories/Salad Station.jpeg",
+    "Wholesome Sharing Platters": "/images/categories/Mediterranean and Tandoori Boards.jpeg",
+    "Sourdough Toasts/Bruschettas": "/images/categories/SANDWHICH.jpg",
+    "Mediterranean": "/images/categories/Mediterranean and Tandoori Boards.jpeg",
+    "European": "/images/categories/European.jpg",
+    "Clay Oven": "/images/categories/Charcoal.jpeg",
+    "Oriental": "/images/categories/Oriental.jpg",
+    "Dumplings": "/images/categories/Oriental.jpg", 
+    "Sushis": "/images/categories/Oriental.jpg",  
+    "Continental Mains": "/images/categories/European.jpg",
+    "Sizzlers": "/images/categories/European.jpg",
+    "Crafted Sandwiches/Burgers": "/images/categories/SANDWHICH.jpg",
+    "Artisan Pizzas": "/images/categories/pizza-2.jpeg",
+    "Flavorsome Pasta": "/images/categories/pasta.jpg",
+    "Meal Bowl": "/images/categories/Chinese.jpg",
+    "Rice / Noodles": "/images/categories/Chinese.jpg",
+    "Soulful Indian Delights": "/images/categories/Main Course.jpeg",
+    "Breads": "/images/categories/north-indian.jpg",
+    "Add Ons": "/images/categories/placeholder-food.jpg",
+    "Dessert": "/images/categories/Desserts.jpeg",
+    "Desserts": "/images/categories/Desserts.jpeg"
+  };
+
+  // Return mapped image or fallback to placeholder
+  return categoryImageMap[categoryName] || "/images/placeholder-food.jpg";
+};
 
 interface MenuItem {
   _id: string;
@@ -40,7 +75,7 @@ interface RestaurantMenuGridProps {
   theme: 'symposium' | 'panache' | 'cafe';
 }
 
-const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
+const getRestaurantMenuDataOld = (restaurantId: string): MenuCategory[] => {
   // Restaurant-specific menu data
   const restaurantMenus = {
     '1': { // Panache - Complete Menu
@@ -251,7 +286,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Salad Station',
-          img: '/images/categories/European.jpg',
+          img: '/images/categories/Salad Station.jpeg',
           items: [
             {
               _id: 'panache_salad_001',
@@ -305,7 +340,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Mediterranean and Tandoori Boards',
-          img: '/images/categories/North-indian.jpg',
+          img: '/images/categories/Mediterranean and Tandoori Boards.jpeg',
           items: [
             {
               _id: 'panache_board_001',
@@ -355,7 +390,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Appetizers Continental',
-          img: '/images/categories/European.jpg',
+          img: '/images/categories/Appetizers Continentaljpg.jpg',
           items: [
             {
               _id: 'panache_app_cont_001',
@@ -449,7 +484,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Charcoal',
-          img: '/images/categories/North-indian.jpg',
+          img: '/images/categories/Charcoal.jpeg',
           items: [
             {
               _id: 'panache_char_001',
@@ -781,7 +816,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Main Course',
-          img: '/images/categories/North-indian.jpg',
+          img: '/images/categories/Main Course.jpeg',
           items: [
             {
               _id: 'panache_main_001',
@@ -853,7 +888,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Desserts',
-          img: '/images/categories/Desserts.jpg',
+          img: '/images/categories/Desserts.jpeg',
           items: [
             {
               _id: 'panache_dessert_001',
@@ -903,7 +938,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Beverages',
-          img: '/images/categories/Bevarages.jpg',
+          img: '/images/categories/Beverages.jpeg',
           items: [
             {
               _id: 'panache_bev_001',
@@ -959,7 +994,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
       categories: [
         {
           name: 'Coffee & Tea',
-          img: '/images/categories/Bevarages.jpg',
+          img: '/images/categories/Beverages.jpeg',
           items: [
             {
               _id: 'cafe_coffee_001',
@@ -1153,7 +1188,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Pizza',
-          img: '/images/categories/Italian.jpg',
+          img: '/images/categories/pizza-2.jpeg',
           items: [
             {
               _id: 'cafe_pizza_001',
@@ -1253,7 +1288,7 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         },
         {
           name: 'Desserts',
-          img: '/images/categories/Desserts.jpg',
+          img: '/images/categories/Desserts.jpeg',
           items: [
             {
               _id: 'cafe_dessert_001',
@@ -1353,449 +1388,41 @@ const getRestaurantMenuData = (restaurantId: string): MenuCategory[] => {
         }
       ]
     },
-    '3': { // Symposium Restaurant - Complete Menu (from current FoodFly app)
-      categories: [
-        {
-          name: 'North Indian',
-          img: '/images/categories/North-indian.jpg',
-          items: [
-            {
-              _id: 'symp_north_001',
-              name: 'Dal Makhani',
-              description: 'Rich and creamy black lentils cooked with butter and spices',
-              price: 180,
-              image: '/images/categories/symposium/Dal Makhan.jpeg',
-              category: 'North Indian',
-              isVeg: true,
-              rating: 4.5,
-              preparationTime: '25 mins'
-            },
-            {
-              _id: 'symp_north_002',
-              name: 'Shahi Paneer',
-              description: 'Royal cottage cheese curry in rich tomato gravy',
-              price: 200,
-              image: '/images/categories/symposium/Shahi Paneer.jpeg',
-              category: 'North Indian',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '20 mins'
-            },
-            {
-              _id: 'symp_north_003',
-              name: 'Butter Chicken',
-              description: 'Tender chicken in creamy tomato-based curry',
-              price: 280,
-              image: '/images/categories/symposium/Butter Chicken.jpeg',
-              category: 'North Indian',
-              isVeg: false,
-              rating: 4.7,
-              preparationTime: '30 mins'
-            }
-          ]
-        },
-        {
-          name: 'South Indian',
-          img: '/images/categories/South-indian.jpg',
-          items: [
-            {
-              _id: 'symp_south_001',
-              name: 'Masala Dosa',
-              description: 'Crispy rice crepe filled with spiced potato',
-              price: 120,
-              image: '/images/categories/symposium/Masala Dosajpeg.jpeg',
-              category: 'South Indian',
-              isVeg: true,
-              rating: 4.4,
-              preparationTime: '20 mins'
-            },
-            {
-              _id: 'symp_south_002',
-              name: 'Idli Sambar',
-              description: 'Steamed rice cakes with lentil curry',
-              price: 100,
-              image: '/images/categories/symposium/Idli Sambar.jpeg',
-              category: 'South Indian',
-              isVeg: true,
-              rating: 4.2,
-              preparationTime: '15 mins'
-            }
-          ]
-        },
-        {
-          name: 'Chinese',
-          img: '/images/categories/Chinese.jpg',
-          items: [
-            {
-              _id: 'symp_chinese_001',
-              name: 'Hakka Noodles',
-              description: 'Stir-fried noodles with vegetables',
-              price: 160,
-              image: '/images/categories/symposium/Hakka Noodles.jpeg',
-              category: 'Chinese',
-              isVeg: true,
-              rating: 4.1,
-              preparationTime: '25 mins'
-            },
-            {
-              _id: 'symp_chinese_002',
-              name: 'Veg Manchurian',
-              description: 'Deep-fried vegetable balls in tangy sauce',
-              price: 140,
-              image: '/images/categories/symposium/Veg Manchurian.jpeg',
-              category: 'Chinese',
-              isVeg: true,
-              rating: 4.0,
-              preparationTime: '20 mins'
-            }
-          ]
-        },
-        {
-          name: 'Oriental',
-          img: '/images/categories/Oriental.jpg',
-          items: [
-            {
-              _id: 'symp_oriental_001',
-              name: 'Sushi Roll',
-              description: 'Fresh sushi roll with vegetables',
-              price: 200,
-              image: '/images/categories/symposium/Sushi Roll.jpeg',
-              category: 'Oriental',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '15 mins'
-            },
-            {
-              _id: 'symp_oriental_002',
-              name: 'Teriyaki Chicken',
-              description: 'Grilled chicken with teriyaki sauce',
-              price: 220,
-              image: '/images/categories/symposium/Teriyaki Chicken.jpeg',
-              category: 'Oriental',
-              isVeg: false,
-              rating: 4.5,
-              preparationTime: '20 mins'
-            },
-            {
-              _id: 'symp_oriental_003',
-              name: 'Miso Soup',
-              description: 'Traditional Japanese miso soup',
-              price: 80,
-              image: '/images/categories/symposium/Miso Soup.jpeg',
-              category: 'Oriental',
-              isVeg: true,
-              rating: 4.2,
-              preparationTime: '10 mins'
-            },
-            {
-              _id: 'symp_oriental_004',
-              name: 'Tempura',
-              description: 'Crispy tempura vegetables',
-              price: 160,
-              image: '/images/categories/symposium/Tempura.jpeg',
-              category: 'Oriental',
-              isVeg: true,
-              rating: 4.4,
-              preparationTime: '18 mins'
-            }
-          ]
-        },
-        {
-          name: 'Italian',
-          img: '/images/categories/Italian.jpg',
-          items: [
-            {
-              _id: 'symp_italian_001',
-              name: 'Margherita Pizza',
-              description: 'Classic pizza with tomato sauce and mozzarella',
-              price: 250,
-              image: '/images/categories/symposium/Margherita Pizza.jpeg',
-              category: 'Italian',
-              isVeg: true,
-              rating: 4.6,
-              preparationTime: '20 mins'
-            },
-            {
-              _id: 'symp_italian_002',
-              name: 'Pasta Carbonara',
-              description: 'Creamy pasta with eggs and cheese',
-              price: 180,
-              image: '/images/categories/symposium/Pasta Carbonara.jpeg',
-              category: 'Italian',
-              isVeg: false,
-              rating: 4.4,
-              preparationTime: '15 mins'
-            },
-            {
-              _id: 'symp_italian_003',
-              name: 'Bruschetta',
-              description: 'Toasted bread with fresh tomatoes and herbs',
-              price: 120,
-              image: '/images/categories/symposium/Bruschetta.jpeg',
-              category: 'Italian',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '8 mins'
-            },
-            {
-              _id: 'symp_italian_004',
-              name: 'Tiramisu',
-              description: 'Classic Italian dessert with coffee',
-              price: 150,
-              image: '/images/categories/Desserts/Tiramisu.webp',
-              category: 'Italian',
-              isVeg: true,
-              rating: 4.7,
-              preparationTime: '5 mins'
-            }
-          ]
-        },
-        {
-          name: 'European',
-          img: '/images/categories/European.jpg',
-          items: [
-            {
-              _id: 'symp_european_001',
-              name: 'Grilled Salmon',
-              description: 'Fresh grilled salmon with herbs',
-              price: 350,
-              image: '/images/categories/symposium/Grilled Salmon.jpeg',
-              category: 'European',
-              isVeg: false,
-              rating: 4.8,
-              preparationTime: '25 mins'
-            },
-            {
-              _id: 'symp_european_002',
-              name: 'Beef Steak',
-              description: 'Juicy beef steak with vegetables',
-              price: 400,
-              image: '/images/categories/symposium/Beef Steakjpeg.jpeg',
-              category: 'European',
-              isVeg: false,
-              rating: 4.7,
-              preparationTime: '30 mins'
-            },
-            {
-              _id: 'symp_european_003',
-              name: 'Caesar Salad',
-              description: 'Fresh romaine lettuce with parmesan',
-              price: 180,
-              image: '/images/categories/symposium/Caesar Salad.jpeg',
-              category: 'European',
-              isVeg: true,
-              rating: 4.4,
-              preparationTime: '12 mins'
-            },
-            {
-              _id: 'symp_european_004',
-              name: 'French Fries',
-              description: 'Crispy golden french fries',
-              price: 100,
-              image: '/images/categories/symposium/French Fries.jpeg',
-              category: 'European',
-              isVeg: true,
-              rating: 4.2,
-              preparationTime: '10 mins'
-            }
-          ]
-        },
-        {
-          name: 'Mughlai',
-          img: '/images/categories/Mughlai.jpg',
-          items: [
-            {
-              _id: 'symp_mughlai_001',
-              name: 'Chicken Biryani',
-              description: 'Aromatic rice with tender chicken',
-              price: 280,
-              image: '/images/categories/Main Course/chicken-hyderabadi-biryani-01.jpg',
-              category: 'Mughlai',
-              isVeg: false,
-              rating: 4.8,
-              preparationTime: '35 mins'
-            },
-            {
-              _id: 'symp_mughlai_002',
-              name: 'Mutton Rogan Josh',
-              description: 'Spicy mutton curry with aromatic spices',
-              price: 320,
-              image: '/images/categories/symposium/Mutton Rogan Josh.jpeg',
-              category: 'Mughlai',
-              isVeg: false,
-              rating: 4.6,
-              preparationTime: '40 mins'
-            },
-            {
-              _id: 'symp_mughlai_003',
-              name: 'Shahi Paneer',
-              description: 'Royal cottage cheese curry',
-              price: 200,
-              image: '/images/categories/symposium/Shahi Paneer.jpeg',
-              category: 'Mughlai',
-              isVeg: true,
-              rating: 4.5,
-              preparationTime: '20 mins'
-            },
-            {
-              _id: 'symp_mughlai_004',
-              name: 'Naan',
-              description: 'Soft bread from tandoor',
-              price: 40,
-              image: '/images/categories/symposium/Naan.jpeg',
-              category: 'Mughlai',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '8 mins'
-            }
-          ]
-        },
-        {
-          name: 'Fast Food',
-          img: '/images/categories/Fast-food.jpg',
-          items: [
-            {
-              _id: 'symp_fast_001',
-              name: 'Burger',
-              description: 'Classic burger with fresh vegetables',
-              price: 150,
-              image: '/images/categories/cafe after hours/Classic Chicken Burge.jpeg',
-              category: 'Fast Food',
-              isVeg: false,
-              rating: 4.4,
-              preparationTime: '12 mins'
-            },
-            {
-              _id: 'symp_fast_002',
-              name: 'French Fries',
-              description: 'Crispy golden french fries',
-              price: 100,
-              image: '/images/categories/symposium/French Fries.jpeg',
-              category: 'Fast Food',
-              isVeg: true,
-              rating: 4.2,
-              preparationTime: '10 mins'
-            },
-            {
-              _id: 'symp_fast_003',
-              name: 'Chicken Wings',
-              description: 'Spicy chicken wings',
-              price: 200,
-              image: '/images/categories/symposium/Chicken Wings.jpeg',
-              category: 'Fast Food',
-              isVeg: false,
-              rating: 4.5,
-              preparationTime: '15 mins'
-            },
-            {
-              _id: 'symp_fast_004',
-              name: 'Pizza Slice',
-              description: 'Fresh pizza slice',
-              price: 120,
-              image: '/images/categories/cafe after hours/Margherita Pizza.jpeg',
-              category: 'Fast Food',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '8 mins'
-            }
-          ]
-        },
-        {
-          name: 'Beverages',
-          img: '/images/categories/Bevarages.jpg',
-          items: [
-            {
-              _id: 'symp_bev_001',
-              name: 'Mix Berries Shake',
-              description: 'Refreshing mixed berries shake',
-              price: 325,
-              image: '/images/categories/symposium/Mix Berries Shake.jpeg',
-              category: 'Beverages',
-              isVeg: true,
-              rating: 4.5,
-              preparationTime: '8 mins'
-            },
-            {
-              _id: 'symp_bev_002',
-              name: 'Cold Coffee',
-              description: 'Creamy cold coffee',
-              price: 295,
-              image: '/images/categories/symposium/Cold Coffee.jpeg',
-              category: 'Beverages',
-              isVeg: true,
-              rating: 4.4,
-              preparationTime: '5 mins'
-            },
-            {
-              _id: 'symp_bev_003',
-              name: 'Various Ice Teas',
-              description: 'Assorted flavored ice teas',
-              price: 299,
-              image: '/images/categories/symposium/Various Ice Teas .jpeg',
-              category: 'Beverages',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '6 mins'
-            },
-            {
-              _id: 'symp_bev_004',
-              name: 'Fresh Juice',
-              description: 'Fresh seasonal fruit juice',
-              price: 150,
-              image: '/images/categories/symposium/Fresh Juice.jpeg',
-              category: 'Beverages',
-              isVeg: true,
-              rating: 4.2,
-              preparationTime: '5 mins'
-            }
-          ]
-        },
-        {
-          name: 'Desserts',
-          img: '/images/categories/Desserts.jpg',
-          items: [
-            {
-              _id: 'symp_dessert_001',
-              name: 'Chocolate Cake',
-              description: 'Rich chocolate cake',
-              price: 180,
-              image: '/images/categories/symposium/Chocolate Cake .jpeg',
-              category: 'Desserts',
-              isVeg: true,
-              rating: 4.6,
-              preparationTime: '5 mins'
-            },
-            {
-              _id: 'symp_dessert_002',
-              name: 'Gulab Jamun',
-              description: 'Sweet milk balls in sugar syrup',
-              price: 80,
-              image: '/images/categories/Desserts/Gulab Jamun.jpg',
-              category: 'Desserts',
-              isVeg: true,
-              rating: 4.6,
-              preparationTime: '10 mins'
-            },
-            {
-              _id: 'symp_dessert_003',
-              name: 'Vanilla Ice Cream',
-              description: 'Creamy vanilla ice cream',
-              price: 60,
-              image: '/images/categories/symposium/Vanilla Ice Cream.jpeg',
-              category: 'Desserts',
-              isVeg: true,
-              rating: 4.3,
-              preparationTime: '5 mins'
-            }
-          ]
-        }
-      ]
+    '3': {
+      categories: []
     }
   };
 
   const menu = restaurantMenus[restaurantId as keyof typeof restaurantMenus];
   if (menu) {
-    return menu.categories.map(cat => ({
+    let categories = menu.categories;
+    if ((restaurantId === '3' || restaurantId === '2' || restaurantId === '1') && (!categories || categories.length === 0)) {
+      // Build categories from symposium admin menu, grouped by category
+      const raw = restaurantId === '3' ? getSymposiumAdminMenu() : restaurantId === '2' ? getCafeAdminMenu() : getPanacheAdminMenu();
+      const grouped: { [cat: string]: any[] } = {};
+      raw.forEach((item) => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push({
+          _id: item._id,
+          name: item.name,
+          description: item.description || '',
+          price: item.price,
+          image: item.image,
+          category: item.category,
+          isVeg: item.isVeg,
+          rating: item.rating,
+          preparationTime: item.preparationTime,
+          variants: item.variants,
+          variantPrices: item.variantPrices
+        });
+      });
+      categories = Object.keys(grouped).map((catName) => ({
+        name: catName,
+        img: getCategoryImage(catName),
+        items: grouped[catName]
+      }));
+    }
+    return categories.map(cat => ({
       ...cat,
       restaurantId,
       restaurantName: restaurantId === '1' ? 'Panache' : restaurantId === '2' ? 'Cafe After Hours' : 'Symposium Restaurant'
@@ -1847,10 +1474,113 @@ const getThemeColors = (theme: string) => {
 };
 
 export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme }: RestaurantMenuGridProps) {
-  const categories = getRestaurantMenuData(restaurantId);
   const colors = getThemeColors(theme);
   const [cartItems, setCartItems] = useState<{[key: string]: number}>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Search and Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'veg' | 'non-veg'>('all');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [sortBy, setSortBy] = useState<'name' | 'price-low' | 'price-high' | 'rating'>('name');
+
+  // Load menu data (synced with admin changes)
+  useEffect(() => {
+    const loadMenuData = async () => {
+      try {
+        setIsLoading(true);
+        // Try to fetch synced menu data first
+        const response = await fetch(`/api/restaurants/${restaurantId}/menu-sync`);
+        
+        if (response.ok) {
+          const syncedData = await response.json();
+          console.log('✅ Loaded synced menu data:', syncedData);
+          setCategories(syncedData.categories);
+        } else {
+          // Fallback to original static data if sync fails
+          console.log('⚠️ Sync failed, using original static data');
+          const staticCategories = getRestaurantMenuDataOld(restaurantId);
+          setCategories(staticCategories);
+        }
+      } catch (error) {
+        console.error('❌ Menu loading error:', error);
+        // Fallback to original static data on error
+        const staticCategories = getRestaurantMenuDataOld(restaurantId);
+        setCategories(staticCategories);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMenuData();
+  }, [restaurantId]);
+
+  // Filter and search logic
+  const filteredCategories = useMemo(() => {
+    if (!categories.length) return [];
+
+    return categories.map(category => {
+      let filteredItems = category.items.filter(item => {
+        // Search filter
+        const matchesSearch = searchTerm === '' || 
+          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Type filter (veg/non-veg)
+        const matchesType = filterType === 'all' || 
+          (filterType === 'veg' && item.isVeg) ||
+          (filterType === 'non-veg' && !item.isVeg);
+
+        // Price range filter
+        const matchesPrice = item.price >= priceRange[0] && item.price <= priceRange[1];
+
+        return matchesSearch && matchesType && matchesPrice;
+      });
+
+      // Sort items
+      filteredItems.sort((a, b) => {
+        switch (sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'price-low':
+            return a.price - b.price;
+          case 'price-high':
+            return b.price - a.price;
+          case 'rating':
+            return (b.rating || 0) - (a.rating || 0);
+          default:
+            return 0;
+        }
+      });
+
+      return {
+        ...category,
+        items: filteredItems
+      };
+    }).filter(category => category.items.length > 0); // Only show categories with items
+  }, [categories, searchTerm, filterType, priceRange, sortBy]);
+
+  // Get all items for global search
+  const allItems = useMemo(() => {
+    return categories.flatMap(category => 
+      category.items.map(item => ({ ...item, category: category.name }))
+    );
+  }, [categories]);
+
+  // Get price range from all items
+  const maxPrice = useMemo(() => {
+    if (!allItems.length) return 1000;
+    return Math.max(...allItems.map(item => item.price));
+  }, [allItems]);
+
+  // Reset price range when restaurant changes
+  useEffect(() => {
+    if (maxPrice > 0) {
+      setPriceRange([0, maxPrice]);
+    }
+  }, [maxPrice, restaurantId]);
 
   const addToCart = async (item: MenuItem) => {
     try {
@@ -1914,14 +1644,37 @@ export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme
   };
 
   const selectedCategoryData = selectedCategory 
-    ? categories.find(cat => cat.name === selectedCategory)
+    ? filteredCategories.find(cat => cat.name === selectedCategory)
     : null;
+
+  // Show loading state while menu is being fetched
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading menu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black">
       {/* Restaurant Header */}
       <div className="bg-gradient-to-r from-gray-900 to-black py-8">
         <div className="max-w-7xl mx-auto px-4">
+          {/* Home Button */}
+          <div className="text-center mb-6">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors font-semibold shadow-lg"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </button>
+          </div>
+          
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-3 mb-4">
               <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${colors.primary} flex items-center justify-center`}>
@@ -1954,6 +1707,140 @@ export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme
         </div>
       </div>
 
+      {/* Modern Search and Filter Section */}
+      <div className="bg-gradient-to-r from-gray-900/80 to-black/80 backdrop-blur-xl border-y border-gray-700/50 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Search Bar */}
+          <div className="mb-8">
+            <div className="relative max-w-2xl mx-auto">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-yellow-400 w-6 h-6" />
+              <input
+                type="text"
+                placeholder="Search for your favorite dishes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-14 pr-6 py-4 bg-gray-800/80 border-2 border-gray-500/50 rounded-2xl text-white placeholder-gray-300 focus:outline-none focus:ring-4 focus:ring-yellow-500/30 focus:border-yellow-500/70 text-lg backdrop-blur-sm transition-all duration-300 font-semibold shadow-lg"
+                style={{ 
+                  textShadow: '0 0 8px rgba(0,0,0,0.8)',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                }}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-yellow-400 transition-colors bg-gray-700/50 p-1 rounded-full hover:bg-gray-600/50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filters Row */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-6">
+            {/* Type Filter */}
+            <div className="flex items-center gap-3">
+              <span className="text-white font-medium text-sm">Type:</span>
+              <div className="flex bg-gray-800/50 rounded-xl p-1 backdrop-blur-sm">
+                {[
+                  { value: 'all', label: 'All', icon: '🍽️' },
+                  { value: 'veg', label: 'Vegetarian', icon: '🌱' },
+                  { value: 'non-veg', label: 'Non-Veg', icon: '🍖' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setFilterType(option.value as 'all' | 'veg' | 'non-veg')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      filterType === option.value
+                        ? 'bg-yellow-500 text-black shadow-lg'
+                        : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                    }`}
+                  >
+                    <span className="mr-2">{option.icon}</span>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort Filter */}
+            <div className="flex items-center gap-3">
+              <span className="text-white font-medium text-sm">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'name' | 'price-low' | 'price-high' | 'rating')}
+                className="px-4 py-2 bg-gray-800/50 border border-gray-600/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 backdrop-blur-sm transition-all duration-200"
+              >
+                <option value="name">Name (A-Z)</option>
+                <option value="price-low">Price (Low to High)</option>
+                <option value="price-high">Price (High to Low)</option>
+                <option value="rating">Rating (High to Low)</option>
+              </select>
+            </div>
+
+            {/* Price Range */}
+            <div className="flex items-center gap-3">
+              <span className="text-white font-medium text-sm">Price:</span>
+              <div className="flex items-center gap-2 bg-gray-800/50 px-4 py-2 rounded-xl backdrop-blur-sm">
+                <span className="text-yellow-400 font-semibold">₹{priceRange[0]}</span>
+                <span className="text-gray-400">-</span>
+                <span className="text-yellow-400 font-semibold">₹{priceRange[1]}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Price Range Sliders */}
+          <div className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <div className="h-2 bg-gray-700/50 rounded-full">
+                <div 
+                  className="h-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full transition-all duration-200"
+                  style={{ 
+                    left: `${(priceRange[0] / maxPrice) * 100}%`,
+                    right: `${100 - (priceRange[1] / maxPrice) * 100}%`
+                  }}
+                ></div>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max={maxPrice}
+                value={priceRange[0]}
+                onChange={(e) => setPriceRange([parseInt(e.target.value), priceRange[1]])}
+                className="absolute top-0 w-full h-2 opacity-0 cursor-pointer"
+              />
+              <input
+                type="range"
+                min="0"
+                max={maxPrice}
+                value={priceRange[1]}
+                onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                className="absolute top-0 w-full h-2 opacity-0 cursor-pointer"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>₹0</span>
+              <span>₹{maxPrice}</span>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div className="text-center">
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterType('all');
+                setPriceRange([0, maxPrice]);
+                setSortBy('name');
+              }}
+              className="px-6 py-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-xl hover:scale-105 transition-all duration-200 backdrop-blur-sm border border-gray-600/30"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {selectedCategory ? (
@@ -1972,13 +1859,7 @@ export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme
               {selectedCategoryData?.items.map((item) => (
                 <div key={item._id} className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-yellow-500/30 transition-colors">
                   <div className="relative h-48">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
+                    <Image src={item.image || '/images/placeholder-food.jpg'} alt={item.name} fill className="object-cover" unoptimized />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
                     <div className="absolute top-2 right-2">
                       {item.isVeg && (
@@ -2039,10 +1920,127 @@ export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme
               ))}
             </div>
           </div>
+        ) : searchTerm ? (
+          // Show search results as individual dishes
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className={`${cormorant.className} text-3xl font-semibold text-white mb-2`}>
+                Search Results
+              </h2>
+              <p className="text-gray-400">
+                Found {allItems.filter(item => 
+                  item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  item.category.toLowerCase().includes(searchTerm.toLowerCase())
+                ).length} dishes matching "{searchTerm}"
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {allItems
+                .filter(item => 
+                  item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  item.category.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .filter(item => {
+                  // Apply type filter
+                  if (filterType === 'veg' && !item.isVeg) return false;
+                  if (filterType === 'non-veg' && item.isVeg) return false;
+                  
+                  // Apply price filter
+                  if (item.price < priceRange[0] || item.price > priceRange[1]) return false;
+                  
+                  return true;
+                })
+                .sort((a, b) => {
+                  // Apply sorting
+                  switch (sortBy) {
+                    case 'name':
+                      return a.name.localeCompare(b.name);
+                    case 'price-low':
+                      return a.price - b.price;
+                    case 'price-high':
+                      return b.price - a.price;
+                    case 'rating':
+                      return (b.rating || 0) - (a.rating || 0);
+                    default:
+                      return 0;
+                  }
+                })
+                .map((item) => (
+                  <div key={item._id} className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-yellow-500/30 transition-all duration-300 hover:scale-105">
+                    <div className="relative h-48">
+                      <Image src={item.image || '/images/placeholder-food.jpg'} alt={item.name} fill className="object-cover" unoptimized />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                      <div className="absolute top-2 right-2">
+                        {item.isVeg && (
+                          <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">🌱 Veg</span>
+                        )}
+                      </div>
+                      <div className="absolute top-2 left-2">
+                        <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                          {item.category}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-white font-semibold text-lg mb-1">{item.name}</h3>
+                        <p className="text-gray-300 text-sm">{item.description}</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-4 text-sm text-gray-400">
+                          <span className="flex items-center gap-1">
+                            ⭐ {item.rating || 4.0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            ⏱️ {item.preparationTime || '15-20 mins'}
+                          </span>
+                        </div>
+                        <div className="text-yellow-400 font-bold text-xl">
+                          ₹{item.price}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {cartItems[item._id] ? (
+                          <>
+                            <button
+                              onClick={() => removeFromCart(item._id)}
+                              className="w-8 h-8 rounded-full bg-gray-700 text-white flex items-center justify-center hover:bg-gray-600 transition-colors"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="text-white font-semibold min-w-[20px] text-center">
+                              {cartItems[item._id]}
+                            </span>
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="w-8 h-8 rounded-full bg-yellow-500 text-black flex items-center justify-center hover:bg-yellow-400 transition-colors"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => addToCart(item)}
+                            className={`w-full py-2 rounded-lg ${colors.button} font-semibold hover:scale-105 transition-all duration-200`}
+                          >
+                            Add to Cart
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
         ) : (
-          // Show categories grid
+          // Show categories grid when no search
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {categories.map((category, index) => (
+            {filteredCategories.map((category, index) => (
               <button
                 key={category.name}
                 onClick={() => setSelectedCategory(category.name)}
@@ -2051,14 +2049,7 @@ export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme
               >
                 {/* Category Image */}
                 <div className="relative w-full h-32 sm:h-36 overflow-hidden">
-                  <Image
-                    src={category.img}
-                    alt={category.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    priority
-                  />
+                  <Image src={category.img || getCategoryImage(category.name)} alt={category.name} fill className="object-cover group-hover:scale-110 transition-transform duration-300" priority unoptimized />
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                   
@@ -2072,7 +2063,7 @@ export default function RestaurantMenuGrid({ restaurantId, restaurantName, theme
 
                 {/* Category Name */}
                 <div className="p-3 sm:p-4 text-center">
-                  <span className={`${cormorant.className} text-sm sm:text-base font-semibold tracking-wide text-white group-hover:${colors.accent} transition-colors duration-300`}>
+                  <span className={`${cormorant.className} text-sm sm:text-base font-semibold text-white group-hover:${colors.accent} transition-colors duration-300`}>
                     {category.name}
                   </span>
                 </div>

@@ -8,17 +8,23 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
     // Skip authentication check for login page
     if (pathname === '/admin/login') {
       setIsLoading(false);
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('adminToken');
-      const adminUser = localStorage.getItem('adminUser');
+    const token = localStorage.getItem('adminToken');
+    const adminUser = localStorage.getItem('adminUser');
       
       if (!token || !adminUser) {
         router.push('/admin/login');
@@ -43,8 +49,7 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
       } finally {
         setIsLoading(false);
       }
-    }
-  }, [router, pathname]);
+  }, [isMounted, router, pathname]);
 
   // Handle login page rendering after hooks
   if (pathname === '/admin/login') {

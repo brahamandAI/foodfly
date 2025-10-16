@@ -61,20 +61,45 @@ export async function GET(
       );
     }
 
+    // Get actual restaurant data
+    const restaurantData = {
+      '1': {
+        name: 'Panache',
+        image: '/images/placeholder-restaurant.jpg',
+        phone: '+91 98765 43210',
+        address: { street: 'Downtown Business District', city: 'City', area: 'Business District' }
+      },
+      '2': {
+        name: 'Cafe After Hours',
+        image: '/images/placeholder-restaurant.jpg',
+        phone: '+91 98765 43211',
+        address: { street: 'Arts District', city: 'City', area: 'Arts Quarter' }
+      },
+      '3': {
+        name: 'Symposium Restaurant',
+        image: '/images/placeholder-restaurant.jpg',
+        phone: '+91 98765 43212',
+        address: { street: 'Heritage Quarter', city: 'City', area: 'Heritage District' }
+      }
+    };
+
+    const restaurantInfo = restaurantData[order.restaurantId] || {
+      name: order.restaurantName || 'Restaurant',
+      image: '/images/restaurants/cafe.jpg',
+      phone: '+91 9876543210',
+      address: { street: 'Main Street', city: 'Your City', area: 'Food District' }
+    };
+
     // Format the response to match the actual order structure
     const formattedOrder = {
       _id: order._id,
       orderNumber: order.orderNumber,
       restaurant: {
         _id: order.restaurantId || 'default-restaurant',
-        name: order.restaurantName || 'FoodFly Kitchen',
-        image: '/images/restaurants/cafe.jpg', // Default image
-        phone: '+91 9876543210', // Default phone
-        address: {
-          street: 'Main Street',
-          city: 'Your City',
-          area: 'Food District'
-        }
+        name: restaurantInfo.name,
+        image: restaurantInfo.image,
+        phone: restaurantInfo.phone,
+        address: restaurantInfo.address
       },
       items: order.items.map((item: any) => ({
         _id: item._id,

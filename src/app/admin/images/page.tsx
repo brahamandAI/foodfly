@@ -198,7 +198,7 @@ export default function ImageManagementPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Image Management</h1>
               <p className="text-gray-600 mt-1">
-                Process menu images using Unsplash API and Cloudinary optimization
+                Process menu images using Pexels/Pixabay and Cloudinary optimization
               </p>
             </div>
             <div className="flex items-center space-x-2">

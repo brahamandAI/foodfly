@@ -13,7 +13,7 @@ const navLinks = [
   { href: '/admin/order-assignments', label: 'Order Assignments' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/restaurants', label: 'Restaurants' },
-  { href: '/admin/images', label: 'Images' },
+  
   { href: '/admin/support', label: 'Support' },
   { href: '/admin/notifications', label: 'Notifications' },
   { href: '/admin/settings', label: 'Settings' },
@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </button>
       </aside>
       {/* Main Content */}
-      <main className="flex-1 p-8 bg-white min-h-screen">{children}</main>
+      <main className="flex-1 bg-gray-50 min-h-screen overflow-auto">{children}</main>
     </div>
   );
 } 

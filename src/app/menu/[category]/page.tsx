@@ -210,7 +210,7 @@ export default function CategoryMenuPage() {
         currentQty, // Use the selected quantity
         '/images/placeholder.svg',
         'foodfly_kitchen',
-        'FoodFly Kitchen',
+        'Restaurant',
         [] // customizations
       );
       

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { v2 as cloudinary } from 'cloudinary';
 
 // Configure Cloudinary
@@ -7,20 +8,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Unsplash API configuration
-const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
-const UNSPLASH_API_URL = 'https://api.unsplash.com';
+// Pexels & Pixabay API configuration (primary → fallback)
+const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
+const PEXELS_API_URL = 'https://api.pexels.com/v1';
 
-interface UnsplashImage {
-  id: string;
-  urls: {
-    regular: string;
-    small: string;
-    thumb: string;
-  };
-  alt_description: string;
-  description: string;
-}
+const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY;
+const PIXABAY_API_URL = 'https://pixabay.com/api';
+
+interface PexelsPhoto { id: number; src: { medium: string; large: string; large2x: string; small: string; tiny: string; }; alt: string; }
+interface PixabayHit { id: number; webformatURL: string; largeImageURL: string; previewURL: string; tags: string; }
 
 interface CloudinaryUploadResult {
   public_id: string;
@@ -32,30 +28,107 @@ interface CloudinaryUploadResult {
 }
 
 export class ImageService {
-  /**
-   * Search for food images on Unsplash
-   */
-  static async searchFoodImages(query: string, count: number = 1): Promise<UnsplashImage[]> {
-    try {
-      const response = await fetch(
-        `${UNSPLASH_API_URL}/search/photos?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape`,
-        {
-          headers: {
-            'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`,
-          },
-        }
-      );
+  private static normalizeDishName(name: string): string {
+    let s = (name || '').toLowerCase();
+    // remove parenthetical and trailing descriptors
+    s = s.replace(/\([^)]*\)/g, ''); // remove ( ... )
+    s = s.replace(/-\s*\d+.*/, ''); // remove price hints after dash
+    s = s.replace(/[^a-z0-9\s]/g, ' ');
+    s = s.replace(/\s+/g, ' ').trim();
+    return s;
+  }
 
-      if (!response.ok) {
-        throw new Error(`Unsplash API error: ${response.status}`);
-      }
+  private static getCategoryKeywords(category: string): string[] {
+    const c = (category || '').toLowerCase();
+    if (c.includes('burger')) return ['burger'];
+    if (c.includes('pizza')) return ['pizza'];
+    if (c.includes('pasta')) return ['pasta'];
+    if (c.includes('dessert')) return ['dessert', 'cake', 'sweets'];
+    if (c.includes('soup')) return ['soup'];
+    if (c.includes('salad')) return ['salad'];
+    if (c.includes('appetizer') || c.includes('starter')) return ['appetizer'];
+    if (c.includes('biryani') || c.includes('rice')) return ['biryani', 'rice'];
+    if (c.includes('indian')) return ['indian food'];
+    if (c.includes('oriental') || c.includes('chinese')) return ['asian food'];
+    if (c.includes('european')) return ['european food'];
+    return [];
+  }
 
-      const data = await response.json();
-      return data.results || [];
-    } catch (error) {
-      console.error('Error searching Unsplash images:', error);
-      throw error;
+  private static buildQueryCandidates(dish: string, category: string): string[] {
+    const dn = this.normalizeDishName(dish);
+    const cat = (category || '').toLowerCase();
+    const catWords = this.getCategoryKeywords(cat);
+
+    const qualifiers = ['food', 'dish', 'meal', 'cuisine'];
+    const drinkQualifiers = ['drink', 'beverage', 'glass'];
+    const dessertQualifiers = ['dessert', 'sweet'];
+
+    const isDrink = /\b(cola|coke|sprite|pepsi|soda|tea|coffee|shake|smoothie|mojito|juice|mocktail|beer|wine)\b/i.test(dn) || /beverage|drink/i.test(cat);
+    const isDessert = /dessert|cake|brownie|ice cream|tiramisu|cheesecake|gulab|rasmalai|jalebi/i.test(dn) || /dessert/i.test(cat);
+
+    const candidates: string[] = [];
+    const baseWords = [dn, `${dn} ${cat}`].filter(Boolean);
+    const kwCombos = catWords.map(kw => `${dn} ${kw}`);
+
+    const withQualifiers = (arr: string[], quals: string[]) => arr.flatMap(s => quals.map(q => `${s} ${q}`));
+
+    if (isDrink) {
+      candidates.push(...withQualifiers(baseWords, drinkQualifiers));
+    } else if (isDessert) {
+      candidates.push(...withQualifiers(baseWords, dessertQualifiers));
+    } else {
+      candidates.push(...withQualifiers(baseWords, qualifiers));
     }
+
+    candidates.push(...withQualifiers(kwCombos, isDrink ? drinkQualifiers : (isDessert ? dessertQualifiers : qualifiers)));
+    candidates.push(...(isDrink ? drinkQualifiers : (isDessert ? dessertQualifiers : qualifiers)));
+    if (cat) candidates.push(`${cat} food`);
+
+    return Array.from(new Set(candidates)).filter(Boolean);
+  }
+  // Search Pexels
+  static async searchPexels(query: string, count: number = 1, page: number = 1): Promise<PexelsPhoto[]> {
+    const perPage = Math.max(1, Math.min(10, count));
+    const resp = await fetch(`${PEXELS_API_URL}/search?query=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}&orientation=landscape`, {
+      headers: { 'Authorization': PEXELS_API_KEY || '' }
+    });
+    if (!resp.ok) throw new Error(`Pexels API error: ${resp.status}`);
+    const raw = await resp.text();
+    let json: any;
+    try {
+      json = JSON.parse(raw);
+    } catch (e: any) {
+      throw new Error(`Pexels JSON parse failed: status ${resp.status}. ${String(raw).slice(0, 120)}`);
+    }
+    // Filter out people/animals by tags/alt where possible
+    const animals = /(dog|cat|animal|tiger|lion|goat|cow|monkey|horse|elephant|bird)/i;
+    const people = /(person|people|man|woman|boy|girl|hand|portrait|face)/i;
+    return (json.photos || []).filter((p: any) => {
+      const txt = `${p.alt || ''}`;
+      return !animals.test(txt) && !people.test(txt);
+    });
+  }
+
+  // Search Pixabay
+  static async searchPixabay(query: string, count: number = 1, page: number = 1): Promise<PixabayHit[]> {
+    // Pixabay requires per_page between 3 and 200
+    const perPage = Math.max(3, Math.min(20, count));
+    const url = `${PIXABAY_API_URL}/?key=${encodeURIComponent(PIXABAY_API_KEY || '')}&q=${encodeURIComponent(query)}&category=food&image_type=photo&per_page=${perPage}&page=${page}&orientation=horizontal&safesearch=true`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Pixabay API error: ${resp.status}`);
+    const raw = await resp.text();
+    let json: any;
+    try {
+      json = JSON.parse(raw);
+    } catch (e: any) {
+      throw new Error(`Pixabay JSON parse failed: status ${resp.status}. ${String(raw).slice(0, 120)}`);
+    }
+    const animals = /(dog|cat|animal|tiger|lion|goat|cow|monkey|horse|elephant|bird)/i;
+    const people = /(person|people|man|woman|boy|girl|hand|portrait|face)/i;
+    return (json.hits || []).filter((h: any) => {
+      const txt = `${h.tags || ''}`;
+      return !animals.test(txt) && !people.test(txt);
+    });
   }
 
   /**
@@ -89,11 +162,8 @@ export class ImageService {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             folder,
-            transformation,
             resource_type: 'image',
-            format: 'auto',
-            quality: 'auto',
-            fetch_format: 'auto',
+            timeout: 60000,
           },
           (error, result) => {
             if (error) {
@@ -117,10 +187,10 @@ export class ImageService {
    */
   static generateOptimizedUrls(publicId: string, baseUrl: string) {
     return {
-      thumbnail: `${baseUrl}/w_200,h_200,c_fill,f_auto,q_auto/${publicId}`,
-      small: `${baseUrl}/w_400,h_300,c_fill,f_auto,q_auto/${publicId}`,
-      medium: `${baseUrl}/w_800,h_600,c_fill,f_auto,q_auto/${publicId}`,
-      large: `${baseUrl}/w_1200,h_900,c_fill,f_auto,q_auto/${publicId}`,
+      thumbnail: `${baseUrl}/c_fill,w_200,h_200/${publicId}`,
+      small: `${baseUrl}/c_fill,w_400,h_300/${publicId}`,
+      medium: `${baseUrl}/c_fill,w_800,h_600/${publicId}`,
+      large: `${baseUrl}/c_fill,w_1200,h_900/${publicId}`,
       original: baseUrl + '/' + publicId,
     };
   }
@@ -131,7 +201,8 @@ export class ImageService {
   static async processMenuImage(
     foodItem: string,
     category: string,
-    folder: string = 'foodfly/menu'
+    folder: string = 'foodfly/menu',
+    options?: { avoidUrls?: string[]; randomize?: boolean; providerPreference?: 'pexels-first' | 'pixabay-first' }
   ): Promise<{
     public_id: string;
     urls: {
@@ -147,20 +218,86 @@ export class ImageService {
       format: string;
       bytes: number;
     };
+    sourceUrl: string;
   }> {
     try {
-      // 1. Search for food image on Unsplash
-      const searchQuery = `${foodItem} food ${category}`;
-      const images = await this.searchFoodImages(searchQuery, 1);
-      
-      if (images.length === 0) {
-        throw new Error(`No images found for: ${searchQuery}`);
+      // 1. Search via providers with preference (default pexels → pixabay)
+      const candidates = this.buildQueryCandidates(foodItem, category);
+      let imageUrl: string | null = null;
+      const avoidArr = (options?.avoidUrls || []).filter(Boolean);
+      const randomize = options?.randomize !== false; // default true
+      const preferPixabay = options?.providerPreference === 'pixabay-first';
+      for (const q of candidates) {
+        // provider order: either pixabay → pexels or pexels → pixabay
+        const tryPixabayFirst = async () => {
+          if (!imageUrl && PIXABAY_API_KEY) {
+            try {
+              const page = randomize ? 1 + Math.floor(Math.random() * 5) : 1;
+              const hits = await this.searchPixabay(q, 20, page);
+              for (const h of hits) {
+                // Prefer moderately-sized images to reduce Cloudinary upload failures/timeouts
+                const url = h.webformatURL || h.largeImageURL || h.previewURL;
+                if (url && !avoidArr.some(a => url.includes(a))) {
+                  imageUrl = url;
+                  return;
+                }
+              }
+            } catch {}
+          }
+          if (!imageUrl && PEXELS_API_KEY) {
+            try {
+              const page = randomize ? 1 + Math.floor(Math.random() * 5) : 1;
+              const photos = await this.searchPexels(q, 12, page);
+              for (const p of photos) {
+                // Prefer large/medium over very large variants
+                const url = p.src.large || p.src.medium || p.src.large2x || p.src.small || p.src.tiny;
+                if (url && !avoidArr.some(a => url.includes(a))) {
+                  imageUrl = url;
+                  return;
+                }
+              }
+            } catch {}
+          }
+        };
+        const tryPexelsFirst = async () => {
+          if (!imageUrl && PEXELS_API_KEY) {
+            try {
+              const page = randomize ? 1 + Math.floor(Math.random() * 5) : 1;
+              const photos = await this.searchPexels(q, 12, page);
+              for (const p of photos) {
+                const url = p.src.large || p.src.medium || p.src.large2x || p.src.small || p.src.tiny;
+                if (url && !avoidArr.some(a => url.includes(a))) {
+                  imageUrl = url;
+                  return;
+                }
+              }
+            } catch {}
+          }
+          if (!imageUrl && PIXABAY_API_KEY) {
+            try {
+              const page = randomize ? 1 + Math.floor(Math.random() * 5) : 1;
+              const hits = await this.searchPixabay(q, 20, page);
+              for (const h of hits) {
+                const url = h.webformatURL || h.largeImageURL || h.previewURL;
+                if (url && !avoidArr.some(a => url.includes(a))) {
+                  imageUrl = url;
+                  return;
+                }
+              }
+            } catch {}
+          }
+        };
+        if (preferPixabay) {
+          await tryPixabayFirst();
+        } else {
+          await tryPexelsFirst();
+        }
+        if (imageUrl) break;
       }
-
-      const unsplashImage = images[0];
+      if (!imageUrl) throw new Error(`No images found for: ${foodItem} ${category}`);
 
       // 2. Download the image
-      const imageBuffer = await this.downloadImage(unsplashImage.urls.regular);
+      const imageBuffer = await this.downloadImage(imageUrl);
 
       // 3. Upload to Cloudinary with optimization
       const uploadResult = await this.uploadToCloudinary(
@@ -182,6 +319,7 @@ export class ImageService {
           format: uploadResult.format,
           bytes: uploadResult.bytes,
         },
+        sourceUrl: imageUrl,
       };
     } catch (error) {
       console.error('Error processing menu image:', error);

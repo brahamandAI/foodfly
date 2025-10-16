@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Poppins, Cormorant_Garamond, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import GoogleOAuthProvider from "@/components/GoogleOAuthProvider";
@@ -18,6 +18,20 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: "--font-cormorant",
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: "--font-playfair",
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: "FoodFly - Delicious Food Delivery",
   description: "Order your favorite food online and get it delivered to your doorstep.",
@@ -30,7 +44,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${poppins.variable} min-h-screen bg-black text-white font-inter antialiased`}>
+      <body className={`${inter.variable} ${poppins.variable} ${cormorant.variable} ${playfair.variable} min-h-screen bg-black text-white font-inter antialiased`}>
         <GoogleOAuthProvider>
           <ClientLayout>
               {children}

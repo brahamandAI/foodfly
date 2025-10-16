@@ -6,7 +6,8 @@ const requiredVars = [
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY', 
   'CLOUDINARY_API_SECRET',
-  'UNSPLASH_ACCESS_KEY'
+  'PEXELS_API_KEY',
+  'PIXABAY_API_KEY'
 ];
 
 let allSet = true;

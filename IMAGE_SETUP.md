@@ -1,10 +1,10 @@
 # 🖼️ Image Processing Setup Guide
 
-This guide will help you set up the automated image processing system using **Unsplash API** and **Cloudinary** for your FoodFly application.
+This guide will help you set up the automated image processing system using **Pexels/Pixabay** and **Cloudinary** for your FoodFly application.
 
 ## 🎯 **What This System Does**
 
-1. **Searches** high-quality food images from Unsplash API
+1. **Searches** high-quality food images from Pexels/Pixabay APIs
 2. **Downloads** images automatically
 3. **Optimizes** and uploads to Cloudinary
 4. **Generates** multiple sizes (thumbnail, small, medium, large)
@@ -12,10 +12,9 @@ This guide will help you set up the automated image processing system using **Un
 
 ## 📋 **Prerequisites**
 
-### 1. **Unsplash API Account**
-- Go to [Unsplash Developers](https://unsplash.com/developers)
-- Create a new application
-- Get your **Access Key**
+### 1. **Pexels/Pixabay API Accounts**
+- Pexels: visit [https://www.pexels.com/api/](https://www.pexels.com/api/)
+- Pixabay: visit [https://pixabay.com/api/docs/](https://pixabay.com/api/docs/)
 
 ### 2. **Cloudinary Account**
 - Sign up at [Cloudinary](https://cloudinary.com/)
@@ -39,21 +38,16 @@ CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
 CLOUDINARY_API_KEY=your-cloudinary-api-key
 CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 
-# Unsplash API
-UNSPLASH_ACCESS_KEY=your-unsplash-access-key
+# Pexels/Pixabay API
+PEXELS_API_KEY=your-pexels-api-key
+PIXABAY_API_KEY=your-pixabay-api-key
 ```
 
 ### **Step 3: Get API Keys**
 
-#### **Unsplash API Key:**
-1. Visit [https://unsplash.com/developers](https://unsplash.com/developers)
-2. Click "New Application"
-3. Fill in the form:
-   - **Application name**: FoodFly Image Processor
-   - **Description**: Automated food image processing for menu items
-   - **What are you building**: Food delivery app with menu images
-4. Accept terms and create
-5. Copy your **Access Key**
+#### **Pexels/Pixabay Keys:**
+1. Create API keys on Pexels and/or Pixabay
+2. Copy keys into your environment
 
 #### **Cloudinary Credentials:**
 1. Sign up at [https://cloudinary.com/](https://cloudinary.com/)
@@ -70,7 +64,7 @@ UNSPLASH_ACCESS_KEY=your-unsplash-access-key
 1. **Access**: Go to `/admin/images` in your admin panel
 2. **Select Items**: Choose menu items that need images
 3. **Process**: Click "Process Images" to automatically:
-   - Search Unsplash for relevant food images
+   - Search Pexels/Pixabay for relevant food images
    - Download and optimize
    - Upload to Cloudinary
    - Generate multiple sizes
@@ -149,7 +143,7 @@ The system automatically maps menu categories to optimized search queries:
 ## 💡 **Best Practices**
 
 ### **1. Rate Limiting**
-- Unsplash: 50 requests per hour (free tier)
+- Pexels/Pixabay: respect provider limits
 - Process in batches of 5 items
 - Add 1-second delays between batches
 

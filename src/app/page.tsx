@@ -539,24 +539,24 @@ export default function HomePage() {
               </div>
 
             {/* AI Features Quick Access */}
-            <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 mt-4 sm:mt-6 items-start">
               <button
                 onClick={() => handleAIFeatureClick('voice')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-3 sm:px-4 rounded-lg transition-colors text-sm"
+                className="w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg transition-colors text-sm"
               >
                 <Mic className="h-4 w-4" />
                 Voice Order
               </button>
               <button
                 onClick={() => handleAIFeatureClick('smart')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 sm:px-4 rounded-lg transition-colors text-sm"
+                className="w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg transition-colors text-sm"
               >
                 <Brain className="h-4 w-4" />
                 Smart Pick
               </button>
               <button
                 onClick={() => handleAIFeatureClick('health')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-3 sm:px-4 rounded-lg transition-colors text-sm"
+                className="w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg transition-colors text-sm"
               >
                 <Heart className="h-4 w-4" />
                 Healthy Options
@@ -638,17 +638,17 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {/* Voice Order */}
               <div 
-                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer min-w-0 overflow-hidden"
                 onClick={() => handleAIFeatureClick('voice')}
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-900 rounded-full mb-3 sm:mb-4">
                   <Mic className="h-6 w-6 sm:h-8 sm:w-8 text-red-400" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Voice Order</h3>
-                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">Order food naturally with your voice. Just speak and we'll understand your preferences.</p>
+                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base break-words">Order food naturally with your voice. Just speak and we'll understand your preferences.</p>
                 <div className="flex items-center text-xs sm:text-sm text-gray-400">
                   <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                   AI-Powered
@@ -657,14 +657,14 @@ export default function HomePage() {
 
               {/* Smart Pick */}
               <div 
-                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer min-w-0 overflow-hidden"
                 onClick={() => handleAIFeatureClick('smart')}
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-900 rounded-full mb-3 sm:mb-4">
                   <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Smart Pick</h3>
-                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">Get personalized recommendations based on your taste, weather, and mood.</p>
+                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base break-words">Get personalized recommendations based on your taste, weather, and mood.</p>
                 <div className="flex items-center text-xs sm:text-sm text-gray-400">
                   <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                   Personalized
@@ -673,14 +673,14 @@ export default function HomePage() {
 
               {/* Healthy Options */}
               <div 
-                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer min-w-0 overflow-hidden"
                 onClick={() => handleAIFeatureClick('health')}
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-900 rounded-full mb-3 sm:mb-4">
                   <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Healthy Options</h3>
-                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">Discover nutritious meals that match your dietary preferences and health goals.</p>
+                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base break-words">Discover nutritious meals that match your dietary preferences and health goals.</p>
                 <div className="flex items-center text-xs sm:text-sm text-gray-400">
                   <Leaf className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                   Health-Focused
@@ -808,7 +808,7 @@ export default function HomePage() {
 
           <div className="text-center mt-8 sm:mt-12">
             <Link 
-              href="/restaurant" 
+              href="/restaurants" 
               className="inline-flex sm:inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-yellow-400 text-[#232323] px-6 py-4 sm:px-8 rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-lg text-base"
             >
               View All Restaurants

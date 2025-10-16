@@ -7,6 +7,11 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '3003',
@@ -37,6 +42,7 @@ const nextConfig = {
         hostname: 'api.qrserver.com',
         pathname: '/v1/create-qr-code/**',
       },
+
     ],
     // Enable image optimization
     minimumCacheTTL: 60,

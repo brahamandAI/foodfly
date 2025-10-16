@@ -162,7 +162,7 @@ export default function OrderSuccessPage() {
           _id: foundOrder._id,
           orderNumber: foundOrder.orderNumber,
           restaurant: {
-            name: foundOrder.restaurant?.name || 'FoodFly Kitchen',
+            name: foundOrder.restaurant?.name || 'Restaurant',
             phone: foundOrder.restaurant?.phone || '+91 9876543210',
             address: {
               street: 'Main Street',

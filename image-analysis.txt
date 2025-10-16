@@ -1,0 +1,96 @@
+📋 Cafe After Hours Menu Image Analysis
+
+Total items found: 129
+
+🚫 ITEMS WITH PLACEHOLDER IMAGES (Need specific dish images):
+Count: 3
+   - Grilled Fish Skewers
+   - Beer Batter Fish Fingers
+   - Keema Bao
+
+⚠️  ITEMS WITH GENERIC CATEGORY IMAGES (Could use better dish-specific images):
+Count: 29
+   - Chicken 65 -> /images/categories/CHICKEN.jpg
+   - Schezwan Mushroom Sourdough Toast -> /images/categories/SANDWHICH.jpg
+   - Avocado Sourdough Toast -> /images/categories/SANDWHICH.jpg
+   - Smoke Salmon Nicoise Toast -> /images/categories/SANDWHICH.jpg
+   - Mexican Vegetable Quesadillas -> /images/categories/European.jpg
+   - Creamy Exotic Veg Vol-Au-Vent -> /images/categories/European.jpg
+   - Peri Peri Onion Rings -> /images/categories/European.jpg
+   - Chicken Wings (BBQ/Buffalo) -> /images/categories/CHICKEN.jpg
+   - Chicken Sausage & Ham Vol-Au-Vent -> /images/categories/European.jpg
+   - Kick in Spicy Chicken Tacos with Roasted Tomato Salsa -> /images/categories/European.jpg
+   - Classic Fish N Chips -> /images/categories/European.jpg
+   - Butter Garlic Tiger Prawns -> /images/categories/European.jpg
+   - Smoked Chicken Quesadillas -> /images/categories/European.jpg
+   - Tuscan Vegetable Melt Focaccia -> /images/categories/SANDWHICH.jpg
+   - Texas Peri Peri Chicken Focaccia -> /images/categories/SANDWHICH.jpg
+   - California Lamb Burger -> /images/categories/SANDWHICH.jpg
+   - Quattro Formaggio -> /images/categories/pizza-2.jpeg
+   - All The Meats -> /images/categories/pizza-2.jpeg
+   - Tex-Mex Peri Peri Chicken -> /images/categories/pizza-2.jpeg
+   - Spaghetti Aglio E Olio -> /images/categories/PASTA.jpg
+   - Veg Lasagna -> /images/categories/PASTA.jpg
+   - Chicken Lasagna -> /images/categories/PASTA.jpg
+   - Naan (Plain/Butter/Garlic) -> /images/categories/north-indian.jpg
+   - Paratha (Pudina/Lachha) -> /images/categories/north-indian.jpg
+   - Missi Roti -> /images/categories/north-indian.jpg
+   - Amritsari Kulcha (Aloo/Onion/Paneer) -> /images/categories/north-indian.jpg
+   - Cheese Jalapeno Naan -> /images/categories/north-indian.jpg
+   - Chur-Chur Naan/Paratha -> /images/categories/north-indian.jpg
+   - Keema Paratha -> /images/categories/north-indian.jpg
+
+✅ ITEMS WITH SPECIFIC DISH IMAGES:
+Count: 97
+   - French Fries (Plain/Peri Peri/Cheesy) -> /images/categories/Bar Munchies/french-fries.jpg
+   - Garlic Bread (Plain/Cheese) -> /images/categories/Bar Munchies/Garlic-Bread-4.webp
+   - Potato Wedges (Plain/Peri Peri) -> /images/categories/Bar Munchies/Potato Wedges Plain.jpeg
+   - Mumbaiya Corn Bhel -> /images/categories/Bar Munchies/American Corn Chat.jpg
+   - Peanut Masala -> /images/categories/Bar Munchies/Peanut Masala.webp
+   - Peri Peri Chana Chat -> /images/categories/Bar Munchies.jpg
+   - Butter Chicken Pav -> /images/categories/Main Course/Butter Chicken.jpeg
+   - Thyme Infused Wild Mushroom Soup -> /images/categories/soups/Almond Broccoli Soup.jpeg
+   - Tomato Basil Soup (Veg/Chicken) -> /images/categories/soups/Cream of Tomato.webp
+   - Tibetan Thupka (Veg/Chicken) -> /images/categories/SOUPS.jpg
+   ... and 87 more
+
+📊 SUMMARY:
+✅ Items with specific images: 97 (75%)
+⚠️  Items with generic category images: 29 (22%)
+🚫 Items with placeholder images: 3 (2%)
+
+🎯 PRIORITY LIST - Items that definitely need specific dish images:
+   - Grilled Fish Skewers
+   - Beer Batter Fish Fingers
+   - Keema Bao
+   - Chicken 65
+   - Schezwan Mushroom Sourdough Toast
+   - Avocado Sourdough Toast
+   - Smoke Salmon Nicoise Toast
+   - Mexican Vegetable Quesadillas
+   - Creamy Exotic Veg Vol-Au-Vent
+   - Peri Peri Onion Rings
+   - Chicken Wings (BBQ/Buffalo)
+   - Chicken Sausage & Ham Vol-Au-Vent
+   - Kick in Spicy Chicken Tacos with Roasted Tomato Salsa
+   - Classic Fish N Chips
+   - Butter Garlic Tiger Prawns
+   - Smoked Chicken Quesadillas
+   - Tuscan Vegetable Melt Focaccia
+   - Texas Peri Peri Chicken Focaccia
+   - California Lamb Burger
+   - Quattro Formaggio
+   - All The Meats
+   - Tex-Mex Peri Peri Chicken
+   - Spaghetti Aglio E Olio
+   - Veg Lasagna
+   - Chicken Lasagna
+   - Naan (Plain/Butter/Garlic)
+   - Paratha (Pudina/Lachha)
+   - Missi Roti
+   - Amritsari Kulcha (Aloo/Onion/Paneer)
+   - Cheese Jalapeno Naan
+   - Chur-Chur Naan/Paratha
+   - Keema Paratha
+
+Total items needing specific images: 32

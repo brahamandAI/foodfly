@@ -291,7 +291,12 @@ export default function CheckoutPage() {
           description: item.description || '',
           price: item.price,
           quantity: item.quantity,
-          customizations: item.customizations || []
+          customizations: item.customizations || [],
+          restaurantId: item.restaurantId || cart.restaurantId,
+          restaurantName: item.restaurantName || cart.restaurantName,
+          image: item.image,
+          isVeg: item.isVeg,
+          category: item.category
         })),
         deliveryAddress: {
           name: selectedAddress.name,

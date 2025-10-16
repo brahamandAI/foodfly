@@ -42,10 +42,10 @@ export default function RestaurantPage() {
           <h2 className="text-2xl font-bold mb-2">Restaurant Not Found</h2>
           <p className="text-gray-400 mb-4">The restaurant you're looking for doesn't exist.</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/')}
             className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-colors"
           >
-            Go Back
+            Go Home
           </button>
         </div>
       </div>
@@ -57,7 +57,7 @@ export default function RestaurantPage() {
       {/* Back Button */}
       <div className="absolute top-4 left-4 z-10">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/')}
           className="p-3 bg-gray-900/80 backdrop-blur-sm text-white rounded-full hover:bg-gray-800 transition-colors"
         >
           <ArrowLeft className="h-6 w-6" />

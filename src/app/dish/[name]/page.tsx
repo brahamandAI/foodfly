@@ -90,7 +90,7 @@ export default function DishPage() {
             preparationTime: '15-20 mins',
             restaurant: {
               _id: 'rest_001',
-              name: 'Pizza Palace',
+              name: 'Panache',
               cuisine: ['Italian', 'Fast Food'],
               rating: 4.5,
               deliveryTime: '25-30 mins',
@@ -274,7 +274,7 @@ export default function DishPage() {
             preparationTime: '18-25 mins',
             restaurant: {
               _id: 'rest_001',
-              name: 'Dragon Palace',
+              name: 'Cafe After Hours',
               cuisine: ['Chinese', 'Asian'],
               rating: 4.4,
               deliveryTime: '25-35 mins',

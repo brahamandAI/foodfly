@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -58,6 +58,7 @@ function SearchPageContent() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
+  const [restaurantResults, setRestaurantResults] = useState<any[]>([]);
   const [healthProfile, setHealthProfile] = useState<HealthProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -71,81 +72,79 @@ function SearchPageContent() {
   });
   const [sortBy, setSortBy] = useState<'relevance' | 'price' | 'rating' | 'health'>('relevance');
 
-  // Mock menu data
-  const mockMenuData: MenuItem[] = [
-    {
-      _id: 'item_001',
-      name: 'Margherita Pizza',
-      description: 'Classic pizza with fresh tomatoes, mozzarella cheese, and basil',
-      price: 299,
-      image: '/images/categories/pizza-2.jpeg',
-      category: 'pizza',
-      isVeg: true,
-      calories: 320,
-      protein: 14,
-      carbs: 42,
-      fat: 12,
-      fiber: 3,
-      tags: ['classic', 'cheesy', 'italian'],
-      dietaryFlags: ['vegetarian'],
-      allergens: ['gluten', 'dairy'],
-      spiceLevel: 'mild',
-      preparationTime: 15,
-      rating: 4.5,
-      nutritionScore: 72,
-      restaurantId: 'rest_001',
-      restaurantName: 'Cafe After Hours'
-    },
-    {
-      _id: 'item_002',
-      name: 'Quinoa Buddha Bowl',
-      description: 'Nutritious quinoa with roasted vegetables, chickpeas, and tahini dressing',
-      price: 349,
-      image: '/images/categories/North-indian.jpg',
-      category: 'healthy',
-      isVeg: true,
-      calories: 420,
-      protein: 18,
-      carbs: 52,
-      fat: 14,
-      fiber: 12,
-      tags: ['superfood', 'high-fiber', 'protein-rich'],
-      dietaryFlags: ['vegan', 'gluten_free', 'high_protein'],
-      allergens: ['sesame'],
-      spiceLevel: 'mild',
-      preparationTime: 12,
-      rating: 4.8,
-      nutritionScore: 95,
-      restaurantId: 'rest_002',
-      restaurantName: 'Healthy Bites'
-    },
-    {
-      _id: 'item_003',
-      name: 'Butter Chicken',
-      description: 'Creamy tomato-based curry with tender chicken pieces',
-      price: 349,
-      image: '/images/categories/chicken.jpg',
-      category: 'indian',
-      isVeg: false,
-      calories: 380,
-      protein: 24,
-      carbs: 18,
-      fat: 22,
-      fiber: 3,
-      tags: ['creamy', 'spicy', 'traditional'],
-      dietaryFlags: ['high_protein'],
-      allergens: ['dairy'],
-      spiceLevel: 'medium',
-      preparationTime: 25,
-      rating: 4.6,
-      nutritionScore: 65,
-      restaurantId: 'rest_004',
-      restaurantName: 'Spice Route'
-    }
-  ];
+  // Restaurant data mapping
+  const restaurantNames = {
+    '1': 'Panache',
+    '2': 'Cafe After Hours', 
+    '3': 'Symposium'
+  };
 
+  // Load real menu data from all restaurants
   useEffect(() => {
-    setMenuItems(mockMenuData);
+    const loadAllMenuData = async () => {
+      try {
+        setIsLoading(true);
+        const allMenuItems: MenuItem[] = [];
+
+        // Fetch menu data from all three restaurants
+        for (const [restaurantId, restaurantName] of Object.entries(restaurantNames)) {
+          try {
+            // Try to get synced menu data first
+            const response = await fetch(`/api/restaurants/${restaurantId}/menu-sync`);
+            
+            if (response.ok) {
+              const syncedData = await response.json();
+              
+              // Process each category and its items
+              if (syncedData.categories) {
+                syncedData.categories.forEach((category: any) => {
+                  category.items.forEach((item: any) => {
+                    allMenuItems.push({
+                      _id: item._id,
+                      name: item.name,
+                      description: item.description || '',
+                      price: item.price,
+                      image: item.image || '/images/placeholder-food.jpg',
+                      category: category.name.toLowerCase().replace(/\s+/g, '_'),
+                      isVeg: item.isVeg || false,
+                      calories: 300, // Default values for now
+                      protein: 15,
+                      carbs: 30,
+                      fat: 10,
+                      fiber: 5,
+                      tags: [category.name.toLowerCase(), item.isVeg ? 'vegetarian' : 'non-vegetarian'],
+                      dietaryFlags: item.isVeg ? ['vegetarian'] : [],
+                      allergens: [],
+                      spiceLevel: 'medium' as const,
+                      preparationTime: parseInt(item.preparationTime?.replace(/[^0-9]/g, '') || '20'),
+                      rating: item.rating || 4.0,
+                      nutritionScore: item.isVeg ? 75 : 65,
+                      restaurantId: restaurantId,
+                      restaurantName: restaurantName
+                    });
+                  });
+                });
+              }
+            } else {
+              console.warn(`Failed to load menu for restaurant ${restaurantId}`);
+            }
+          } catch (error) {
+            console.error(`Error loading menu for restaurant ${restaurantId}:`, error);
+          }
+        }
+
+        console.log(`Loaded ${allMenuItems.length} menu items from all restaurants`);
+        setMenuItems(allMenuItems);
+      } catch (error) {
+        console.error('Error loading all menu data:', error);
+        // Fallback to empty array
+        setMenuItems([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAllMenuData();
   }, []);
 
   useEffect(() => {
@@ -157,9 +156,25 @@ function SearchPageContent() {
     
     setTimeout(() => {
       let results = [...menuItems];
+      let restaurantMatches: any[] = [];
 
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
+        
+        // Search for restaurants that match the query
+        Object.entries(restaurantNames).forEach(([id, name]) => {
+          if (name.toLowerCase().includes(query)) {
+            restaurantMatches.push({
+              id,
+              name,
+              image: `/images/restaurants/${name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+              description: `Explore ${name}'s delicious menu`,
+              itemCount: menuItems.filter(item => item.restaurantId === id).length
+            });
+          }
+        });
+
+        // Filter menu items
         results = results.filter(item =>
           item.name.toLowerCase().includes(query) ||
           item.description.toLowerCase().includes(query) ||
@@ -171,6 +186,7 @@ function SearchPageContent() {
 
       results = applyFilters(results);
       setFilteredItems(results);
+      setRestaurantResults(restaurantMatches);
       setIsLoading(false);
     }, 300);
   };
@@ -266,7 +282,8 @@ function SearchPageContent() {
 
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">
-              {filteredItems.length} results
+              {restaurantResults.length > 0 && `${restaurantResults.length} restaurants, `}
+              {filteredItems.length} dishes
               {searchQuery && ' for "' + searchQuery + '"'}
             </span>
           </div>
@@ -333,7 +350,143 @@ function SearchPageContent() {
               </div>
             ))}
           </div>
-        ) : filteredItems.length === 0 ? (
+        ) : (
+          <div className="space-y-8">
+            {/* Restaurant Results */}
+            {restaurantResults.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Restaurants</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {restaurantResults.map((restaurant) => (
+                    <Link
+                      key={restaurant.id}
+                      href={`/restaurant/${restaurant.id}`}
+                      className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200 hover:scale-105"
+                    >
+                      <div className="relative h-48">
+                        <Image
+                          src={restaurant.image}
+                          alt={restaurant.name}
+                          fill
+                          className="object-cover rounded-t-lg"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/placeholder-restaurant.jpg';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-t-lg"></div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <h3 className="text-white font-bold text-lg mb-1">{restaurant.name}</h3>
+                          <p className="text-white/90 text-sm">{restaurant.description}</p>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 text-sm">{restaurant.itemCount} dishes available</span>
+                          <span className="text-red-600 font-medium text-sm">View Menu →</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Dish Results */}
+            {filteredItems.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Dishes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredItems.map((item) => {
+                    const healthBadge = getHealthBadge(item);
+                    return (
+                      <div key={item._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+                        <div className="relative h-48">
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover rounded-t-lg"
+                          />
+                          <div className="absolute top-3 left-3 flex space-x-2">
+                            {item.isVeg && (
+                              <span className="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                            )}
+                            <span className={'text-xs px-2 py-1 rounded-full font-medium ' + healthBadge.color}>
+                              {healthBadge.text}
+                            </span>
+                          </div>
+                          <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                            {item.preparationTime}m
+                          </div>
+                        </div>
+
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <Link 
+                              href={'/dish/' + encodeURIComponent(item.name)}
+                              className="font-semibold text-gray-900 hover:text-red-600 transition-colors"
+                            >
+                              {item.name}
+                            </Link>
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                              {item.rating}
+                            </div>
+                          </div>
+
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
+
+                          {item.calories && (
+                            <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
+                              <span>{item.calories} cal</span>
+                              {item.protein && <span>{item.protein}g protein</span>}
+                              {item.fiber && <span>{item.fiber}g fiber</span>}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs text-gray-500">{item.restaurantName}</p>
+                            <Link 
+                              href={`/restaurant/${item.restaurantId}`}
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              View Menu →
+                            </Link>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {item.tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-gray-900 text-lg">₹{item.price}</span>
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="flex items-center space-x-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span>Add</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* No Results */}
+        {!isLoading && restaurantResults.length === 0 && filteredItems.length === 0 && (
           <div className="text-center py-12">
             <ChefHat className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">No dishes found</h2>
@@ -359,84 +512,6 @@ function SearchPageContent() {
             >
               Clear all filters
             </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => {
-              const healthBadge = getHealthBadge(item);
-              return (
-                <div key={item._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                  <div className="relative h-48">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover rounded-t-lg"
-                    />
-                    <div className="absolute top-3 left-3 flex space-x-2">
-                      {item.isVeg && (
-                        <span className="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
-                      )}
-                      <span className={'text-xs px-2 py-1 rounded-full font-medium ' + healthBadge.color}>
-                        {healthBadge.text}
-                      </span>
-                    </div>
-                    <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                      {item.preparationTime}m
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <Link 
-                        href={'/dish/' + encodeURIComponent(item.name)}
-                        className="font-semibold text-gray-900 hover:text-red-600 transition-colors"
-                      >
-                        {item.name}
-                      </Link>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                        {item.rating}
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
-
-                    {item.calories && (
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
-                        <span>{item.calories} cal</span>
-                        {item.protein && <span>{item.protein}g protein</span>}
-                        {item.fiber && <span>{item.fiber}g fiber</span>}
-                      </div>
-                    )}
-
-                    <p className="text-xs text-gray-500 mb-3">{item.restaurantName}</p>
-
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {item.tags.slice(0, 2).map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900 text-lg">₹{item.price}</span>
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="flex items-center space-x-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         )}
       </div>

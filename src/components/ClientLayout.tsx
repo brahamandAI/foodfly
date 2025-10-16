@@ -19,10 +19,17 @@ export default function ClientLayout({
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     // Initialize test data for development/testing
     initializeTestData();
 
@@ -68,7 +75,7 @@ export default function ClientLayout({
       window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
       clearInterval(authCheckInterval);
     };
-  }, [showAuthPopup]);
+  }, [isMounted, showAuthPopup]);
 
   const handleCloseAuthPopup = () => {
     setShowAuthPopup(false);
@@ -101,8 +108,8 @@ export default function ClientLayout({
     }
   }, []);
 
-  // Show loading spinner for protected routes while checking auth
-  if (isLoading && PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
+  // Show loading spinner while mounting or checking auth for protected routes
+  if (!isMounted || (isLoading && PROTECTED_ROUTES.some(route => pathname.startsWith(route)))) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>

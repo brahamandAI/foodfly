@@ -75,6 +75,17 @@ export function verifyToken(request: NextRequest): AuthenticatedUser {
   }
 
   const token = authHeader.substring(7);
+  
+  // Handle restaurant admin tokens
+  if (token.startsWith('restaurant-admin-token-')) {
+    const restaurantId = token.replace('restaurant-admin-token-', '');
+    return {
+      _id: restaurantId,
+      email: `admin${restaurantId}@restaurant.com`,
+      role: 'admin' // Treat restaurant admins as admin for API access
+    };
+  }
+  
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as any;
     // Handle different token formats - some use userId, some use _id

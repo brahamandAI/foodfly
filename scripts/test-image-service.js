@@ -53,11 +53,12 @@ console.log('🔍 Environment Check:');
 console.log(`   CLOUDINARY_CLOUD_NAME: ${process.env.CLOUDINARY_CLOUD_NAME ? '✅ Set' : '❌ Not set'}`);
 console.log(`   CLOUDINARY_API_KEY: ${process.env.CLOUDINARY_API_KEY ? '✅ Set' : '❌ Not set'}`);
 console.log(`   CLOUDINARY_API_SECRET: ${process.env.CLOUDINARY_API_SECRET ? '✅ Set' : '❌ Not set'}`);
-console.log(`   UNSPLASH_ACCESS_KEY: ${process.env.UNSPLASH_ACCESS_KEY ? '✅ Set' : '❌ Not set'}`);
+console.log(`   PEXELS_API_KEY: ${process.env.PEXELS_API_KEY ? '✅ Set' : '❌ Not set'}`);
+console.log(`   PIXABAY_API_KEY: ${process.env.PIXABAY_API_KEY ? '✅ Set' : '❌ Not set'}`);
 console.log();
 
-if (!process.env.UNSPLASH_ACCESS_KEY) {
-  console.error('❌ UNSPLASH_ACCESS_KEY is required for testing');
+if (!process.env.PEXELS_API_KEY && !process.env.PIXABAY_API_KEY) {
+  console.error('❌ Either PEXELS_API_KEY or PIXABAY_API_KEY is required for testing');
   process.exit(1);
 }
 

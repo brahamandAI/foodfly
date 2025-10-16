@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
-import { verifyToken } from '@/lib/backend/middleware/auth';
 import Order from '@/lib/backend/models/order.model';
-import User from '@/lib/backend/models/user.model';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -11,139 +9,109 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
     
-    // Verify admin authentication
-    const user = verifyToken(request);
+    console.log('🏪 Super Admin fetching all orders from all restaurants');
     
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+    const restaurantId = searchParams.get('restaurantId');
+    const limit = parseInt(searchParams.get('limit') || '100');
+    
+    // Build query filter
+    let queryFilter: any = {};
+    
+    // Filter by specific status if provided
+    if (status && status !== 'all') {
+      queryFilter.status = status;
     }
-
-    // Get all orders from database with user details
-    const orders = await Order.find({})
-      .populate('customerId', 'name email phone')
-      .sort({ createdAt: -1 }); // Newest first
-
-    return NextResponse.json({
-      orders: orders.map(order => {
-        // Handle customer data properly
-        const customer = order.customerId;
-        const customerEmail = customer && typeof customer === 'object' ? customer.email : '';
-        const customerName = customer && typeof customer === 'object' ? customer.name : '';
-        const customerPhone = customer && typeof customer === 'object' ? customer.phone : '';
-
-        // Handle order items properly
-        const items = order.items.map((item: any) => ({
-          menuItemId: item.menuItemId || item._id,
-          name: item.name,
-          description: item.description || '',
-          price: item.price,
-          quantity: item.quantity,
-          customizations: item.customizations || [],
-          image: item.image || '/images/placeholder.svg'
-        }));
-
-        return {
-          _id: order._id,
-          orderNumber: order.orderNumber,
-          customerId: customer && typeof customer === 'object' ? customer._id : order.customerId,
-          customerEmail: customerEmail,
-          customerName: customerName,
-          customerPhone: customerPhone,
-          restaurant: {
-            _id: order.restaurantId || 'unknown',
-            name: order.restaurantName || 'Unknown Restaurant'
-          },
-          totalAmount: order.totalAmount,
-          status: order.status,
-          paymentMethod: order.paymentMethod,
-          paymentStatus: order.paymentStatus,
-          createdAt: order.createdAt,
-          placedAt: order.placedAt || order.createdAt,
-          estimatedDeliveryTime: order.estimatedDeliveryTime,
-          deliveryAddress: order.deliveryAddress,
-          items: items,
-          specialInstructions: order.specialInstructions
+    
+    // Filter by specific restaurant if provided
+    if (restaurantId && restaurantId !== 'all') {
+      queryFilter.restaurantId = restaurantId;
+    }
+    
+    // Get all orders across all restaurants
+    const orders = await Order.find(queryFilter)
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    
+    console.log(`📋 Found ${orders.length} total orders across all restaurants`);
+    
+    // Group orders by restaurant for analytics
+    const ordersByRestaurant = orders.reduce((acc, order) => {
+      const restaurantId = order.restaurantId;
+      if (!acc[restaurantId]) {
+        acc[restaurantId] = {
+          restaurantName: order.restaurantName,
+          orders: [],
+          totalOrders: 0,
+          totalRevenue: 0
         };
-      }),
-      message: 'Orders retrieved successfully'
+      }
+      acc[restaurantId].orders.push(order);
+      acc[restaurantId].totalOrders += 1;
+      acc[restaurantId].totalRevenue += order.totalAmount;
+      return acc;
+    }, {});
+    
+    // Calculate summary statistics
+    const summary = {
+      totalOrders: orders.length,
+      totalRevenue: orders.reduce((sum, order) => sum + order.totalAmount, 0),
+      restaurantCount: Object.keys(ordersByRestaurant).length,
+      statusBreakdown: orders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {}),
+      recentOrders: orders.slice(0, 10) // Last 10 orders
+    };
+    
+    // Map orders for super admin view
+    const mappedOrders = orders.map(order => ({
+      _id: order._id,
+      orderNumber: order.orderNumber,
+      customerId: order.customerId,
+      customerEmail: order.customerEmail,
+      customer: {
+        name: order.deliveryAddress?.name || 'Customer',
+        phone: order.deliveryAddress?.phone || '',
+        email: order.customerEmail
+      },
+      restaurant: {
+        _id: order.restaurantId,
+        name: order.restaurantName
+      },
+      items: order.items.map(item => ({
+        ...item,
+        itemTotal: item.price * item.quantity
+      })),
+      subtotal: order.subtotal,
+      deliveryFee: order.deliveryFee,
+      taxes: order.taxes,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      deliveryAddress: order.deliveryAddress,
+      estimatedDeliveryTime: order.estimatedDeliveryTime,
+      specialInstructions: order.specialInstructions,
+      placedAt: order.placedAt,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt
+    }));
+    
+    return NextResponse.json({
+      orders: mappedOrders,
+      summary,
+      ordersByRestaurant,
+      message: 'All orders retrieved successfully'
     });
 
   } catch (error: any) {
-    console.error('Get admin orders error:', error);
-    if (error.message === 'No token provided' || error.message === 'Invalid token') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    console.error('Get all orders error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
-
-export async function PUT(request: NextRequest) {
-  try {
-    await connectDB();
-    
-    // Verify admin authentication
-    const user = verifyToken(request);
-    
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
-
-    const { orderId, status, notes } = await request.json();
-
-    if (!orderId || !status) {
-      return NextResponse.json(
-        { error: 'Order ID and status are required' },
-        { status: 400 }
-      );
-    }
-
-    // Update order status
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { 
-        status,
-        ...(notes && { adminNotes: notes }),
-        ...(status === 'delivered' && { deliveredAt: new Date() }),
-        ...(status === 'cancelled' && { cancelledAt: new Date() })
-      },
-      { new: true }
-    );
-
-    if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: 'Order status updated successfully',
-      order
-    });
-
-  } catch (error: any) {
-    console.error('Update order status error:', error);
-    if (error.message === 'No token provided' || error.message === 'Invalid token') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-} 

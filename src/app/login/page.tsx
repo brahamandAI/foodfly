@@ -228,12 +228,8 @@ function LoginPageContent() {
   };
 
   const handleClose = () => {
-    // Check if we came from a specific page
-    if (document.referrer && document.referrer.includes(window.location.origin)) {
-      router.back();
-    } else {
-      router.push('/');
-    }
+    // Always navigate to home to avoid blank screen issues
+    router.push('/');
   };
 
   const handleGoogleError = (error: string) => {
@@ -526,6 +522,18 @@ function LoginPageContent() {
                   >
                     <User className="h-5 w-5" />
                     Continue as Guest
+                  </button>
+
+                  {/* Restaurant Admin Button */}
+                  <button
+                    type="button"
+                    onClick={() => router.push('/restaurant-admin/login')}
+                    className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white py-3 rounded-xl font-bold shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-orange-500/30"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Restaurant Admin Login
                   </button>
                 </div>
               </>
