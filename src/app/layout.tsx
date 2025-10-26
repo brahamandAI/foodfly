@@ -9,6 +9,8 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: 'swap',
+  preload: false,
+  fallback: ['sans-serif'],
 });
 
 const poppins = Poppins({ 
@@ -16,6 +18,8 @@ const poppins = Poppins({
   weight: ['300', '400', '500', '600', '700', '800'],
   variable: "--font-poppins",
   display: 'swap',
+  preload: false,
+  fallback: ['sans-serif'],
 });
 
 export const metadata: Metadata = {

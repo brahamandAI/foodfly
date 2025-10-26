@@ -111,7 +111,12 @@ const nextConfig = {
     serverComponentsExternalPackages: ['mongoose'],
     // Fix symlink issues on Windows/OneDrive
     esmExternals: 'loose',
+    // Skip font optimization during build to avoid network issues
+    fontLoaders: [],
   },
+  
+  // Skip font optimization during build
+  optimizeFonts: false,
   
   // Headers for security
   async headers() {
