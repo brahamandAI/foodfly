@@ -294,11 +294,10 @@ const OrderSchema = new Schema<IOrder>({
   timestamps: true
 });
 
-// Indexes for better query performance
+// Indexes for better query performance (orderNumber already has unique index)
 OrderSchema.index({ customerId: 1, createdAt: -1 });
 OrderSchema.index({ restaurantId: 1, createdAt: -1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
-OrderSchema.index({ orderNumber: 1 });
 
 // Generate order number before saving
 OrderSchema.pre('save', function(next) {

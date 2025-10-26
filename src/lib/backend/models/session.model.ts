@@ -70,8 +70,7 @@ const sessionSchema = new Schema<ISession>({
   },
   expiresAt: {
     type: Date,
-    required: true,
-    index: { expireAfterSeconds: 0 }, // MongoDB TTL index
+    required: true
   },
 }, {
   timestamps: true,
@@ -80,7 +79,7 @@ const sessionSchema = new Schema<ISession>({
 // Compound indexes for efficient querying
 sessionSchema.index({ userId: 1, userType: 1, isActive: 1 });
 sessionSchema.index({ tokenHash: 1, isActive: 1 });
-sessionSchema.index({ expiresAt: 1 }); // For TTL cleanup
+sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for auto-cleanup
 
 // Static methods
 sessionSchema.statics.createSession = function(

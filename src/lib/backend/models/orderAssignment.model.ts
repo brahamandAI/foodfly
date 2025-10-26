@@ -155,8 +155,7 @@ const OrderAssignmentSchema = new Schema<IOrderAssignment>({
     type: Date
   },
   timeoutAt: {
-    type: Date,
-    index: true
+    type: Date
   },
   
   maxAssignmentAttempts: {
@@ -213,7 +212,7 @@ OrderAssignmentSchema.index({ 'customerLocation': '2dsphere' });
 // Compound indexes for efficient queries
 OrderAssignmentSchema.index({ status: 1, createdAt: -1 });
 OrderAssignmentSchema.index({ assignedTo: 1, status: 1 });
-OrderAssignmentSchema.index({ timeoutAt: 1 }, { sparse: true });
+OrderAssignmentSchema.index({ timeoutAt: 1 }, { sparse: true }); // Only sparse index, no duplicate
 
 // Virtual for calculating assignment timeout
 OrderAssignmentSchema.virtual('isTimedOut').get(function() {
@@ -310,7 +309,7 @@ OrderAssignmentSchema.statics.findTimedOutAssignments = function() {
 OrderAssignmentSchema.statics.findPendingAssignments = function() {
   return this.find({
     status: 'pending',
-    currentAttempt: { $lt: this.maxAssignmentAttempts }
+    $expr: { $lt: ['$currentAttempt', '$maxAssignmentAttempts'] }
   }).sort({ priority: -1, createdAt: 1 });
 };
 

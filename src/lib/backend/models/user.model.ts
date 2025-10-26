@@ -561,8 +561,7 @@ const UserSchema = new Schema<IUser>({
   timestamps: true
 });
 
-// Index for faster queries
-UserSchema.index({ email: 1 });
+// Index for faster queries (email already has unique index)
 UserSchema.index({ role: 1 });
 
 // Hash password before saving

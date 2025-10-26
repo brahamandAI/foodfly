@@ -133,7 +133,6 @@ const voiceSessionSchema = new Schema<IVoiceSession>({
   expiresAt: {
     type: Date,
     default: () => new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-    index: { expireAfterSeconds: 0 },
   },
 }, {
   timestamps: true,
@@ -142,7 +141,7 @@ const voiceSessionSchema = new Schema<IVoiceSession>({
 // Index for efficient querying
 voiceSessionSchema.index({ user: 1, isActive: 1 });
 voiceSessionSchema.index({ sessionId: 1, isActive: 1 });
-voiceSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+voiceSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for auto-cleanup
 
 // Instance methods
 voiceSessionSchema.methods.addMessage = function(role: 'user' | 'assistant', content: string, healthRecommendations?: any, actions?: any[]) {
