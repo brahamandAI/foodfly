@@ -4,9 +4,9 @@
   "description": "Unified FoodFly food delivery platform built with Next.js",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3003",
+    "dev": "PORT=${PORT:-3002} next dev",
     "build": "next build",
-    "start": "next start -p 3003",
+    "start": "PORT=${PORT:-3002} next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
@@ -17,7 +17,7 @@
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "netlify deploy --prod",
     "postbuild": "echo '✅ Build completed successfully'",
-    "health-check": "curl -f http://localhost:3003/api/test || exit 1",
+    "health-check": "curl -f http://localhost:${PORT:-3002}/api/test || exit 1",
     "check-oauth": "node scripts/check-google-oauth.js",
     "fix-oauth": "node scripts/fix-google-oauth.js",
     "test-oauth": "node scripts/test-google-oauth.js"
