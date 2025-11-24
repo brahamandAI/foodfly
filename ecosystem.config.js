@@ -15,7 +15,10 @@ module.exports = {
       error_file: './logs/err.log',
       out_file: './logs/out.log',
       log_file: './logs/combined.log',
-      time: true
+      time: true,
+      max_restarts: 5,
+      restart_delay: 5000,       // 5 seconds delay
+      exp_backoff_restart_delay: 200 // exponential backoff
     }
   ]
 } 
