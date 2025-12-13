@@ -1,0 +1,4 @@
+2025-12-13T14:53:24: 
+> foodfly-app@1.0.0 start
+> PORT=${PORT:-3002} next start
+

@@ -3,6 +3,13 @@
  * Handles geocoding, places search, and other map-related functionality
  */
 
+// Declare google maps types for TypeScript
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 export interface GeocodingResult {
   address: string;
   coordinates: {
@@ -76,25 +83,37 @@ class GoogleMapsService {
     await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const geocoder = new google.maps.Geocoder();
+      if (!window.google?.maps) {
+        reject(new Error('Google Maps not loaded'));
+        return;
+      }
+
+      const geocoder = new window.google.maps.Geocoder();
       
       geocoder.geocode(
         { location: { lat, lng } },
-        (results, status) => {
+        (results: any, status: any) => {
           if (status === 'OK' && results && results[0]) {
             const result = results[0];
             const addressComponents = result.address_components;
             
             const components: any = {};
             
-            addressComponents.forEach(component => {
+            addressComponents.forEach((component: any) => {
               const types = component.types;
               if (types.includes('street_number') || types.includes('route')) {
                 components.street = components.street ? 
                   `${components.street} ${component.long_name}` : 
                   component.long_name;
               }
-              if (types.includes('locality')) {
+              // Priority order for city: locality > postal_town > administrative_area_level_2
+              if (types.includes('locality') && !components.city) {
+                components.city = component.long_name;
+              }
+              if (types.includes('postal_town') && !components.city) {
+                components.city = component.long_name;
+              }
+              if (types.includes('administrative_area_level_2') && !components.city) {
                 components.city = component.long_name;
               }
               if (types.includes('administrative_area_level_1')) {
@@ -128,11 +147,16 @@ class GoogleMapsService {
     await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const geocoder = new google.maps.Geocoder();
+      if (!window.google?.maps) {
+        reject(new Error('Google Maps not loaded'));
+        return;
+      }
+
+      const geocoder = new window.google.maps.Geocoder();
       
       geocoder.geocode(
         { address },
-        (results, status) => {
+        (results: any, status: any) => {
           if (status === 'OK' && results && results[0]) {
             const result = results[0];
             const location = result.geometry.location;
@@ -140,14 +164,21 @@ class GoogleMapsService {
             
             const components: any = {};
             
-            addressComponents.forEach(component => {
+            addressComponents.forEach((component: any) => {
               const types = component.types;
               if (types.includes('street_number') || types.includes('route')) {
                 components.street = components.street ? 
                   `${components.street} ${component.long_name}` : 
                   component.long_name;
               }
-              if (types.includes('locality')) {
+              // Priority order for city: locality > postal_town > administrative_area_level_2
+              if (types.includes('locality') && !components.city) {
+                components.city = component.long_name;
+              }
+              if (types.includes('postal_town') && !components.city) {
+                components.city = component.long_name;
+              }
+              if (types.includes('administrative_area_level_2') && !components.city) {
                 components.city = component.long_name;
               }
               if (types.includes('administrative_area_level_1')) {
@@ -184,16 +215,21 @@ class GoogleMapsService {
     await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const service = new google.maps.places.PlacesService(document.createElement('div'));
+      if (!window.google?.maps?.places) {
+        reject(new Error('Google Maps Places not loaded'));
+        return;
+      }
+
+      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       
-      const request: google.maps.places.TextSearchRequest = {
+      const request: any = {
         query,
-        ...(location && { location: new google.maps.LatLng(location.lat, location.lng) })
+        ...(location && { location: new window.google.maps.LatLng(location.lat, location.lng) })
       };
 
-      service.textSearch(request, (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          const places = results.map(place => ({
+      service.textSearch(request, (results: any, status: any) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          const places = results.map((place: any) => ({
             placeId: place.place_id,
             name: place.name,
             address: place.formatted_address,
@@ -220,15 +256,20 @@ class GoogleMapsService {
     await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const service = new google.maps.places.PlacesService(document.createElement('div'));
+      if (!window.google?.maps?.places) {
+        reject(new Error('Google Maps Places not loaded'));
+        return;
+      }
+
+      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       
-      const request: google.maps.places.PlaceDetailsRequest = {
+      const request: any = {
         placeId,
         fields: ['name', 'formatted_address', 'geometry', 'rating', 'types', 'website', 'formatted_phone_number']
       };
 
-      service.getDetails(request, (place, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+      service.getDetails(request, (place: any, status: any) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
           resolve(place);
         } else {
           reject(new Error(`Place details failed: ${status}`));
@@ -244,16 +285,21 @@ class GoogleMapsService {
     await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const directionsService = new google.maps.DirectionsService();
+      if (!window.google?.maps) {
+        reject(new Error('Google Maps not loaded'));
+        return;
+      }
+
+      const directionsService = new window.google.maps.DirectionsService();
       
-      const request: google.maps.DirectionsRequest = {
-        origin: new google.maps.LatLng(origin.lat, origin.lng),
-        destination: new google.maps.LatLng(destination.lat, destination.lng),
-        travelMode: google.maps.TravelMode.DRIVING
+      const request: any = {
+        origin: new window.google.maps.LatLng(origin.lat, origin.lng),
+        destination: new window.google.maps.LatLng(destination.lat, destination.lng),
+        travelMode: window.google.maps.TravelMode.DRIVING
       };
 
-      directionsService.route(request, (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
+      directionsService.route(request, (result: any, status: any) => {
+        if (status === window.google.maps.DirectionsStatus.OK && result) {
           resolve(result);
         } else {
           reject(new Error(`Route calculation failed: ${status}`));

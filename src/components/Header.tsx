@@ -134,7 +134,7 @@ export default function Header() {
     };
   }, [isLoggedIn]);
 
-  const loadDefaultLocation = () => {
+  const loadDefaultLocation = async () => {
     try {
       // For logged-in users, get location from their saved addresses
       if (isLoggedIn) {
@@ -177,12 +177,118 @@ export default function Header() {
       if (defaultLocation) {
         setCurrentLocation(JSON.parse(defaultLocation));
       } else {
-        // Don't set any default location - keep it blank
-        setCurrentLocation(null);
+        // Auto-detect location using GPS if no saved location exists
+        await autoDetectLocation();
       }
     } catch (error) {
       console.error('Error loading location:', error);
       setCurrentLocation(null);
+    }
+  };
+
+  const autoDetectLocation = async () => {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      console.log('Geolocation is not supported by this browser');
+      setCurrentLocation(null);
+      return;
+    }
+
+    // Check if user has already denied permission
+    try {
+      const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+      if (permissionStatus.state === 'denied') {
+        console.log('Location permission denied');
+        setCurrentLocation(null);
+        return;
+      }
+    } catch (error) {
+      // Permissions API might not be supported, continue anyway
+      console.log('Permissions API not supported, attempting geolocation anyway');
+    }
+
+    // Try to get current position
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Reverse geocode to get city name
+          const address = await reverseGeocodeLocation(latitude, longitude);
+          
+          const detectedLocation: Location = {
+            label: 'Other',
+            name: 'Current Location',
+            city: address.city || 'Your Location',
+            state: address.state || '',
+            pincode: address.pincode || '',
+            isDefault: false,
+            coordinates: {
+              lat: latitude,
+              lng: longitude
+            }
+          };
+          
+          setCurrentLocation(detectedLocation);
+          localStorage.setItem('defaultLocation', JSON.stringify(detectedLocation));
+          console.log('Location auto-detected:', address.city || 'Your Location');
+        } catch (error) {
+          console.error('Error reverse geocoding:', error);
+          // Set a basic location with coordinates only
+          const basicLocation: Location = {
+            label: 'Other',
+            name: 'Current Location',
+            city: 'Your Location',
+            isDefault: false,
+            coordinates: {
+              lat: latitude,
+              lng: longitude
+            }
+          };
+          setCurrentLocation(basicLocation);
+          localStorage.setItem('defaultLocation', JSON.stringify(basicLocation));
+        }
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        // Don't show error toast for auto-detection failure
+        setCurrentLocation(null);
+      },
+      {
+        enableHighAccuracy: false, // Use less accurate but faster positioning
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes cache
+      }
+    );
+  };
+
+  const reverseGeocodeLocation = async (lat: number, lng: number): Promise<Partial<Location>> => {
+    try {
+      // Try Google Maps geocoding first
+      const { googleMapsService } = await import('@/lib/googleMapsService');
+      
+      if (googleMapsService.isConfigured()) {
+        const result = await googleMapsService.reverseGeocode(lat, lng);
+        return {
+          city: result.components.city || '',
+          state: result.components.state || '',
+          pincode: result.components.pincode || ''
+        };
+      }
+      
+      // Return basic info if Google Maps not configured
+      return {
+        city: 'Your Location',
+        state: '',
+        pincode: ''
+      };
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error);
+      return {
+        city: 'Your Location',
+        state: '',
+        pincode: ''
+      };
     }
   };
 
