@@ -2,7 +2,10 @@
 /node_modules
 /.pnp
 .pnp.js
-
+/logs
+logs/
+/*.log
+logs/*
 backup2/
 
 # Next.js
