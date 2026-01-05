@@ -82,6 +82,7 @@ export default function CheckoutPage() {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({
     label: 'Home',
     name: '',
@@ -296,6 +297,23 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleEditAddress = (address: Address) => {
+    setEditingAddress(address);
+    setNewAddress({
+      label: address.label,
+      name: address.name,
+      phone: address.phone,
+      street: address.street,
+      landmark: address.landmark || '',
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+      isDefault: address.isDefault,
+      coordinates: address.coordinates
+    });
+    setShowAddressForm(true);
+  };
+
   const saveAddress = async () => {
     if (!newAddress.name || !newAddress.phone || !newAddress.street || !newAddress.city || !newAddress.state || !newAddress.pincode) {
       toast.error('Please fill in all required fields');
@@ -303,14 +321,35 @@ export default function CheckoutPage() {
     }
 
     try {
-      // Use database address API exclusively
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please login to save addresses');
+        return;
+      }
+
+      // Use database address API - PUT for edit, POST for new
       const response = await fetch('/api/users/addresses', {
-        method: 'POST',
+        method: editingAddress ? 'PUT' : 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newAddress),
+        body: JSON.stringify(editingAddress ? {
+          addressId: editingAddress._id,
+          label: newAddress.label,
+          name: newAddress.name,
+          phone: newAddress.phone,
+          street: newAddress.street,
+          landmark: newAddress.landmark || '',
+          city: newAddress.city,
+          state: newAddress.state,
+          pincode: newAddress.pincode,
+          coordinates: newAddress.coordinates ? {
+            latitude: newAddress.coordinates.latitude || newAddress.coordinates.lat,
+            longitude: newAddress.coordinates.longitude || newAddress.coordinates.lng
+          } : undefined,
+          isDefault: newAddress.isDefault || false
+        } : newAddress),
       });
 
       if (!response.ok) {
@@ -320,15 +359,19 @@ export default function CheckoutPage() {
 
       const data = await response.json();
       
-      // Update addresses list
+      // Update addresses list from database (ensures persistence)
       await loadAddresses();
       
-      // Select the newly added address
+      // Select the newly added/updated address
       if (data.address) {
         setSelectedAddress(data.address);
       }
 
+      // Dispatch event to notify other components
+      window.dispatchEvent(new Event('addressesUpdated'));
+      
       setShowAddressForm(false);
+      setEditingAddress(null);
       setNewAddress({
         label: 'Home',
         name: '',
@@ -341,7 +384,7 @@ export default function CheckoutPage() {
         isDefault: false
       });
       
-      toast.success('Address saved successfully!');
+      toast.success(editingAddress ? 'Address updated successfully!' : 'Address saved successfully!');
     } catch (error) {
       console.error('Error saving address:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save address';
@@ -676,9 +719,19 @@ export default function CheckoutPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleEditAddress(address);
+                              }}
+                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors touch-target"
+                              title="Edit address"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 deleteAddress(address._id);
                               }}
-                              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors touch-target"
                               title="Delete address"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -695,16 +748,30 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Improved Add Address Form */}
+                {/* Improved Add/Edit Address Form */}
                 {showAddressForm && (
                   <div className="mt-5 p-6 rounded-lg bg-gray-800">
                     <div className="flex items-center justify-between mb-5">
                       <h3 className="text-lg font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
-                        Add New Address
+                        {editingAddress ? 'Edit Address' : 'Add New Address'}
                       </h3>
                       <button
-                        onClick={() => setShowAddressForm(false)}
-                        className="text-white hover:text-gray-300"
+                        onClick={() => {
+                          setShowAddressForm(false);
+                          setEditingAddress(null);
+                          setNewAddress({
+                            label: 'Home',
+                            name: '',
+                            phone: '',
+                            street: '',
+                            landmark: '',
+                            city: '',
+                            state: '',
+                            pincode: '',
+                            isDefault: false
+                          });
+                        }}
+                        className="text-white hover:text-gray-300 touch-target"
                       >
                         <X className="h-5 w-5" />
                       </button>
@@ -833,14 +900,28 @@ export default function CheckoutPage() {
                     <div className="mt-5 flex space-x-3">
                       <button
                         onClick={saveAddress}
-                        className="bg-yellow-400 text-[#232323] px-6 py-2.5 rounded-md hover:bg-yellow-300 font-bold text-base shadow-sm hover:shadow-md transition-all duration-200"
+                        className="bg-yellow-400 text-[#232323] px-6 py-2.5 rounded-md hover:bg-yellow-300 font-bold text-base shadow-sm hover:shadow-md transition-all duration-200 touch-target"
                         style={{ fontFamily: "'Satoshi', sans-serif" }}
                       >
-                        Save Address
+                        {editingAddress ? 'Update Address' : 'Save Address'}
                       </button>
                       <button
-                        onClick={() => setShowAddressForm(false)}
-                        className="bg-gray-700 text-white px-6 py-2.5 rounded-md hover:bg-gray-600 font-semibold text-base transition-colors duration-200"
+                        onClick={() => {
+                          setShowAddressForm(false);
+                          setEditingAddress(null);
+                          setNewAddress({
+                            label: 'Home',
+                            name: '',
+                            phone: '',
+                            street: '',
+                            landmark: '',
+                            city: '',
+                            state: '',
+                            pincode: '',
+                            isDefault: false
+                          });
+                        }}
+                        className="bg-gray-700 text-white px-6 py-2.5 rounded-md hover:bg-gray-600 font-semibold text-base transition-colors duration-200 touch-target"
                         style={{ fontFamily: "'Satoshi', sans-serif" }}
                       >
                         Cancel

@@ -1,0 +1,10 @@
+2026-01-05T14:55:30: 
+2026-01-05T14:55:30: > foodfly-app@1.0.0 start /home/ubuntu/htdocs/foodfly
+2026-01-05T14:55:30: > cross-env PORT=3002 next start
+2026-01-05T14:55:30: 
+2026-01-05T14:55:33:   ▲ Next.js 14.2.35
+2026-01-05T14:55:33:   - Local:        http://localhost:3002
+2026-01-05T14:55:33: 
+2026-01-05T14:55:33:  ✓ Starting...
+2026-01-05T14:55:34:  ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2026-01-05T14:55:35:  ✓ Ready in 2.3s

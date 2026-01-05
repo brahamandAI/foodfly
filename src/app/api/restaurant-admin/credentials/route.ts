@@ -2,16 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Simple endpoint to display restaurant admin credentials
+/**
+ * WARNING: This endpoint contains development/test credentials.
+ * Only accessible in development mode (NODE_ENV !== 'production').
+ * 
+ * For production, use proper authentication and user management.
+ * These are test credentials only - change passwords in production!
+ */
 export async function GET(request: NextRequest) {
-  // Only allow in development
-  if (process.env.NODE_ENV === 'production') {
+  // Only allow in development - double check environment
+  if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod') {
     return NextResponse.json(
       { error: 'Not available in production' },
       { status: 403 }
     );
   }
 
+  // Additional safety: Only allow from localhost in development
+  const host = request.headers.get('host') || '';
+  if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+    return NextResponse.json(
+      { error: 'Only accessible from localhost in development' },
+      { status: 403 }
+    );
+  }
+
+  // Development/Test credentials only
   const credentials = [
     {
       restaurant: 'Symposium Restaurant',

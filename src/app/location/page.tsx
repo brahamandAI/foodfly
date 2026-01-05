@@ -41,62 +41,76 @@ export default function LocationManagementPage() {
     try {
       setIsLoading(true);
       
-      // Load from user-specific storage
-      const { userStorage } = await import('@/lib/api');
-      const userAddresses = userStorage.getUserAddresses();
-      
-      // Convert addresses to location format
-      const convertedLocations: Location[] = userAddresses.map(address => ({
-        _id: address._id || Date.now().toString(),
-        label: address.label,
-        coordinates: address.coordinates || { latitude: 19.0760, longitude: 72.8777 },
-        address: {
-          street: address.street,
-          area: '', // LocationSelector doesn't use area field
-          city: address.city,
-          state: address.state,
-          pincode: address.pincode,
-          landmark: address.landmark
-        },
-        isDefault: address.isDefault,
-        createdAt: new Date().toISOString()
-      }));
-      
-      setLocations(convertedLocations);
-      
-      // If no addresses exist, create a default one
-      if (convertedLocations.length === 0) {
-        const defaultLocation: Location = {
-          _id: 'default_1',
-          label: 'Home',
-          coordinates: { latitude: 19.0760, longitude: 72.8777 },
-          address: {
-            street: '123 Sample Street',
-            area: 'Sample Area',
-            city: 'Mumbai',
-            state: 'Maharashtra',
-            pincode: '400050',
-            landmark: 'Near Station'
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to view addresses');
+        setIsLoading(false);
+        return;
+      }
+
+      // Load from database API (MongoDB) for proper persistence
+      try {
+        const response = await fetch('/api/users/addresses', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
-          isDefault: true,
-          createdAt: new Date().toISOString()
-        };
-        
-        // Add to user storage
-        userStorage.addUserAddress({
-          label: 'Home',
-          name: 'Default Address',
-          phone: '9999999999',
-          street: '123 Sample Street',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          pincode: '400050',
-          landmark: 'Near Station',
-          isDefault: true,
-          coordinates: { lat: 19.0760, lng: 72.8777 }
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          const userAddresses = data.addresses || [];
+          
+          // Convert addresses to location format
+          const convertedLocations: Location[] = userAddresses.map((address: any) => ({
+            _id: address._id || Date.now().toString(),
+            label: address.label,
+            coordinates: address.coordinates || { latitude: 19.0760, longitude: 72.8777 },
+            address: {
+              street: address.street || '',
+              area: '', // LocationSelector doesn't use area field
+              city: address.city || '',
+              state: address.state || '',
+              pincode: address.pincode || '',
+              landmark: address.landmark || ''
+            },
+            isDefault: address.isDefault || false,
+            createdAt: new Date().toISOString()
+          }));
+          
+          setLocations(convertedLocations);
+          
+          // Update localStorage as backup
+          const { userStorage } = await import('@/lib/api');
+          userStorage.setUserAddresses(userAddresses);
+          
+          return;
+        } else {
+          throw new Error('Failed to load addresses');
+        }
+      } catch (fetchError) {
+        console.error('Failed to fetch addresses from database:', fetchError);
+        // Fallback to localStorage if database fetch fails
+        const { userStorage } = await import('@/lib/api');
+        const userAddresses = userStorage.getUserAddresses();
         
-        setLocations([defaultLocation]);
+        const convertedLocations: Location[] = userAddresses.map((address: any) => ({
+          _id: address._id || Date.now().toString(),
+          label: address.label,
+          coordinates: address.coordinates || { latitude: 19.0760, longitude: 72.8777 },
+          address: {
+            street: address.street || '',
+            area: '',
+            city: address.city || '',
+            state: address.state || '',
+            pincode: address.pincode || '',
+            landmark: address.landmark || ''
+          },
+          isDefault: address.isDefault || false,
+          createdAt: new Date().toISOString()
+        }));
+        
+        setLocations(convertedLocations);
       }
     } catch (error) {
       console.error('Error loading locations:', error);
@@ -108,12 +122,33 @@ export default function LocationManagementPage() {
 
   const handleLocationAdd = async (newAddress: any) => {
     try {
-      // Add to user-specific storage
-      const { userStorage } = await import('@/lib/api');
-      userStorage.addUserAddress(newAddress);
-      
-      // Reload locations to reflect the change
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to add addresses');
+        return;
+      }
+
+      // Save to database API for proper persistence
+      const response = await fetch('/api/users/addresses', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newAddress),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add address');
+      }
+
+      // Reload locations from database
       await loadLocations();
+      
+      // Dispatch event for other components
+      window.dispatchEvent(new Event('addressesUpdated'));
+      
       setShowLocationSelector(false);
     } catch (error) {
       console.error('Error adding location:', error);
@@ -125,12 +160,48 @@ export default function LocationManagementPage() {
     if (!editingLocation) return;
 
     try {
-      // Update in user-specific storage
-      const { userStorage } = await import('@/lib/api');
-      userStorage.updateUserAddress(editingLocation._id, updatedAddress);
-      
-      // Reload locations to reflect the change
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to update addresses');
+        return;
+      }
+
+      // Update in database API for proper persistence
+      const response = await fetch('/api/users/addresses', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          addressId: editingLocation._id,
+          label: updatedAddress.label,
+          name: updatedAddress.name,
+          phone: updatedAddress.phone,
+          street: updatedAddress.street,
+          landmark: updatedAddress.landmark || '',
+          city: updatedAddress.city,
+          state: updatedAddress.state,
+          pincode: updatedAddress.pincode,
+          coordinates: updatedAddress.coordinates ? {
+            latitude: updatedAddress.coordinates.latitude || updatedAddress.coordinates.lat,
+            longitude: updatedAddress.coordinates.longitude || updatedAddress.coordinates.lng
+          } : undefined,
+          isDefault: updatedAddress.isDefault || false
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update address');
+      }
+
+      // Reload locations from database
       await loadLocations();
+      
+      // Dispatch event for other components
+      window.dispatchEvent(new Event('addressesUpdated'));
+      
       setEditingLocation(null);
       setShowLocationSelector(false);
     } catch (error) {
@@ -141,12 +212,35 @@ export default function LocationManagementPage() {
 
   const setDefaultLocation = async (locationId: string) => {
     try {
-      // Update in user-specific storage
-      const { userStorage } = await import('@/lib/api');
-      userStorage.updateUserAddress(locationId, { isDefault: true });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to update addresses');
+        return;
+      }
+
+      // Update in database API for proper persistence
+      const response = await fetch('/api/users/addresses', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          addressId: locationId,
+          isDefault: true
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to set default address');
+      }
       
-      // Reload locations to reflect the change
+      // Reload locations from database
       await loadLocations();
+      
+      // Dispatch event for other components
+      window.dispatchEvent(new Event('addressesUpdated'));
     } catch (error) {
       console.error('Error setting default location:', error);
       setError('Failed to set default location');
@@ -160,12 +254,31 @@ export default function LocationManagementPage() {
     }
 
     try {
-      // Delete from user-specific storage
-      const { userStorage } = await import('@/lib/api');
-      userStorage.deleteUserAddress(locationId);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to delete addresses');
+        return;
+      }
+
+      // Delete from database API for proper persistence
+      const response = await fetch(`/api/users/addresses?addressId=${locationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete address');
+      }
       
-      // Reload locations to reflect the change
+      // Reload locations from database
       await loadLocations();
+      
+      // Dispatch event for other components
+      window.dispatchEvent(new Event('addressesUpdated'));
     } catch (error) {
       console.error('Error deleting location:', error);
       setError('Failed to delete location');
@@ -317,7 +430,7 @@ export default function LocationManagementPage() {
                   {!location.isDefault && (
                     <button
                       onClick={() => setDefaultLocation(location._id)}
-                      className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-gray-50 transition-colors touch-target no-tap-highlight"
                       title="Set as default"
                     >
                       <Check className="h-4 w-4" />
@@ -329,7 +442,7 @@ export default function LocationManagementPage() {
                       setEditingLocation(location);
                       setShowLocationSelector(true);
                     }}
-                    className="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50 transition-colors touch-target no-tap-highlight"
                     title="Edit location"
                   >
                     <Edit className="h-4 w-4" />

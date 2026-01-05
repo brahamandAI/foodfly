@@ -452,23 +452,23 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="modal-content-light rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="mobile-modal">
+      <div className="mobile-modal-content w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white rounded-t-2xl flex items-center justify-between p-6 border-b border-gray-200 z-10">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="sticky top-0 bg-white rounded-t-xl sm:rounded-t-2xl flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 z-10">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             {showAddForm ? (editingAddress ? 'Edit Address' : 'Add New Address') : 'Select Delivery Address'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 flex items-center justify-center"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 flex items-center justify-center touch-target no-tap-highlight"
             aria-label="Close"
           >
-            <X className="h-6 w-6 text-gray-600" />
+            <X className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
           </button>
         </div>
 
-        <div className="p-6 bg-white">
+        <div className="p-4 sm:p-6 bg-white">
           {showAddForm ? (
             /* Add/Edit Address Form */
             <div className="space-y-6">
@@ -607,19 +607,19 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
                 </div>
 
               {/* Action Buttons */}
-              <div className="flex space-x-3 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
                 <button
                   onClick={() => {
                     resetForm();
                     setShowAddForm(false);
                   }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all duration-200"
+                  className="flex-1 px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all duration-200 touch-target no-tap-highlight"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveAddress}
-                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="flex-1 px-4 sm:px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md touch-target no-tap-highlight"
                 >
                   {editingAddress ? 'Update Address' : 'Save Address'}
                 </button>
@@ -684,15 +684,15 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-3 mt-4 pt-3 border-t border-gray-200">
+                    {/* Action Buttons - Mobile Optimized */}
+                    <div className="flex items-center justify-between sm:justify-start space-x-2 sm:space-x-3 mt-4 pt-3 border-t border-gray-200">
                       {!address.isDefault && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setDefaultAddress(address._id!);
                           }}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-semibold hover:bg-blue-50 px-3 py-1 rounded transition-all duration-200"
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-semibold hover:bg-blue-50 px-3 py-2 rounded transition-all duration-200 touch-target no-tap-highlight"
                         >
                           Set as Default
                         </button>
@@ -702,7 +702,7 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
                           e.stopPropagation();
                           handleEditAddress(address);
                         }}
-                        className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-700 font-medium hover:bg-gray-50 px-3 py-1 rounded transition-all duration-200"
+                        className="flex items-center space-x-1 text-xs sm:text-sm text-gray-600 hover:text-gray-700 font-medium hover:bg-gray-50 px-3 py-2 rounded transition-all duration-200 touch-target no-tap-highlight"
                       >
                         <Edit2 className="h-4 w-4" />
                         <span>Edit</span>
@@ -712,7 +712,7 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
                           e.stopPropagation();
                           deleteAddress(address._id!);
                         }}
-                        className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700 font-medium hover:bg-red-50 px-3 py-1 rounded transition-all duration-200"
+                        className="flex items-center space-x-1 text-xs sm:text-sm text-red-600 hover:text-red-700 font-medium hover:bg-red-50 px-3 py-2 rounded transition-all duration-200 touch-target no-tap-highlight"
                       >
                         <Trash2 className="h-4 w-4" />
                         <span>Delete</span>

@@ -4,7 +4,8 @@ module.exports = {
       name: 'foodfly-nextjs',
       
       // ---- WORKING DIRECTORY ----
-      cwd: '/home/ubuntu/htdocs/foodfly',
+      // Update this path to your actual deployment directory
+      cwd: process.env.PM2_CWD || '/home/ubuntu/htdocs/foodfly',
       
       // ---- START USING PNPM (IMPORTANT) ----
       script: '/usr/local/bin/pnpm',

@@ -2,11 +2,26 @@
 /node_modules
 /.pnp
 .pnp.js
+
+# Logs
 /logs
 logs/
 /*.log
 logs/*
-backup2/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Testing
+/coverage
+*.test.js
+*.spec.js
+test-*.js
+*-test.js
 
 # Next.js
 /.next/
@@ -14,41 +29,60 @@ backup2/
 /build
 .next
 
-__pycache__/
-
-# Testing
-/coverage
-
 # Production
 /build
 
-# Misc
-.DS_Store
-*.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-firebase-debug.log*
-firebase-debug.*.log*
-myenv
-venv
-archive.zip
-# Local env files (encrypted .env.production is now tracked)
-# .env.production - now encrypted and tracked with git-crypt
+# Environment Variables & Secrets (NEVER COMMIT THESE!)
 .env
 .env.local
 .env.development.local
 .env.production
 .env.test.local
-
-# Encryption key (never commit this!)
+.env.*.local
+.env.git
 ENCRYPTION_KEY
 
-test-api.js
+# Credentials & Sensitive Files
+**/credentials*.md
+**/secrets*.md
+**/*credentials*.txt
+**/*secrets*.txt
+**/*password*.md
+**/*password*.txt
 
-livefile.zip
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+myenv/
+
+# Archives
 *.zip
+*.tar.gz
+*.rar
+livefile.zip
+archive.zip
+backup2/
 
-.env.git
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary Files
+*.tmp
+*.temp
+.tmp/

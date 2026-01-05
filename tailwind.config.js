@@ -15,6 +15,37 @@ module.exports = {
         inter: ['var(--font-inter)', 'sans-serif'],
         poppins: ['var(--font-poppins)', 'sans-serif'],
       },
+      // Enhanced mobile-first breakpoints
+      screens: {
+        'xs': '375px',
+        // sm: 640px (default)
+        // md: 768px (default)
+        // lg: 1024px (default)
+        // xl: 1280px (default)
+        '2xl': '1536px',
+      },
+      // Mobile-optimized spacing
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
+      // Touch-friendly minimum sizes
+      minHeight: {
+        'touch': '44px',
+        'touch-lg': '56px',
+      },
+      minWidth: {
+        'touch': '44px',
+        'touch-lg': '56px',
+      },
+      // Mobile-optimized z-index scale
+      zIndex: {
+        'mobile-nav': '50',
+        'modal': '60',
+        'toast': '70',
+      },
     },
   },
   plugins: [

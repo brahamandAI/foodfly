@@ -142,47 +142,47 @@ export default function MenuPage() {
     return (
       <div className="min-h-screen bg-white">
         {/* Header */}
-        <div className="bg-[#232323] border-b-4 border-yellow-400">
-          <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-[#232323] border-b-2 sm:border-b-4 border-yellow-400">
+          <div className="max-w-7xl mx-auto mobile-padding-x py-4 sm:py-6 md:py-8">
             <button
               onClick={handleBackToRestaurants}
-              className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-6 transition-colors font-bold"
+              className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-4 sm:mb-6 transition-colors font-bold touch-target no-tap-highlight"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Restaurants</span>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Back to Restaurants</span>
             </button>
 
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div>
-                <h1 className="text-5xl md:text-6xl font-black text-yellow-400 mb-3 tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+              <div className="w-full">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-yellow-400 mb-2 sm:mb-3 tracking-tight line-clamp-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>
                   {restaurant.name}
                 </h1>
-                <p className="text-yellow-300 text-xl mb-6 font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>
+                <p className="text-yellow-300 text-base sm:text-lg md:text-xl mb-4 sm:mb-6 font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>
                   {restaurant.cuisine} Fine Dining Experience
                 </p>
                 
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2 bg-yellow-400 text-[#232323] px-5 py-2.5 rounded-lg font-bold">
-                    <Star className="w-5 h-5 fill-[#232323]" />
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-yellow-400 text-[#232323] px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 rounded-lg font-bold text-xs sm:text-sm md:text-base">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-[#232323]" />
                     <span>{restaurant.rating}</span>
-                    <span className="text-sm">(2.5k+ ratings)</span>
+                    <span className="hidden sm:inline text-xs sm:text-sm">(2.5k+)</span>
                   </div>
                   
-                  <div className="flex items-center gap-2 bg-[#2a2a2a] text-yellow-400 border-2 border-yellow-400 px-5 py-2.5 rounded-lg font-bold">
-                    <Clock className="w-5 h-5" />
-                    <span>{restaurant.deliveryTime}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-[#2a2a2a] text-yellow-400 border-2 border-yellow-400 px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 rounded-lg font-bold text-xs sm:text-sm md:text-base">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="truncate">{restaurant.deliveryTime}</span>
                   </div>
                   
-                  <div className="flex items-center gap-2 bg-[#2a2a2a] text-yellow-400 border-2 border-yellow-400 px-5 py-2.5 rounded-lg font-bold">
-                    <MapPin className="w-5 h-5" />
-                    <span>{restaurant.location}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-[#2a2a2a] text-yellow-400 border-2 border-yellow-400 px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 rounded-lg font-bold text-xs sm:text-sm md:text-base">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="truncate max-w-[120px] sm:max-w-none">{restaurant.location}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-yellow-400 text-[#232323] rounded-xl p-6 text-center border-4 border-[#232323] shadow-xl">
-                <p className="text-sm mb-1 font-semibold">Delivery Fee</p>
-                <p className="text-4xl font-black">₹{restaurant.deliveryFee}</p>
+              <div className="bg-yellow-400 text-[#232323] rounded-lg sm:rounded-xl p-4 sm:p-6 text-center border-2 sm:border-4 border-[#232323] shadow-xl w-full sm:w-auto">
+                <p className="text-xs sm:text-sm mb-1 font-semibold">Delivery Fee</p>
+                <p className="text-2xl sm:text-3xl md:text-4xl font-black">₹{restaurant.deliveryFee}</p>
                 <p className="text-xs mt-1 font-bold">Within 2km</p>
               </div>
             </div>
@@ -213,48 +213,48 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-[#232323] border-b-4 border-yellow-400">
-        <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="bg-[#232323] border-b-2 sm:border-b-4 border-yellow-400">
+        <div className="max-w-7xl mx-auto mobile-padding-x py-6 sm:py-8 md:py-12">
           <Link 
             href="/" 
-            className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-6 transition-colors font-bold"
+            className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-4 sm:mb-6 transition-colors font-bold touch-target no-tap-highlight"
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Home</span>
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm sm:text-base">Back to Home</span>
           </Link>
 
-          <h1 className="text-4xl md:text-5xl font-black text-yellow-400 mb-3 tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-400 mb-2 sm:mb-3 tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>
             Our Restaurants
           </h1>
-          <p className="text-yellow-300 text-lg font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <p className="text-yellow-300 text-base sm:text-lg font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>
             Select a restaurant to view their menu
           </p>
         </div>
       </div>
 
       {/* Restaurant Cards */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto mobile-padding-x mobile-padding-y">
         {isLoadingRestaurants ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex items-center justify-center py-12 sm:py-16 md:py-20">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading restaurants...</p>
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-3 sm:mb-4"></div>
+              <p className="text-gray-600 mobile-text">Loading restaurants...</p>
             </div>
           </div>
         ) : restaurants.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-gray-600 text-lg">No restaurants available at the moment.</p>
+          <div className="text-center py-12 sm:py-16 md:py-20">
+            <p className="text-gray-600 text-base sm:text-lg">No restaurants available at the moment.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="responsive-grid">
             {restaurants.map((restaurant) => (
             <div
               key={restaurant.id}
               onClick={() => handleRestaurantSelect(restaurant.id)}
-              className="group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden hover:border-yellow-400 hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-2"
+              className="group mobile-card bg-white border-2 border-gray-200 overflow-hidden hover:border-yellow-400 hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1 md:hover:-translate-y-2 no-tap-highlight"
             >
               {/* Restaurant Image */}
-              <div className="relative h-64 w-full overflow-hidden bg-gray-200">
+              <div className="relative mobile-card-height w-full overflow-hidden bg-gray-200">
                 <Image
                   src={restaurant.image}
                   alt={restaurant.name}
@@ -265,40 +265,40 @@ export default function MenuPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#232323] via-transparent to-transparent" />
                 
                 {/* Rating Badge */}
-                <div className="absolute top-4 right-4 bg-yellow-400 text-[#232323] px-4 py-2 rounded-lg font-black flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-[#232323]" />
+                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 bg-yellow-400 text-[#232323] px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 rounded-lg font-black flex items-center gap-1 text-xs sm:text-sm md:text-base">
+                  <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#232323]" />
                   <span>{restaurant.rating}</span>
                 </div>
               </div>
 
               {/* Restaurant Info */}
-              <div className="p-6">
-                <h3 className="text-xl font-black text-[#232323] mb-2 group-hover:text-yellow-600 transition-colors" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+              <div className="p-3 sm:p-4 md:p-6">
+                <h3 className="text-base sm:text-lg md:text-xl font-black text-[#232323] mb-1.5 sm:mb-2 group-hover:text-yellow-600 transition-colors line-clamp-1" style={{ fontFamily: "'Montserrat', sans-serif" }}>
                   {restaurant.name}
                 </h3>
-                <p className="text-gray-600 mb-3 font-semibold text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+                <p className="text-gray-600 mb-2 sm:mb-3 font-semibold mobile-text line-clamp-1" style={{ fontFamily: "'Inter', sans-serif" }}>
                   {restaurant.cuisine}
                 </p>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Clock className="w-5 h-5 text-yellow-600" />
-                    <span className="font-medium">{restaurant.deliveryTime}</span>
+                <div className="space-y-2 sm:space-y-2.5 md:space-y-3 mb-4 sm:mb-5 md:mb-6">
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-gray-700">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0" />
+                    <span className="font-medium mobile-text truncate">{restaurant.deliveryTime}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <MapPin className="w-5 h-5 text-yellow-600" />
-                    <span className="font-medium">{restaurant.location}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-gray-700">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0" />
+                    <span className="font-medium mobile-text truncate">{restaurant.location}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <span className="text-xs font-semibold text-gray-600">Delivery Fee:</span>
-                    <span className="text-lg font-black text-[#232323]">₹{restaurant.deliveryFee}</span>
+                    <span className="text-base sm:text-lg font-black text-[#232323]">₹{restaurant.deliveryFee}</span>
                   </div>
                 </div>
 
                 {/* View Menu Button */}
-                <button className="w-full bg-[#232323] text-yellow-400 py-3 rounded-xl font-bold hover:bg-yellow-400 hover:text-[#232323] transition-all duration-200 border-2 border-yellow-400 flex items-center justify-center gap-2">
+                <button className="w-full bg-[#232323] text-yellow-400 mobile-btn rounded-lg sm:rounded-xl font-bold hover:bg-yellow-400 hover:text-[#232323] transition-all duration-200 border-2 border-yellow-400 flex items-center justify-center gap-2 touch-target no-tap-highlight">
                   <span>View Menu</span>
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>

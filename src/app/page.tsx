@@ -595,33 +595,33 @@ export default function HomePage() {
       <SignupPopup isOpen={showSignupPopup} onClose={() => setShowSignupPopup(false)} />
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-black relative min-h-[500px] sm:min-h-[600px] flex flex-col justify-center">
-        <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 gap-6 sm:gap-8 relative z-10">
+      <section className="bg-black relative mobile-hero flex flex-col justify-center overflow-hidden">
+        <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center mobile-padding-x py-6 sm:py-8 md:py-12 gap-4 sm:gap-6 md:gap-8 relative z-10">
           {/* Left: Text */}
-          <div className="flex-1 text-center md:text-left space-y-4 sm:space-y-6 text-white">
-            <div className="inline-block bg-yellow-400 text-[#232323] px-4 py-1 rounded-full text-sm font-semibold mb-2 shadow-lg">From Screen To Stomach 🥘</div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">Order Tasty And<br />Fresh Food Any Time</h1>
+          <div className="flex-1 text-center md:text-left space-y-3 sm:space-y-4 md:space-y-6 text-white w-full">
+            <div className="inline-block bg-yellow-400 text-[#232323] px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold mb-1 sm:mb-2 shadow-lg no-select">From Screen To Stomach 🥘</div>
+            <h1 className="mobile-heading font-bold leading-tight">Order Tasty And<br />Fresh Food Any Time</h1>
             {/* Marquee Robo Delivery Announcement */}
-            <div className="flex justify-center items-center w-full my-4 sm:my-6">
-              <div className="overflow-hidden w-full bg-gradient-to-r from-yellow-900/20 via-yellow-800/30 to-yellow-900/20 rounded-xl border border-yellow-600/30 shadow-lg backdrop-blur-sm">
-                <a href="/info-banner.pdf" target="_blank" rel="noopener noreferrer" className="block hover:bg-yellow-800/10 transition-all duration-300">
-                  <div className="whitespace-nowrap animate-marquee flex items-center justify-center gap-2 sm:gap-4 cursor-pointer py-2 sm:py-3 px-2 sm:px-4 hover:scale-105 transition-transform duration-300">
+            <div className="flex justify-center items-center w-full my-3 sm:my-4 md:my-6">
+              <div className="overflow-hidden w-full bg-gradient-to-r from-yellow-900/20 via-yellow-800/30 to-yellow-900/20 rounded-lg sm:rounded-xl border border-yellow-600/30 shadow-lg backdrop-blur-sm">
+                <a href="/info-banner.pdf" target="_blank" rel="noopener noreferrer" className="block hover:bg-yellow-800/10 transition-all duration-300 no-tap-highlight">
+                  <div className="whitespace-nowrap animate-marquee flex items-center justify-center gap-2 sm:gap-3 md:gap-4 cursor-pointer py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 hover:scale-105 transition-transform duration-300">
                     <Image
                       src="/images/robo-delivery.png"
                       alt="Robo Delivery"
-                      width={48}
-                      height={48}
-                      className="inline-block rounded-full border-2 border-yellow-400 bg-white shadow-lg hover:border-yellow-300 transition-all duration-300 hover:shadow-xl hover:scale-110 w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16"
+                      width={40}
+                      height={40}
+                      className="inline-block rounded-full border-2 border-yellow-400 bg-white shadow-lg hover:border-yellow-300 transition-all duration-300 hover:shadow-xl hover:scale-110 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0"
                     />
-                    <span className="text-xs sm:text-base md:text-lg font-bold text-yellow-300 drop-shadow-lg hover:text-yellow-200 transition-colors duration-300">
+                    <span className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-yellow-300 drop-shadow-lg hover:text-yellow-200 transition-colors duration-300">
                        Coming soon: Robo Meal deliveries within 2 km of our restaurant! The future of food is rolling your way! 
                     </span>
                     <Image
                       src="/images/robo-delivery.png"
                       alt="Robo Delivery"
-                      width={48}
-                      height={48}
-                      className="inline-block rounded-full border-2 border-yellow-400 bg-white shadow-lg hover:border-yellow-300 transition-all duration-300 hover:shadow-xl hover:scale-110 w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16"
+                      width={40}
+                      height={40}
+                      className="inline-block rounded-full border-2 border-yellow-400 bg-white shadow-lg hover:border-yellow-300 transition-all duration-300 hover:shadow-xl hover:scale-110 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0"
                     />
                   </div>
                 </a>
@@ -629,26 +629,26 @@ export default function HomePage() {
             </div>
             
               {/* Menu & Deals Quick Access (replaces Search Form) */}
-              <div className="flex items-center justify-center md:justify-start gap-4 sm:gap-6 mt-4 sm:mt-6 w-full">
-                <a href="/menu" className="flex flex-col items-center group flex-1 sm:flex-none">
-                  <span className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-yellow-400 to-red-500 shadow-lg group-hover:scale-110 transition-transform">
+              <div className="flex items-center justify-center md:justify-start gap-3 sm:gap-4 md:gap-6 mt-3 sm:mt-4 md:mt-6 w-full">
+                <a href="/menu" className="flex flex-col items-center group flex-1 sm:flex-none touch-target no-tap-highlight">
+                  <span className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-14 md:h-14 rounded-full bg-gradient-to-tr from-yellow-400 to-red-500 shadow-lg group-hover:scale-110 transition-transform">
                     <Utensils className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                   </span>
-                  <span className="mt-2 text-xs sm:text-sm font-semibold text-yellow-300 group-hover:text-yellow-200 transition-colors">Menu</span>
+                  <span className="mt-1.5 sm:mt-2 text-xs sm:text-sm font-semibold text-yellow-300 group-hover:text-yellow-200 transition-colors">Menu</span>
                 </a>
-                <a href="/deals" className="flex flex-col items-center group flex-1 sm:flex-none">
-                  <span className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-red-500 to-yellow-400 shadow-lg group-hover:scale-110 transition-transform">
+                <a href="/deals" className="flex flex-col items-center group flex-1 sm:flex-none touch-target no-tap-highlight">
+                  <span className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-14 md:h-14 rounded-full bg-gradient-to-tr from-red-500 to-yellow-400 shadow-lg group-hover:scale-110 transition-transform">
                     <Flame className="h-6 w-6 sm:h-7 sm:w-7 text-white animate-bounce" />
                   </span>
-                  <span className="mt-2 text-xs sm:text-sm font-semibold text-red-300 group-hover:text-yellow-200 transition-colors">Deals</span>
+                  <span className="mt-1.5 sm:mt-2 text-xs sm:text-sm font-semibold text-red-300 group-hover:text-yellow-200 transition-colors">Deals</span>
                 </a>
               </div>
 
             {/* Voice Order Quick Access */}
-            <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 mt-3 sm:mt-4 md:mt-6">
               <button
                 onClick={() => handleAIFeatureClick('voice')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 sm:px-8 rounded-lg transition-colors text-base font-semibold shadow-lg"
+                className="w-full sm:w-auto mobile-btn flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-semibold shadow-lg touch-target no-tap-highlight"
               >
                 <Mic className="h-5 w-5" />
                 Voice Order
@@ -657,34 +657,34 @@ export default function HomePage() {
               </div>
 
           {/* Right: Food Images */}
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             {/* Mobile: single hero image */}
-            <div className="flex sm:hidden justify-center items-center py-6">
+            <div className="flex sm:hidden justify-center items-center py-4 sm:py-6">
               <Image
                 src="/images/hero-vegthali.jpg"
                 alt="Veg Thali Hero"
-                width={240}
-                height={240}
-                className="object-contain drop-shadow-2xl rounded-full border-4 border-white bg-white w-40 h-40"
+                width={200}
+                height={200}
+                className="object-contain drop-shadow-2xl rounded-full border-3 sm:border-4 border-white bg-white w-36 h-36 xs:w-40 xs:h-40"
                 priority
               />
             </div>
             {/* Tablet/Desktop: dual images */}
-            <div className="hidden sm:flex justify-center items-center relative min-h-[280px] md:min-h-[320px] gap-4 md:gap-6">
+            <div className="hidden sm:flex justify-center items-center relative min-h-[240px] sm:min-h-[280px] md:min-h-[320px] gap-2 sm:gap-4 md:gap-6">
               <Image
                 src="/images/hero-vegthali.jpg"
                 alt="Veg Thali Hero"
-                width={320}
-                height={320}
-                className="object-contain drop-shadow-2xl rounded-full border-4 sm:border-8 border-white bg-white w-40 h-40 sm:w-48 sm:h-48 md:w-80 md:h-80"
+                width={280}
+                height={280}
+                className="object-contain drop-shadow-2xl rounded-full border-4 sm:border-6 md:border-8 border-white bg-white w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80"
                 priority
               />
               <Image
                 src="/images/hero-burger.jpg"
                 alt="Burger Hero"
-                width={220}
-                height={220}
-                className="object-contain drop-shadow-xl rounded-full border-4 sm:border-8 border-white bg-white md:-ml-12 -ml-2 w-28 h-28 sm:w-36 sm:h-36 md:w-56 md:h-56"
+                width={180}
+                height={180}
+                className="object-contain drop-shadow-xl rounded-full border-4 sm:border-6 md:border-8 border-white bg-white -ml-2 sm:-ml-4 md:-ml-8 lg:-ml-12 w-28 h-28 sm:w-32 sm:h-32 md:w-44 md:h-44 lg:w-56 lg:h-56"
                 priority
               />
             </div>
@@ -692,24 +692,24 @@ export default function HomePage() {
         </div>
         {/* Curved Divider */}
         <div className="divider-curve -mb-1">
-          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0C360 60 1080 60 1440 0V60H0V0Z" fill="#fff"/></svg>
+          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto"><path d="M0 0C360 60 1080 60 1440 0V60H0V0Z" fill="#fff"/></svg>
       </div>
       </section>
 
       {/* Voice Order Section - Only show for authenticated users */}
       {isAuthenticated && (
-        <section className="py-12 sm:py-16 bg-black">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-white">Voice Order</h2>
-              <p className="text-gray-300 max-w-2xl mx-auto text-sm sm:text-base">Order food naturally with your voice. Just speak and we'll understand your order.</p>
+        <section className="mobile-padding-y bg-black">
+          <div className="max-w-7xl mx-auto mobile-padding-x">
+            <div className="text-center mb-6 sm:mb-8 md:mb-12">
+              <h2 className="mobile-subheading font-bold mb-3 sm:mb-4 text-white">Voice Order</h2>
+              <p className="text-gray-300 max-w-2xl mx-auto mobile-text">Order food naturally with your voice. Just speak and we'll understand your order.</p>
           </div>
 
             {/* Quick Navigation */}
-            <div className="flex justify-center gap-4 sm:gap-6 mb-8 sm:mb-12">
+            <div className="flex justify-center gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 md:mb-12 flex-wrap">
               <Link 
                 href="/menu" 
-                className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-gray-700 text-sm sm:text-base"
+                className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white mobile-btn-sm rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-gray-700 touch-target no-tap-highlight"
               >
                 <span className="relative flex items-center justify-center">
                   <span className="absolute w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-red-500 to-yellow-400 opacity-30 animate-pulse"></span>
@@ -752,14 +752,14 @@ export default function HomePage() {
       )}
 
       {/* Popular Restaurants Section */}
-      <section className="py-12 sm:py-16 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-white">Our Restaurants</h2>
-            <p className="text-gray-300 max-w-2xl mx-auto text-sm sm:text-base">Discover the most loved restaurants in your area, from local favorites to hidden gems.</p>
+      <section className="mobile-padding-y bg-black">
+        <div className="max-w-7xl mx-auto mobile-padding-x">
+          <div className="text-center mb-6 sm:mb-8 md:mb-12">
+            <h2 className="mobile-subheading font-bold mb-3 sm:mb-4 text-white">Our Restaurants</h2>
+            <p className="text-gray-300 max-w-2xl mx-auto mobile-text">Discover the most loved restaurants in your area, from local favorites to hidden gems.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          <div className="responsive-grid">
             {restaurants.map((restaurant) => {
               // Map restaurant ID to route ID
               const routeIdMap: Record<string, string> = {
@@ -783,13 +783,13 @@ export default function HomePage() {
                 <Link 
                   key={restaurant._id}
                   href={`/restaurant/${routeId}`}
-                  className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer ${
+                  className={`mobile-card bg-white overflow-hidden transition-all duration-300 cursor-pointer no-tap-highlight ${
                     isClosed 
                       ? 'opacity-50 grayscale hover:opacity-60' 
                       : 'hover:shadow-xl'
                   }`}
                 >
-                  <div className="relative h-40 sm:h-48">
+                  <div className="relative mobile-card-height">
                     <Image
                       src={getImage(restaurant.name)}
                       alt={restaurant.name}
@@ -805,20 +805,20 @@ export default function HomePage() {
                         </div>
                       </div>
                     )}
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="text-white text-lg sm:text-2xl font-bold">{restaurant.name}</h3>
-                      <p className="text-white/90 text-xs sm:text-sm">⭐ {restaurant.rating} ({Math.floor(restaurant.rating * 100)}+ reviews)</p>
+                    <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
+                      <h3 className="text-white text-base sm:text-lg md:text-2xl font-bold line-clamp-1">{restaurant.name}</h3>
+                      <p className="text-white/90 mobile-text">⭐ {restaurant.rating} ({Math.floor(restaurant.rating * 100)}+ reviews)</p>
                     </div>
                   </div>
-                  <div className="p-4 sm:p-6">
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-start gap-3">
+                  <div className="p-3 sm:p-4 md:p-6">
+                    <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         <div className="flex-1">
-                          <p className="text-gray-600 text-xs sm:text-sm">{restaurant.address.area}, {restaurant.address.city}</p>
-                          <p className={`text-xs sm:text-sm mt-1 ${isClosed ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                          <p className="text-gray-600 mobile-text line-clamp-1">{restaurant.address.area}, {restaurant.address.city}</p>
+                          <p className={`mobile-text mt-1 ${isClosed ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
                             {isClosed ? 'Closed' : 'Open'} • {restaurant.deliveryTime}
                           </p>
-                          <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
+                          <div className="flex items-center gap-1 sm:gap-2 mt-1.5 sm:mt-2 flex-wrap">
                             {isClosed ? (
                               <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-semibold">Currently Closed</span>
                             ) : (
@@ -839,10 +839,10 @@ export default function HomePage() {
             })}
           </div>
 
-          <div className="text-center mt-8 sm:mt-12">
+          <div className="text-center mt-6 sm:mt-8 md:mt-12">
             <Link 
               href="/menu" 
-              className="inline-flex sm:inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-yellow-400 text-[#232323] px-6 py-4 sm:px-8 rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-lg text-base"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-yellow-400 text-[#232323] mobile-btn rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-lg touch-target no-tap-highlight"
             >
               View All Restaurants
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

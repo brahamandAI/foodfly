@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
+import MobileBottomNav from './MobileBottomNav';
 import AuthPopup from './AuthPopup';
 import NotificationSystem from './NotificationSystem';
 import { initializeTestData } from '@/lib/testData';
@@ -115,12 +116,13 @@ export default function ClientLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mobile-container">
       <Header />
-      <main className="mobile-padding mobile-padding-y">
+      <main className="mobile-bottom-spacing">
         {children}
       </main>
       <Footer />
+      <MobileBottomNav />
       <NotificationSystem />
       {showAuthPopup && (
         <AuthPopup

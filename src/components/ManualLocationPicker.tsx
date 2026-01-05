@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { saveUserLocation, getUserLocation } from '@/lib/locationUtils';
 import { addressToCoordinates } from '@/lib/addressToCoordinates';
@@ -10,6 +11,7 @@ interface ManualLocationPickerProps {
 }
 
 export default function ManualLocationPicker({ onLocationSet }: ManualLocationPickerProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [addressInput, setAddressInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +40,10 @@ export default function ManualLocationPicker({ onLocationSet }: ManualLocationPi
       }
 
       setIsOpen(false);
-      window.location.reload();
+      // Use router refresh instead of hard reload for better mobile UX
+      router.refresh();
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('locationUpdated'));
     } catch (error) {
       console.error('Address search error:', error);
       toast.error('Could not find address. Please try a different address or area.');
@@ -64,7 +69,10 @@ export default function ManualLocationPicker({ onLocationSet }: ManualLocationPi
       }
 
       setIsOpen(false);
-      window.location.reload();
+      // Use router refresh instead of hard reload for better mobile UX
+      router.refresh();
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('locationUpdated'));
     } catch (error) {
       console.error('GPS error:', error);
       toast.error('Could not get GPS location. Please enter address manually.');

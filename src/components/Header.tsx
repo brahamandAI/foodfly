@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ShoppingCart, User, Menu, X, MapPin, Heart, Clock, LogOut, LogIn, ChevronDown, Mic, ChefHat } from 'lucide-react';
@@ -27,6 +28,7 @@ interface Location {
 }
 
 export default function Header() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -343,8 +345,9 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Redirect to search results page
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+      // Use Next.js router for smooth navigation (no page reload)
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setShowSuggestions(false);
     }
   };
 
@@ -377,26 +380,26 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-black shadow-sm sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+    <header className="bg-black shadow-sm sticky top-0 z-40 border-b border-gray-800">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-2 group">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Link href="/" className="flex items-center space-x-2 group no-tap-highlight">
               <Image
                 src="/images/logo.png"
                 alt="FoodFly"
                 width={1500}
                 height={860}
-                className="h-20 w-auto transition-transform duration-300 group-hover:scale-105"
+                className="h-14 sm:h-20 w-auto transition-transform duration-300 group-hover:scale-105"
                 priority
               />
             </Link>
             
-            {/* Location */}
+            {/* Location - Desktop */}
             <div 
               onClick={() => setShowLocationSelector(true)}
-              className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-white cursor-pointer group bg-gray-800 px-3 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200"
+              className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-white cursor-pointer group bg-gray-800 px-3 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200 touch-target no-tap-highlight"
             >
               <MapPin className="h-5 w-5 text-red-500 group-hover:scale-110 transition-transform" />
               <div className="flex flex-col">
@@ -459,10 +462,10 @@ export default function Header() {
                             break;
                           }
                         }
-                        window.location.href = `/restaurant/${restaurantRouteId}?highlight=${encodeURIComponent(item.name)}`;
+                        router.push(`/restaurant/${restaurantRouteId}?highlight=${encodeURIComponent(item.name)}`);
                       } else {
                         // It's a restaurant
-                        window.location.href = `/restaurant/${item._id}`;
+                        router.push(`/restaurant/${item._id}`);
                       }
                       setShowSuggestions(false);
                     }}
@@ -497,32 +500,32 @@ export default function Header() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex items-center space-x-6">
-            {/* Chef Services */}
+          <nav className="flex items-center space-x-2 sm:space-x-4 md:space-x-6">
+            {/* Chef Services - Desktop only */}
             <Link 
               href="/chef-services" 
-              className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-orange-500 transition-colors duration-200 group"
+              className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-orange-500 transition-colors duration-200 group touch-target no-tap-highlight"
             >
               <ChefHat className="h-5 w-5 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">Chef Services</span>
             </Link>
 
-            {/* Voice Assistant */}
+            {/* Voice Assistant - Desktop only */}
             <button
               onClick={() => setShowVoiceOrder(true)}
-              className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-red-500 transition-colors duration-200 group"
+              className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-red-500 transition-colors duration-200 group touch-target no-tap-highlight"
             >
               <Mic className="h-5 w-5 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">Voice</span>
             </button>
 
-            {/* Cart */}
-            <Link href="/cart" className="relative group">
-              <div className="flex items-center space-x-2 text-gray-300 hover:text-red-500 transition-colors duration-200">
+            {/* Cart - Mobile optimized */}
+            <Link href="/cart" className="relative group no-tap-highlight">
+              <div className="flex items-center space-x-2 text-gray-300 hover:text-red-500 transition-colors duration-200 p-2 sm:p-0 touch-target">
                 <div className="relative">
-                  <ShoppingCart className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                  <ShoppingCart className="h-6 w-6 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform" />
                   {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold border-2 border-white shadow-lg">
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center font-bold border-2 border-black shadow-lg">
                       {cartCount > 99 ? '99+' : cartCount}
                     </span>
                   )}
@@ -534,36 +537,36 @@ export default function Header() {
             {/* User Menu */}
             {isLoggedIn ? (
               <div className="relative group">
-                <button className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                  <div className={`w-8 h-8 ${user?.isGuest ? 'bg-orange-600' : 'bg-red-600'} rounded-full flex items-center justify-center`}>
+                <button className="flex items-center space-x-1 sm:space-x-2 text-gray-300 hover:text-white transition-colors duration-200 touch-target no-tap-highlight p-2 sm:p-0">
+                  <div className={`w-9 h-9 sm:w-8 sm:h-8 ${user?.isGuest ? 'bg-orange-600' : 'bg-red-600'} rounded-full flex items-center justify-center`}>
                     <User className="h-5 w-5 text-white" />
                   </div>
                   <span className="hidden lg:block text-sm font-medium">
                     {user?.isGuest ? 'Guest' : (user?.name || 'User')}
                     {user?.isGuest && <span className="text-xs text-orange-400 ml-1">(Guest)</span>}
                   </span>
-                  <ChevronDown className="h-4 w-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <ChevronDown className="hidden lg:block h-4 w-4 opacity-60 group-hover:opacity-100 transition-opacity" />
                 </button>
                 
                 {/* Dropdown Menu */}
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-200">
                   {user?.isGuest ? (
                     <>
-                      <div className="px-4 py-2 text-orange-600 font-medium border-b">
+                      <div className="px-4 py-3 text-orange-600 font-semibold border-b border-gray-100 touch-target">
                         <User className="h-4 w-4 inline mr-2" />
                         Guest Mode
                       </div>
                       <button
-                        onClick={() => window.location.href = '/login'}
-                        className="block w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 transition-colors"
+                        onClick={() => router.push('/login')}
+                        className="block w-full text-left px-4 py-3 text-green-600 hover:bg-green-50 transition-colors touch-target font-medium"
                       >
                         <LogIn className="h-4 w-4 inline mr-2" />
                         Sign Up / Login
                       </button>
-                      <hr className="my-2" />
+                      <hr className="my-1" />
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                        className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 transition-colors touch-target font-medium"
                       >
                         <LogOut className="h-4 w-4 inline mr-2" />
                         Exit Guest Mode
@@ -571,22 +574,22 @@ export default function Header() {
                     </>
                   ) : (
                     <>
-                      <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                      <Link href="/profile" className="block px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors touch-target font-medium">
                         <User className="h-4 w-4 inline mr-2" />
                         Profile
                       </Link>
-                      <Link href="/orders" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                      <Link href="/orders" className="block px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors touch-target font-medium">
                         <Clock className="h-4 w-4 inline mr-2" />
                         Orders
                       </Link>
-                      <Link href="/favorites" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
+                      <Link href="/favorites" className="block px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors touch-target font-medium">
                         <Heart className="h-4 w-4 inline mr-2" />
                         Favorites
                       </Link>
-                      <hr className="my-2" />
+                      <hr className="my-1" />
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                        className="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 transition-colors touch-target font-medium"
                       >
                         <LogOut className="h-4 w-4 inline mr-2" />
                         Logout
@@ -597,8 +600,8 @@ export default function Header() {
               </div>
             ) : (
               <button
-                onClick={() => window.location.href = '/login'}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                onClick={() => router.push('/login')}
+                className="hidden sm:inline-flex bg-red-600 hover:bg-red-700 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg touch-target no-tap-highlight"
               >
                 Sign In
               </button>
@@ -607,7 +610,8 @@ export default function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden text-gray-300 hover:text-white transition-colors duration-200"
+              className="md:hidden text-gray-300 hover:text-white transition-colors duration-200 p-2 touch-target no-tap-highlight"
+              aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -616,44 +620,87 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-700 py-4">
-            <div className="space-y-4">
+          <div className="md:hidden border-t border-gray-700 py-4 animate-fade-in">
+            <div className="space-y-2">
+              {/* Mobile Location Selector */}
+              <button
+                onClick={() => setShowLocationSelector(true)}
+                className="flex items-center space-x-3 text-gray-300 hover:text-white w-full px-4 py-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-200 touch-target no-tap-highlight"
+              >
+                <MapPin className="h-5 w-5 text-red-500" />
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs text-gray-400">Deliver to</span>
+                  <span className="text-sm font-medium truncate max-w-full">
+                    {getLocationDisplayText()}
+                  </span>
+                </div>
+                <ChevronDown className="h-4 w-4 opacity-60" />
+              </button>
+
               {/* Mobile Search */}
               <form onSubmit={handleSearch}>
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search restaurants, dishes..."
-                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-700 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-gray-400"
+                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-700 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-gray-400 text-base touch-target"
                   />
                 </div>
               </form>
 
               {/* Mobile Navigation */}
-              <div className="space-y-2">
-                <Link href="/chef-services" className="block text-gray-300 hover:text-orange-500 py-2">
-                  <ChefHat className="h-4 w-4 inline mr-2" />
-                  Chef Services
+              <div className="space-y-1 pt-2">
+                <Link href="/chef-services" className="flex items-center text-gray-300 hover:text-orange-500 px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors touch-target no-tap-highlight">
+                  <ChefHat className="h-5 w-5 inline mr-3" />
+                  <span className="font-medium">Chef Services</span>
                 </Link>
+                <button
+                  onClick={() => {
+                    setShowVoiceOrder(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center w-full text-left text-gray-300 hover:text-red-500 px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors touch-target no-tap-highlight"
+                >
+                  <Mic className="h-5 w-5 inline mr-3" />
+                  <span className="font-medium">Voice Order</span>
+                </button>
                 {isLoggedIn ? (
                   <>
-                    <Link href="/profile" className="block text-gray-300 hover:text-white py-2">Profile</Link>
-                    <Link href="/orders" className="block text-gray-300 hover:text-white py-2">Orders</Link>
-                    <Link href="/favorites" className="block text-gray-300 hover:text-white py-2">Favorites</Link>
-                    <button onClick={handleLogout} className="block text-red-400 hover:text-red-300 py-2">
-                      Logout
+                    <div className="border-t border-gray-700 my-2"></div>
+                    <Link href="/profile" className="flex items-center text-gray-300 hover:text-white px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors touch-target no-tap-highlight">
+                      <User className="h-5 w-5 inline mr-3" />
+                      <span className="font-medium">Profile</span>
+                    </Link>
+                    <Link href="/orders" className="flex items-center text-gray-300 hover:text-white px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors touch-target no-tap-highlight">
+                      <Clock className="h-5 w-5 inline mr-3" />
+                      <span className="font-medium">Orders</span>
+                    </Link>
+                    <Link href="/favorites" className="flex items-center text-gray-300 hover:text-white px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors touch-target no-tap-highlight">
+                      <Heart className="h-5 w-5 inline mr-3" />
+                      <span className="font-medium">Favorites</span>
+                    </Link>
+                    <div className="border-t border-gray-700 my-2"></div>
+                    <button 
+                      onClick={handleLogout} 
+                      className="flex items-center w-full text-left text-red-400 hover:text-red-300 px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors touch-target no-tap-highlight"
+                    >
+                      <LogOut className="h-5 w-5 inline mr-3" />
+                      <span className="font-medium">Logout</span>
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => window.location.href = '/login'}
-                    className="block bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                  >
-                    Sign In
-                  </button>
+                  <>
+                    <div className="border-t border-gray-700 my-2"></div>
+                    <button
+                      onClick={() => router.push('/login')}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors touch-target no-tap-highlight"
+                    >
+                      Sign In
+                    </button>
+                  </>
                 )}
               </div>
             </div>

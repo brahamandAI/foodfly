@@ -69,12 +69,9 @@ axiosInstance.interceptors.response.use(
         localStorage.removeItem('isLoggedIn');
         delete axiosInstance.defaults.headers.Authorization;
         
-        // Redirect to home page only if not already on login/register page
-        if (typeof window !== 'undefined' && 
-            !window.location.pathname.includes('/login') && 
-            !window.location.pathname.includes('/register')) {
-          window.location.href = '/';
-        }
+        // Note: Cannot use router here as this is in a service file
+        // Client-side redirects should be handled in components/pages
+        // This interceptor just clears auth state
       }
     }
 
