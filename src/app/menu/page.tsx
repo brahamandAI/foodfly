@@ -1,113 +1,311 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Clock, Flame, Heart } from 'lucide-react';
-import { Playfair_Display, Dancing_Script, Cormorant_Garamond } from 'next/font/google';
-
-const playfair = Playfair_Display({ subsets: ['latin'] });
-const dancingScript = Dancing_Script({ subsets: ['latin'] });
-const cormorant = Cormorant_Garamond({ 
-  weight: ['400', '600'],
-  subsets: ['latin'] 
-});
-
-interface MenuItem {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  rating: number;
-  prepTime: string;
-  isSpicy: boolean;
-  isPopular: boolean;
-}
-
-const categories = [
-  { name: 'North Indian', img: '/images/categories/North-indian.jpg' },
-  { name: 'Chinese', img: '/images/categories/Chinese.jpg' },
-  { name: 'Oriental', img: '/images/categories/Oriental.jpg' },
-  { name: 'Italian', img: '/images/categories/Italian.jpg' },
-  { name: 'European', img: '/images/categories/European.jpg' },
-  { name: 'South Indian', img: '/images/categories/South-indian.jpg' },
-  { name: 'Mughlai', img: '/images/categories/Mughlai.jpg' },
-  { name: 'Fast Food', img: '/images/categories/Fast-food.jpg' },
-  { name: 'Beverages', img: '/images/categories/Bevarages.jpg' },
-  { name: 'Desserts', img: '/images/categories/Desserts.jpg' },
-];
+import { ArrowLeft, Star, Clock, MapPin, ChevronRight } from 'lucide-react';
+import RestaurantMenu from '@/components/RestaurantMenu';
 
 export default function MenuPage() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const router = useRouter();
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
+  const [menu, setMenu] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(true);
 
-  return (
-    <div className="min-h-screen bg-black">
-      {/* Hero Section */}
-      <section className="relative h-[200px] bg-black">
-        <Image
-          src="/images/hero-burger.jpg"
-          alt="Menu Hero"
-          fill
-          className="object-cover opacity-50"
-          priority
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h1 className={`${cormorant.className} text-5xl md:text-6xl font-semibold mb-4 tracking-wider uppercase`}>
-              <span className="text-red-500">M</span>enu
-            </h1>
-            <p className={`${dancingScript.className} text-3xl md:text-4xl text-gray-200 flex items-center justify-center gap-3 w-full max-w-2xl mx-auto`}>
-              Made with <Heart className="w-8 h-8 text-red-500 fill-current animate-pulse" /> love
-            </p>
+  const handleRestaurantSelect = (restaurantId: string) => {
+    setSelectedRestaurant(restaurantId);
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToRestaurants = () => {
+    setSelectedRestaurant(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const fetchRestaurants = async () => {
+    setIsLoadingRestaurants(true);
+    try {
+      const response = await fetch('/api/restaurants', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      const data = await response.json();
+      
+      if (data.restaurants && data.restaurants.length > 0) {
+        // Map restaurant data to match expected format
+        const formattedRestaurants = data.restaurants.map((r: any) => ({
+          id: r.id || r._id?.toString() || '',
+          name: r.name,
+          cuisine: Array.isArray(r.cuisine) ? r.cuisine[0] : r.cuisine || 'Multi-Cuisine',
+          rating: r.rating || 4.5,
+          deliveryTime: r.deliveryTime || '30-45 mins',
+          deliveryFee: r.deliveryFee || 40,
+          location: r.location || `${r.address?.city || ''}, ${r.address?.state || ''}`,
+          address: r.address || '',
+          image: r.image || '/images/restaurants/cafe.jpg',
+          isActive: r.isActive !== false
+        }));
+        setRestaurants(formattedRestaurants);
+      } else {
+        setRestaurants([]);
+      }
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+      setRestaurants([]);
+    } finally {
+      setIsLoadingRestaurants(false);
+    }
+  };
+
+  const fetchMenu = async (restaurantId: string, showLoading = false) => {
+    if (showLoading) setIsLoading(true);
+    
+    try {
+      // Add cache-busting timestamp to ensure fresh data
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/restaurants/${restaurantId}/menu?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      const data = await response.json();
+      
+      if (data.menu && data.menu.length > 0) {
+        setMenu(data.menu);
+      } else {
+        setMenu([]);
+      }
+    } catch (error) {
+      console.error('Error fetching menu:', error);
+      setMenu([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch restaurants on mount
+  useEffect(() => {
+    fetchRestaurants();
+  }, []);
+
+  useEffect(() => {
+    if (selectedRestaurant) {
+      // Fetch menu from database when restaurant is selected
+      fetchMenu(selectedRestaurant, true);
+      
+      // Listen for menu updates from admin
+      const handleMenuUpdate = () => {
+        console.log('Menu update event received, refreshing menu...');
+        fetchMenu(selectedRestaurant, false);
+      };
+      
+      // Also poll for updates every 5 seconds as a fallback
+      const pollInterval = setInterval(() => {
+        fetchMenu(selectedRestaurant, false);
+      }, 5000);
+      
+      window.addEventListener('menuUpdated', handleMenuUpdate);
+      
+      // Listen for storage events (cross-tab communication)
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'menuUpdated' && e.newValue) {
+          handleMenuUpdate();
+        }
+      };
+      window.addEventListener('storage', handleStorageChange);
+      
+      return () => {
+        window.removeEventListener('menuUpdated', handleMenuUpdate);
+        window.removeEventListener('storage', handleStorageChange);
+        clearInterval(pollInterval);
+      };
+    }
+  }, [selectedRestaurant]);
+
+  // If restaurant is selected, show menu
+  if (selectedRestaurant) {
+    const restaurant = restaurants.find(r => r.id === selectedRestaurant);
+    if (!restaurant) {
+      setSelectedRestaurant(null);
+      return null;
+    }
+
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div className="bg-[#232323] border-b-4 border-yellow-400">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <button
+              onClick={handleBackToRestaurants}
+              className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-6 transition-colors font-bold"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Restaurants</span>
+            </button>
+
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <h1 className="text-5xl md:text-6xl font-black text-yellow-400 mb-3 tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                  {restaurant.name}
+                </h1>
+                <p className="text-yellow-300 text-xl mb-6 font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  {restaurant.cuisine} Fine Dining Experience
+                </p>
+                
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2 bg-yellow-400 text-[#232323] px-5 py-2.5 rounded-lg font-bold">
+                    <Star className="w-5 h-5 fill-[#232323]" />
+                    <span>{restaurant.rating}</span>
+                    <span className="text-sm">(2.5k+ ratings)</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-[#2a2a2a] text-yellow-400 border-2 border-yellow-400 px-5 py-2.5 rounded-lg font-bold">
+                    <Clock className="w-5 h-5" />
+                    <span>{restaurant.deliveryTime}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-[#2a2a2a] text-yellow-400 border-2 border-yellow-400 px-5 py-2.5 rounded-lg font-bold">
+                    <MapPin className="w-5 h-5" />
+                    <span>{restaurant.location}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-400 text-[#232323] rounded-xl p-6 text-center border-4 border-[#232323] shadow-xl">
+                <p className="text-sm mb-1 font-semibold">Delivery Fee</p>
+                <p className="text-4xl font-black">₹{restaurant.deliveryFee}</p>
+                <p className="text-xs mt-1 font-bold">Within 2km</p>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* Categories */}
-      <section className="py-12 bg-black">
-      <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className={`${cormorant.className} text-3xl font-semibold tracking-wide text-white`}>Categories</h2>
-          <button
-              onClick={() => setSelectedCategory('All')}
-              className={`px-4 py-2 rounded-full ${
-                selectedCategory === 'All'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-900 text-gray-200 hover:bg-gray-800'
-              }`}
+        {/* Menu Component - Fetch from database */}
+        {!isLoading && (
+          <RestaurantMenu 
+            categories={menu}
+            restaurantId={restaurant.id}
+            restaurantName={restaurant.name}
+          />
+        )}
+        {isLoading && (
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading menu...</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Show restaurant selection
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-[#232323] border-b-4 border-yellow-400">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-6 transition-colors font-bold"
           >
-            All
-          </button>
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Home</span>
+          </Link>
+
+          <h1 className="text-4xl md:text-5xl font-black text-yellow-400 mb-3 tracking-tight" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            Our Restaurants
+          </h1>
+          <p className="text-yellow-300 text-lg font-semibold" style={{ fontFamily: "'Inter', sans-serif" }}>
+            Select a restaurant to view their menu
+          </p>
         </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <Link
-                key={category.name}
-                href={`/menu/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className={`p-4 rounded-xl text-center transition-all ${
-                  selectedCategory === category.name
-                    ? 'bg-red-500 text-white shadow-lg scale-105'
-                    : 'bg-black hover:bg-gray-900 text-white'
-                }`}
-              >
-                <div className="w-32 h-32 mx-auto mb-3 relative overflow-hidden rounded-lg">
-                  <Image
-                    src={category.img}
-                    alt={category.name}
-                    fill
-                    className="object-cover hover:scale-110 transition-transform duration-300"
-                    sizes="(max-width: 768px) 128px, 128px"
-                    priority
-                  />
+      </div>
+
+      {/* Restaurant Cards */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {isLoadingRestaurants ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading restaurants...</p>
+            </div>
+          </div>
+        ) : restaurants.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-600 text-lg">No restaurants available at the moment.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {restaurants.map((restaurant) => (
+            <div
+              key={restaurant.id}
+              onClick={() => handleRestaurantSelect(restaurant.id)}
+              className="group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden hover:border-yellow-400 hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-2"
+            >
+              {/* Restaurant Image */}
+              <div className="relative h-64 w-full overflow-hidden bg-gray-200">
+                <Image
+                  src={restaurant.image}
+                  alt={restaurant.name}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#232323] via-transparent to-transparent" />
+                
+                {/* Rating Badge */}
+                <div className="absolute top-4 right-4 bg-yellow-400 text-[#232323] px-4 py-2 rounded-lg font-black flex items-center gap-1">
+                  <Star className="w-4 h-4 fill-[#232323]" />
+                  <span>{restaurant.rating}</span>
                 </div>
-                <span className={`${cormorant.className} text-xl font-semibold tracking-wide`}>{category.name}</span>
-              </Link>
+              </div>
+
+              {/* Restaurant Info */}
+              <div className="p-6">
+                <h3 className="text-xl font-black text-[#232323] mb-2 group-hover:text-yellow-600 transition-colors" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                  {restaurant.name}
+                </h3>
+                <p className="text-gray-600 mb-3 font-semibold text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  {restaurant.cuisine}
+                </p>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Clock className="w-5 h-5 text-yellow-600" />
+                    <span className="font-medium">{restaurant.deliveryTime}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <MapPin className="w-5 h-5 text-yellow-600" />
+                    <span className="font-medium">{restaurant.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-600">Delivery Fee:</span>
+                    <span className="text-lg font-black text-[#232323]">₹{restaurant.deliveryFee}</span>
+                  </div>
+                </div>
+
+                {/* View Menu Button */}
+                <button className="w-full bg-[#232323] text-yellow-400 py-3 rounded-xl font-bold hover:bg-yellow-400 hover:text-[#232323] transition-all duration-200 border-2 border-yellow-400 flex items-center justify-center gap-2">
+                  <span>View Menu</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
             ))}
           </div>
-        </div>
-      </section>
+        )}
+      </div>
     </div>
   );
-} 
+}

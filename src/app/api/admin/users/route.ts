@@ -1,10 +1,8 @@
-import { verifyToken } from '@/lib/backend/middleware/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
 import User from '@/lib/backend/models/user.model';
-import Order from '@/lib/backend/models/order.model';
+import { verifyToken } from '@/lib/backend/middleware/auth';
 
-// Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
@@ -12,78 +10,40 @@ export async function GET(request: NextRequest) {
     await connectDB();
     
     // Verify admin authentication
-    const user = verifyToken(request);
-    
-    if (user.role !== 'admin') {
+    const admin = verifyToken(request);
+    if (admin.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
 
-    // Get all users with their order statistics
-    const users = await User.find({})
-      .select('name email phone role isActive createdAt updatedAt lastLogin')
-      .sort({ createdAt: -1 });
+    // Get all customer users (exclude admin, delivery, chef)
+    const users = await (User as any)
+      .find({ role: { $in: ['customer', 'user'] } })
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // Get order statistics for each user
-    const usersWithStats = await Promise.all(
-      users.map(async (user) => {
-        if (user.role === 'customer' || user.role === 'user') {
-          // Get order stats for customers only
-          const [totalOrders, totalSpent] = await Promise.all([
-            Order.countDocuments({ customerId: user._id }),
-            Order.aggregate([
-              { $match: { customerId: user._id, status: 'delivered' } },
-              { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-            ])
-          ]);
+    const formattedUsers = users.map((u: any) => ({
+      _id: u._id.toString(),
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      role: u.role,
+      isEmailVerified: u.isEmailVerified || false,
+      createdAt: u.createdAt,
+      lastLogin: u.lastLogin,
+      isBlocked: u.isBlocked || false
+    }));
 
-          return {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            role: user.role,
-            isActive: user.isActive,
-            createdAt: user.createdAt,
-            lastLogin: user.lastLogin,
-            totalOrders,
-            totalSpent: totalSpent[0]?.total || 0
-          };
-        } else {
-          return {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            role: user.role,
-            isActive: user.isActive,
-            createdAt: user.createdAt,
-            lastLogin: user.lastLogin,
-            totalOrders: 0,
-            totalSpent: 0
-          };
-        }
-      })
-    );
-
-    return NextResponse.json({
-      users: usersWithStats,
-      message: 'Users retrieved successfully'
-    });
+    return NextResponse.json({ users: formattedUsers });
 
   } catch (error: any) {
-    console.error('Get admin users error:', error);
-    if (error.message === 'No token provided' || error.message === 'Invalid token') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    console.error('Get users error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch users' },
       { status: 500 }
     );
   }
-} 
+}

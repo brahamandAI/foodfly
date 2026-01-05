@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, startTransition } from 'react';
 import Image from 'next/image';
+import { sanitizeImageUrl } from '@/lib/imageUtils';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Minus, Trash2, ShoppingBag, CheckCircle, Clock, MapPin, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -108,7 +109,7 @@ export default function CartPage() {
       console.error('Error updating quantity:', error);
       // ROLLBACK - reload cart on error
       await loadCart();
-      alert('Failed to update quantity');
+      toast.error('Failed to update quantity');
     } finally {
       setUpdatingItems(prev => ({ ...prev, [itemId]: false }));
     }
@@ -135,11 +136,12 @@ export default function CartPage() {
       const { unifiedCartService } = require('@/lib/api');
       await unifiedCartService.removeFromCart(itemId);
       
+      toast.success('Item removed from cart');
     } catch (error) {
       console.error('Error removing item:', error);
       // ROLLBACK - reload cart on error
       await loadCart();
-      alert('Failed to remove item');
+      toast.error('Failed to remove item');
     } finally {
       setUpdatingItems(prev => ({ ...prev, [itemId]: false }));
     }
@@ -153,10 +155,11 @@ export default function CartPage() {
       const { unifiedCartService } = require('@/lib/api');
       await unifiedCartService.clearCart();
       await loadCart(); // Reload cart from database or localStorage
+      toast.success('Cart cleared');
     } catch (error) {
       console.error('Error clearing cart:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to clear cart';
-      alert(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -179,8 +182,8 @@ export default function CartPage() {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+        <div className="min-h-screen bg-[#232323] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
         </div>
       </AuthGuard>
     );
@@ -188,24 +191,29 @@ export default function CartPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#232323]">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="bg-[#232323] shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <ArrowLeft className="h-6 w-6" />
+                <Link href="/" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+                  <ArrowLeft className="h-5 w-5 text-white" />
                 </Link>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Your Cart</h1>
-                  <p className="text-sm text-gray-600">Review your items before checkout</p>
+                  <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                    Your Cart
+                  </h1>
+                  <p className="text-sm text-gray-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                    Review your items before checkout
+                  </p>
                 </div>
               </div>
               {cart.items.length > 0 && (
                 <button
                   onClick={clearCart}
-                  className="text-red-600 hover:text-red-700 font-medium px-4 py-2 rounded-lg hover:bg-red-50"
+                  className="text-white hover:text-gray-300 font-semibold text-base px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+                  style={{ fontFamily: "'Satoshi', sans-serif" }}
                 >
                   Clear Cart
                 </button>
@@ -214,77 +222,93 @@ export default function CartPage() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-6">
           {cart.items.length === 0 ? (
             <div className="text-center py-16">
-              <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Your cart is empty</h2>
-              <p className="text-gray-600 mb-8">Add some delicious items to get started!</p>
+              <ShoppingBag className="h-20 w-20 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-yellow-400 mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                Your cart is empty
+              </h2>
+              <p className="text-base text-yellow-300 mb-6" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                Add some delicious items to get started!
+              </p>
               <Link
                 href="/menu"
-                className="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="inline-flex items-center px-5 py-2.5 bg-[#232323] text-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-[#232323] transition-colors font-semibold text-base border-2 border-yellow-400"
+                style={{ fontFamily: "'Satoshi', sans-serif" }}
               >
                 Browse Menu
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
               {/* Cart Items */}
-              <div className="lg:col-span-3 space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border">
+              <div className="lg:col-span-3 space-y-4">
+                <div className="bg-[#232323] rounded-xl shadow-md">
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-gray-900">
+                      <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                         Items from {cart.restaurantName || 'FoodFly Kitchen'}
                       </h2>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span>30-45 mins delivery</span>
+                      <div className="flex items-center text-sm text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        <Clock className="h-4 w-4 mr-1.5" />
+                        <span>30-45 mins</span>
                       </div>
                     </div>
                     
                     <div className="space-y-4">
                       {cart.items.map((item, index) => (
-                        <div key={`${item.menuItemId}-${index}`} className="flex items-center justify-between p-6 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div key={`${item.menuItemId}-${index}`} className="flex items-center justify-between p-5 bg-gray-800 rounded-xl hover:bg-gray-750 transition-all duration-200">
+                          <div className="flex items-center space-x-4 flex-1 min-w-0">
+                            <div className="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                               {item.image ? (
                                 <Image
-                                  src={item.image}
+                                  src={sanitizeImageUrl(item.image)}
                                   alt={item.name}
-                                  width={64}
-                                  height={64}
+                                  width={80}
+                                  height={80}
                                   className="object-cover rounded-lg"
                                 />
                               ) : (
                                 <span className="text-2xl">🍽️</span>
                               )}
                             </div>
-                            <div className="flex-1">
-                              <h3 className="text-gray-900 font-semibold text-lg">{item.name}</h3>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-white font-semibold text-base truncate" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                                {item.name}
+                              </h3>
                               {item.description && (
-                                <p className="text-gray-600 text-sm mt-1">{item.description}</p>
+                                <p className="text-gray-400 text-sm mt-1 line-clamp-1" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                                  {item.description}
+                                </p>
                               )}
-                              <p className="text-red-600 font-bold text-lg mt-2">₹{item.price}</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-2 border border-gray-200">
+                          <div className="flex items-center gap-6 ml-4 flex-shrink-0">
+                            {/* Price - Pushed to hard right */}
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                                ₹{item.price}
+                              </p>
+                            </div>
+                            
+                            {/* Quantity Controls */}
+                            <div className="flex items-center space-x-2 bg-gray-700 rounded-lg p-1.5">
                               <button
                                 onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
                                 disabled={updatingItems[item.menuItemId] || item.quantity <= 1}
-                                className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-8 h-8 rounded bg-white text-[#232323] hover:bg-gray-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                               >
                                 <Minus className="w-4 h-4" />
                               </button>
-                              <span className="text-gray-900 font-bold text-lg min-w-[2rem] text-center bg-white px-3 py-2 rounded border border-gray-200">
+                              <span className="text-white font-semibold text-base min-w-[2rem] text-center" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                 {updatingItems[item.menuItemId] ? '...' : item.quantity}
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
                                 disabled={updatingItems[item.menuItemId] || item.quantity >= 10}
-                                className="w-8 h-8 rounded-full bg-red-600 text-white hover:bg-red-700 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-8 h-8 rounded bg-white text-[#232323] hover:bg-gray-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                               >
                                 <Plus className="w-4 h-4" />
                               </button>
@@ -293,7 +317,7 @@ export default function CartPage() {
                             <button
                               onClick={() => removeItem(item.menuItemId)}
                               disabled={updatingItems[item.menuItemId]}
-                              className="w-10 h-10 rounded-full bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-red-200"
+                              className="w-9 h-9 rounded-lg bg-gray-700 text-white hover:bg-gray-600 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -305,73 +329,79 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Order Summary - Enhanced */}
+              {/* Order Summary */}
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-xl shadow-lg border-2 border-gray-100 sticky top-24">
+                <div className="bg-[#232323] rounded-xl shadow-xl sticky top-20">
                   <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                      <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+                    <h2 className="text-xl font-bold text-white mb-6 flex items-center" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                      <CheckCircle className="h-5 w-5 mr-2 text-white" />
                       Order Summary
                     </h2>
                     
-                    <div className="space-y-4 text-base">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-800 font-medium">Subtotal ({safeNumber(cart.totalItems)} items)</span>
-                        <span className="font-bold text-gray-900">₹{subtotal}</span>
+                    <div className="space-y-4 text-base" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-300 font-medium">Subtotal ({safeNumber(cart.totalItems)} items)</span>
+                        <span className="font-semibold text-white">₹{subtotal}</span>
                       </div>
                       
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-800 font-medium">Delivery Fee</span>
-                        <span className={`font-bold ${deliveryFee === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-300 font-medium">Delivery Fee</span>
+                        <span className={`font-semibold ${deliveryFee === 0 ? 'text-green-400' : 'text-white'}`}>
                           {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
                         </span>
                       </div>
                       
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-800 font-medium">Taxes & Fees (5%)</span>
-                        <span className="font-bold text-gray-900">₹{taxes}</span>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-300 font-medium">Taxes & Fees (5%)</span>
+                        <span className="font-semibold text-white">₹{taxes}</span>
                       </div>
                       
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-800 font-medium">Packaging Fee</span>
-                        <span className="font-bold text-gray-900">₹{packagingFee}</span>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-300 font-medium">Packaging Fee</span>
+                        <span className="font-semibold text-white">₹{packagingFee}</span>
                       </div>
                       
-                      <div className="border-t-2 border-gray-200 pt-4">
+                      <div className="border-t border-gray-700 pt-4 mt-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-xl font-bold text-gray-900">Total</span>
-                          <span className="text-2xl font-bold text-red-600">₹{total}</span>
+                          <span className="text-lg font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            Total
+                          </span>
+                          <span className="text-2xl font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            ₹{total}
+                          </span>
                         </div>
                       </div>
                     </div>
                     
                     {subtotal < 299 && (
-                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-800 font-medium">
+                      <div className="mt-5 p-4 bg-gray-800 rounded-lg">
+                        <p className="text-sm text-gray-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                           💡 Add ₹{299 - subtotal} more for free delivery!
                         </p>
                       </div>
                     )}
                     
                     <div className="mt-6 space-y-3">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
+                      <div className="flex items-center text-sm text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        <MapPin className="h-4 w-4 mr-1.5" />
                         <span>Delivery in 30-45 minutes</span>
                       </div>
                       
                       <Link
                         href="/checkout"
-                        className="w-full bg-red-600 text-white py-4 px-6 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center space-x-2 font-semibold text-lg shadow-lg hover:shadow-xl"
+                        className="w-full bg-yellow-400 text-[#232323] py-3.5 px-5 rounded-lg hover:bg-yellow-300 transition-colors flex items-center justify-center space-x-2 font-bold text-base shadow-lg hover:shadow-xl"
+                        style={{ fontFamily: "'Satoshi', sans-serif" }}
                       >
-                        <CheckCircle className="h-6 w-6" />
+                        <CheckCircle className="h-4 w-4" />
                         <span>Proceed to Checkout</span>
                       </Link>
                       
                       <Link
                         href="/menu"
-                        className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2 font-medium"
+                        className="w-full bg-gray-800 text-white py-3 px-5 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2 font-semibold text-base"
+                        style={{ fontFamily: "'Satoshi', sans-serif" }}
                       >
-                        <Plus className="h-5 w-5" />
+                        <Plus className="h-4 w-4" />
                         <span>Add More Items</span>
                       </Link>
                     </div>
@@ -384,4 +414,4 @@ export default function CartPage() {
       </div>
     </AuthGuard>
   );
-} 
+}

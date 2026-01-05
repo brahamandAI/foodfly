@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { sanitizeImageUrl } from '@/lib/imageUtils';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
@@ -313,10 +314,10 @@ export default function OrdersPage() {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[#232323] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your orders...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+            <p className="text-yellow-300 text-sm" style={{ fontFamily: "'Satoshi', sans-serif" }}>Loading your orders...</p>
           </div>
         </div>
       </AuthGuard>
@@ -325,24 +326,29 @@ export default function OrdersPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#232323]">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="bg-[#232323] shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <ArrowLeft className="h-6 w-6" />
+                <Link href="/" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+                  <ArrowLeft className="h-5 w-5 text-white" />
                 </Link>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Your Orders</h1>
-                  <p className="text-gray-600">Track and manage your food orders</p>
+                  <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                    Your Orders
+                  </h1>
+                  <p className="text-sm text-gray-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                    Track and manage your food orders
+                  </p>
                 </div>
               </div>
               
               <button
                 onClick={fetchOrders}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold text-base"
+                style={{ fontFamily: "'Satoshi', sans-serif" }}
               >
                 <RefreshCw className="h-4 w-4" />
                 <span>Refresh</span>
@@ -351,19 +357,20 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-6">
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <div className="bg-[#232323] rounded-xl shadow-md p-5 mb-6">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               {/* Search */}
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search orders, restaurants, or dishes..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full pl-9 pr-4 py-2.5 bg-gray-800 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 text-base placeholder-gray-400"
+                  style={{ fontFamily: "'Satoshi', sans-serif" }}
                 />
               </div>
               
@@ -373,11 +380,12 @@ export default function OrdersPage() {
                   <button
                     key={option.value}
                     onClick={() => setSelectedFilter(option.value)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
                       selectedFilter === option.value
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-yellow-400 text-[#232323]'
+                        : 'bg-gray-800 text-white hover:bg-gray-700'
                     }`}
+                    style={{ fontFamily: "'Satoshi', sans-serif" }}
                   >
                     {option.label} ({option.count})
                   </button>
@@ -388,12 +396,12 @@ export default function OrdersPage() {
 
           {/* Orders List */}
           {filteredOrders.length === 0 ? (
-            <div className="text-center py-16">
-              <Receipt className="h-24 w-24 text-gray-400 mx-auto mb-6" />
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <div className="text-center py-12">
+              <Receipt className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-yellow-400 mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                 {orders.length === 0 ? 'No orders yet' : 'No orders found'}
               </h2>
-              <p className="text-gray-600 mb-8">
+              <p className="text-base text-yellow-300 mb-6" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                 {orders.length === 0 
                   ? "You haven't placed any orders yet. Start exploring our delicious menu!"
                   : 'Try adjusting your search or filter criteria'
@@ -402,10 +410,11 @@ export default function OrdersPage() {
               {orders.length === 0 && (
                 <Link
                   href="/menu"
-                  className="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Browse Menu
-                </Link>
+                className="inline-flex items-center px-5 py-2.5 bg-[#232323] text-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-[#232323] transition-colors font-semibold text-base border-2 border-yellow-400"
+                style={{ fontFamily: "'Satoshi', sans-serif" }}
+              >
+                Browse Menu
+              </Link>
               )}
             </div>
           ) : (
@@ -415,29 +424,33 @@ export default function OrdersPage() {
                 const StatusIcon = statusInfo.icon;
                 
                 return (
-                  <div key={order._id} className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-                    <div className="p-6">
-                      {/* Order Header */}
+                  <div key={order._id} className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400/30 hover:border-yellow-400 hover:shadow-lg transition-all">
+                    <div className="p-5">
+                      {/* Order Header - Black & Yellow Theme */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                          <div className="flex items-center space-x-3 mb-2 flex-wrap">
+                            <h3 className="text-lg font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                               {order.restaurant.name}
                             </h3>
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusInfo.color}`}>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-semibold border-2 ${
+                              order.status === 'delivered' ? 'bg-green-100 text-green-700 border-green-300' :
+                              order.status === 'cancelled' ? 'bg-red-100 text-red-700 border-red-300' :
+                              'bg-yellow-100 text-yellow-700 border-yellow-300'
+                            }`}>
                               <StatusIcon className="h-4 w-4 mr-1" />
                               {statusInfo.label}
                             </span>
                           </div>
                           
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <span>Order #{order.orderNumber}</span>
+                          <div className="flex items-center space-x-3 text-sm text-yellow-300 flex-wrap" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            <span className="font-medium">Order #{order.orderNumber}</span>
                             <span className="flex items-center">
                               <Calendar className="h-4 w-4 mr-1" />
                               {formatDate(order.placedAt)} at {formatTime(order.placedAt)}
                             </span>
                             {['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(order.status) && (
-                              <span className="flex items-center text-green-600">
+                              <span className="flex items-center text-green-400 font-semibold">
                                 <Clock className="h-4 w-4 mr-1" />
                                 {getEstimatedTime(order.estimatedDeliveryTime)}
                               </span>
@@ -446,44 +459,50 @@ export default function OrdersPage() {
                         </div>
                         
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-gray-900">₹{order.totalAmount}</p>
-                          <p className="text-sm text-gray-600">{order.items.length} items</p>
+                          <p className="text-xl font-black text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            ₹{order.totalAmount}
+                          </p>
+                          <p className="text-sm text-yellow-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            {order.items.length} items
+                          </p>
                         </div>
                       </div>
 
                       {/* Order Items */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Items Ordered</h4>
+                          <h4 className="font-bold text-yellow-400 mb-2 text-base" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            Items Ordered
+                          </h4>
                           <div className="space-y-2">
                             {order.items.slice(0, 3).map((item, index) => (
-                              <div key={index} className="flex items-center space-x-3">
-                                <div className="w-10 h-10 relative flex-shrink-0">
+                              <div key={index} className="flex items-center space-x-2">
+                                <div className="w-9 h-9 relative flex-shrink-0">
                                   <Image
-                                    src={item.menuItem.image || '/images/placeholder.svg'}
+                                    src={sanitizeImageUrl(item.menuItem.image)}
                                     alt={item.menuItem.name}
                                     fill
                                     className="object-cover rounded-lg"
                                   />
                                   {item.menuItem.isVeg && (
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                    <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                      <div className="w-1 h-1 bg-white rounded-full"></div>
                                     </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                  <p className="text-sm font-semibold text-yellow-400 truncate" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     {item.menuItem.name}
                                   </p>
-                                  <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                                  <p className="text-sm text-yellow-300/80">Qty: {item.quantity}</p>
                                 </div>
-                                <p className="text-sm font-semibold text-gray-900">
+                                <p className="text-sm font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                   ₹{item.price}
                                 </p>
                               </div>
                             ))}
                             {order.items.length > 3 && (
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-yellow-300/80 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                 +{order.items.length - 3} more items
                               </p>
                             )}
@@ -491,36 +510,39 @@ export default function OrdersPage() {
                         </div>
                         
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Delivery Address</h4>
-                          <div className="text-sm text-gray-600">
-                            <p className="font-medium text-gray-900">{order.deliveryAddress.name}</p>
+                          <h4 className="font-bold text-yellow-400 mb-2 text-base" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            Delivery Address
+                          </h4>
+                          <div className="text-sm text-yellow-300/80" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            <p className="font-semibold text-yellow-400">{order.deliveryAddress.name}</p>
                             <p>{order.deliveryAddress.street}</p>
                             <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} - {order.deliveryAddress.pincode}</p>
                             <p className="flex items-center mt-1">
-                              <Phone className="h-3 w-3 mr-1" />
+                              <Phone className="h-4 w-4 mr-1" />
                               {order.deliveryAddress.phone}
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Order Actions */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-600">
-                            Payment: <span className="font-medium capitalize">{order.paymentMethod.replace('_', ' ')}</span>
+                      {/* Order Actions - Black & Yellow Theme */}
+                      <div className="flex items-center justify-between pt-4 border-t-2 border-gray-200">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm text-yellow-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                            Payment: <span className="font-semibold capitalize">{order.paymentMethod.replace('_', ' ')}</span>
                           </span>
-                          <span className={`text-sm font-medium ${
-                            order.paymentStatus === 'completed' ? 'text-green-600' : 'text-yellow-600'
-                          }`}>
+                          <span className={`text-sm font-semibold ${
+                            order.paymentStatus === 'completed' ? 'text-green-400' : 'text-yellow-400'
+                          }`} style={{ fontFamily: "'Satoshi', sans-serif" }}>
                             {order.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
                           </span>
                         </div>
                         
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleReorder(order)}
-                            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-semibold border border-gray-300"
+                            style={{ fontFamily: "'Satoshi', sans-serif" }}
                           >
                             <Repeat className="h-4 w-4" />
                             <span>Reorder</span>
@@ -528,7 +550,8 @@ export default function OrdersPage() {
                           
                           <Link
                             href={`/orders/${order._id}`}
-                            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#232323] text-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-[#232323] transition-colors text-sm font-semibold border-2 border-yellow-400"
+                            style={{ fontFamily: "'Satoshi', sans-serif" }}
                           >
                             <Eye className="h-4 w-4" />
                             <span>View Details</span>

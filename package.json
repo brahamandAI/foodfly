@@ -4,9 +4,9 @@
   "description": "Unified FoodFly food delivery platform built with Next.js",
   "private": true,
   "scripts": {
-    "dev": "PORT=${PORT:-3002} next dev",
+    "dev": "cross-env PORT=3002 next dev",
     "build": "next build",
-    "start": "PORT=${PORT:-3002} next start",
+    "start": "cross-env PORT=3002 next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
@@ -17,7 +17,7 @@
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "netlify deploy --prod",
     "postbuild": "echo '✅ Build completed successfully'",
-    "health-check": "curl -f http://localhost:${PORT:-3002}/api/test || exit 1",
+    "health-check": "cross-env PORT=3002 node -e \"require('http').get('http://localhost:' + (process.env.PORT || 3002) + '/api/test', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\"",
     "check-oauth": "node scripts/check-google-oauth.js",
     "fix-oauth": "node scripts/fix-google-oauth.js",
     "test-oauth": "node scripts/test-google-oauth.js"
@@ -85,6 +85,7 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.13",
+    "cross-env": "^10.1.0",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
     "nodemon": "^3.0.1",

@@ -1,9 +1,8 @@
-import { verifyToken } from '@/lib/backend/middleware/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
 import User from '@/lib/backend/models/user.model';
+import { verifyToken } from '@/lib/backend/middleware/auth';
 
-// Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
 export async function PATCH(
@@ -14,36 +13,24 @@ export async function PATCH(
     await connectDB();
     
     // Verify admin authentication
-    const user = verifyToken(request);
-    
-    if (user.role !== 'admin') {
+    const admin = verifyToken(request);
+    if (admin.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
       );
     }
+    
+    const body = await request.json();
+    const userId = params.userId;
 
-    const { userId } = params;
-    const updateData = await request.json();
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Find and update the user
-    const updatedUser = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       userId,
-      { 
-        ...updateData,
-        updatedAt: new Date()
-      },
-      { new: true, select: 'name email phone role isActive createdAt updatedAt' }
-    );
+      { $set: body },
+      { new: true }
+    ).select('-password');
 
-    if (!updatedUser) {
+    if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -52,20 +39,70 @@ export async function PATCH(
 
     return NextResponse.json({
       message: 'User updated successfully',
-      user: updatedUser
+      user: {
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        isBlocked: user.isBlocked || false
+      }
     });
 
   } catch (error: any) {
     console.error('Update user error:', error);
-    if (error.message === 'No token provided' || error.message === 'Invalid token') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update user' },
       { status: 500 }
     );
   }
-} 
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { userId: string } }
+) {
+  try {
+    await connectDB();
+    
+    // Verify admin authentication
+    const admin = verifyToken(request);
+    if (admin.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+    
+    const userId = params.userId;
+    
+    // Prevent deleting admin accounts
+    const userToDelete = await (User as any).findById(userId);
+    if (!userToDelete) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+    
+    if (userToDelete.role === 'admin') {
+      return NextResponse.json(
+        { error: 'Cannot delete admin accounts' },
+        { status: 403 }
+      );
+    }
+    
+    // Permanently delete user from database
+    await (User as any).findByIdAndDelete(userId);
+    
+    return NextResponse.json({
+      message: 'User deleted permanently',
+      userId
+    });
+    
+  } catch (error: any) {
+    console.error('Delete user error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete user' },
+      { status: 500 }
+    );
+  }
+}

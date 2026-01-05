@@ -55,16 +55,26 @@ axiosInstance.interceptors.response.use(
     });
 
     // Handle unauthorized errors (token expired or invalid)
+    // BUT: Don't redirect if it's a login/register endpoint - let those pages handle their own errors
     if (error.response?.status === 401) {
-      // Clear auth state
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isLoggedIn');
-      delete axiosInstance.defaults.headers.Authorization;
+      const isAuthEndpoint = error.config?.url?.includes('/api/auth/login') || 
+                            error.config?.url?.includes('/api/auth/register');
       
-      // Redirect to home page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
+      // Only clear auth state and redirect if it's NOT a login/register attempt
+      // Login/register pages should handle their own 401 errors
+      if (!isAuthEndpoint) {
+        // Clear auth state
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        delete axiosInstance.defaults.headers.Authorization;
+        
+        // Redirect to home page only if not already on login/register page
+        if (typeof window !== 'undefined' && 
+            !window.location.pathname.includes('/login') && 
+            !window.location.pathname.includes('/register')) {
+          window.location.href = '/';
+        }
       }
     }
 
@@ -135,6 +145,10 @@ export interface Address {
   state: string;
   pincode: string;
   landmark?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
   isDefault: boolean;
 }
 

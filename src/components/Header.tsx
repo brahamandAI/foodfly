@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Search, ShoppingCart, User, Menu, X, MapPin, Heart, Clock, LogOut, LogIn, ChevronDown, Mic, ChefHat } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import LocationSelector from './LocationSelector';
-import VoiceAssistant from './VoiceAssistant';
+import VoiceOrder from './VoiceOrder';
 import { enhancedCartService, logout } from '@/lib/api';
 
 interface Location {
@@ -35,7 +35,9 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
-  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
+  const [showVoiceOrder, setShowVoiceOrder] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     // Check authentication status
@@ -133,6 +135,29 @@ export default function Header() {
       clearTimeout(cartUpdateTimeout);
     };
   }, [isLoggedIn]);
+
+  // Fetch search suggestions as user types
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2) {
+      const debounceTimer = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=5`, {
+            cache: 'no-store'
+          });
+          const data = await response.json();
+          setSearchSuggestions([...(data.dishes || []).slice(0, 5), ...(data.restaurants || []).slice(0, 3)]);
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error('Error fetching suggestions:', error);
+        }
+      }, 300);
+
+      return () => clearTimeout(debounceTimer);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [searchQuery]);
 
   const loadDefaultLocation = async () => {
     try {
@@ -387,19 +412,88 @@ export default function Header() {
           </div>
 
           {/* Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
+          <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative group">
                 <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors duration-200" />
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for restaurants, dishes..."
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => {
+                    if (searchQuery.trim().length >= 2) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay to allow click on suggestion
+                    setTimeout(() => setShowSuggestions(false), 200);
+                  }}
+                  placeholder="Search dishes, restaurants, cuisines... (e.g., 'biryani', 'veg pizza', 'cheap food')"
                   className="w-full pl-11 pr-4 py-3 border-2 border-gray-700 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 placeholder-gray-400 hover:border-gray-600"
                 />
               </div>
             </form>
+
+            {/* Search Suggestions Dropdown */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border-2 border-gray-700 rounded-lg shadow-2xl z-50 max-h-96 overflow-y-auto">
+                {searchSuggestions.map((item: any, index: number) => (
+                  <div
+                    key={item._id || index}
+                    onClick={() => {
+                      if (item.restaurantId) {
+                        // It's a dish
+                        const restaurantIdMap: Record<string, string> = {
+                          '1': 'Panache',
+                          '2': 'Cafe After Hours',
+                          '3': 'Symposium Restaurant'
+                        };
+                        let restaurantRouteId = item.restaurantId;
+                        for (const [numId, name] of Object.entries(restaurantIdMap)) {
+                          if (name === item.restaurantName) {
+                            restaurantRouteId = numId;
+                            break;
+                          }
+                        }
+                        window.location.href = `/restaurant/${restaurantRouteId}?highlight=${encodeURIComponent(item.name)}`;
+                      } else {
+                        // It's a restaurant
+                        window.location.href = `/restaurant/${item._id}`;
+                      }
+                      setShowSuggestions(false);
+                    }}
+                    className="px-4 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-b-0 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-white font-semibold">{item.name || item.restaurantName}</p>
+                        {item.restaurantName && (
+                          <p className="text-sm text-gray-400">From {item.restaurantName}</p>
+                        )}
+                        {item.category && (
+                          <p className="text-xs text-gray-500 mt-1">{item.category}</p>
+                        )}
+                      </div>
+                      {item.price && (
+                        <p className="text-yellow-400 font-bold ml-4">
+                          ₹{typeof item.price === 'number' ? item.price : item.price}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div
+                  onClick={handleSearch}
+                  className="px-4 py-3 bg-gray-800 hover:bg-gray-700 cursor-pointer border-t border-gray-700 text-center"
+                >
+                  <span className="text-yellow-400 font-semibold">View all results for "{searchQuery}"</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Navigation */}
@@ -415,7 +509,7 @@ export default function Header() {
 
             {/* Voice Assistant */}
             <button
-              onClick={() => setShowVoiceAssistant(true)}
+              onClick={() => setShowVoiceOrder(true)}
               className="hidden md:flex items-center space-x-2 text-gray-300 hover:text-red-500 transition-colors duration-200 group"
             >
               <Mic className="h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -576,11 +670,11 @@ export default function Header() {
         />
       )}
 
-      {/* Voice Assistant Modal */}
-      {showVoiceAssistant && (
-        <VoiceAssistant
-          isOpen={showVoiceAssistant}
-          onClose={() => setShowVoiceAssistant(false)}
+      {/* Voice Order Modal */}
+      {showVoiceOrder && (
+        <VoiceOrder
+          isOpen={showVoiceOrder}
+          onClose={() => setShowVoiceOrder(false)}
         />
       )}
     </header>

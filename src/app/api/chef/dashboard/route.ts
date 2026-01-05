@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
       status: 'pending_chef_assignment'
     });
 
+    const isVerified = chef.chefProfile?.verification?.isVerified || false;
+
     const stats = {
       chef: {
         name: chef.name,
@@ -42,14 +44,16 @@ export async function GET(request: NextRequest) {
         totalEvents: chef.chefProfile?.performance?.completedEvents || 0,
         availability: chef.chefProfile?.availability?.status || 'offline',
         specialization: chef.chefProfile?.specialization || [],
-        priceRange: chef.chefProfile?.priceRange || { min: 0, max: 0, currency: 'INR' }
+        priceRange: chef.chefProfile?.priceRange || { min: 0, max: 0, currency: 'INR' },
+        isVerified
       },
       stats: {
-        pendingRequests: pendingGeneralRequests,
+        pendingRequests: isVerified ? pendingGeneralRequests : 0,
         completedEvents: chef.chefProfile?.performance?.completedEvents || 0,
         rating: chef.chefProfile?.rating || 5.0,
         earnings: 0
-      }
+      },
+      isVerified
     };
 
     return NextResponse.json(stats);

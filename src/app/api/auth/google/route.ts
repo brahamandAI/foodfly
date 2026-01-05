@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Create new user with Google info
+      const now = new Date();
       user = new User({
         name: name.trim(),
         email: email.toLowerCase().trim(),
@@ -72,7 +73,9 @@ export async function POST(request: NextRequest) {
           dietary: [],
           allergies: [],
           cuisinePreferences: []
-        }
+        },
+        createdAt: now, // Explicitly set createdAt for Google OAuth users
+        updatedAt: now
       });
 
       await user.save();
@@ -95,7 +98,9 @@ export async function POST(request: NextRequest) {
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       preferences: user.preferences,
-      addresses: user.addresses
+      addresses: user.addresses,
+      createdAt: (user as any).createdAt ? (user as any).createdAt.toISOString() : new Date().toISOString(),
+      joinedAt: (user as any).createdAt ? (user as any).createdAt.toISOString() : new Date().toISOString() // Use createdAt as joinedAt for consistency
     };
 
     // Create response and set HTTP-only cookies for middleware/auth

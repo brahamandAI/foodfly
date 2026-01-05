@@ -101,6 +101,7 @@ export default function ChefDashboard() {
   const [eventFilter, setEventFilter] = useState('all');
   const [availabilityStatus, setAvailabilityStatus] = useState<'available' | 'busy' | 'offline'>('available');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -130,6 +131,7 @@ export default function ChefDashboard() {
         console.log('📊 Stats loaded:', statsData);
         setStats(statsData);
         setAvailabilityStatus(statsData.availabilityStatus || 'available');
+        setIsVerified(statsData.isVerified || false);
       } else {
         console.error('❌ Failed to load stats:', statsResponse.status);
       }
@@ -325,6 +327,38 @@ export default function ChefDashboard() {
             <div className="flex items-center space-x-2">
               <ChefHat className="h-6 w-6 text-orange-500" />
               <p className="text-lg font-semibold text-white">Loading chef dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show pending verification message if not verified
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+        <div className="bg-gray-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-700/50 max-w-2xl w-full">
+          <div className="flex flex-col items-center space-y-6 text-center">
+            <div className="bg-yellow-500/20 rounded-full p-4">
+              <Clock className="h-12 w-12 text-yellow-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Profile Under Review</h2>
+              <p className="text-gray-300 text-lg">
+                Your profile is currently being reviewed by our team.
+              </p>
+              <p className="text-gray-400 mt-2">
+                We'll notify you once your account has been approved. This usually takes 24-48 hours.
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-lg p-4 w-full text-left">
+              <h3 className="text-white font-semibold mb-2">What happens next?</h3>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>• Our team reviews your credentials and documents</li>
+                <li>• You'll receive an email notification once approved</li>
+                <li>• Your dashboard will be unlocked after approval</li>
+              </ul>
             </div>
           </div>
         </div>

@@ -1,149 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
-import { verifyToken } from '@/lib/backend/middleware/auth';
 import Order from '@/lib/backend/models/order.model';
-import User from '@/lib/backend/models/user.model';
 
-// Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    
-    // Verify admin authentication
-    const user = verifyToken(request);
-    
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
+    const { searchParams } = new URL(request.url);
+
+    const restaurant = searchParams.get('restaurant');
+    const status = searchParams.get('status');
+    const date = searchParams.get('date');
+
+    let query: any = {};
+
+    if (restaurant) {
+      query.restaurantName = { $regex: restaurant, $options: 'i' };
     }
 
-    // Get all orders from database with user details
-    const orders = await Order.find({})
-      .populate('customerId', 'name email phone')
-      .sort({ createdAt: -1 }); // Newest first
+    if (status) {
+      query.status = status;
+    }
 
-    return NextResponse.json({
-      orders: orders.map(order => {
-        // Handle customer data properly
-        const customer = order.customerId;
-        const customerEmail = customer && typeof customer === 'object' ? customer.email : '';
-        const customerName = customer && typeof customer === 'object' ? customer.name : '';
-        const customerPhone = customer && typeof customer === 'object' ? customer.phone : '';
+    if (date) {
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      query.placedAt = { $gte: startDate, $lte: endDate };
+    }
 
-        // Handle order items properly
-        const items = order.items.map((item: any) => ({
-          menuItemId: item.menuItemId || item._id,
-          name: item.name,
-          description: item.description || '',
-          price: item.price,
-          quantity: item.quantity,
-          customizations: item.customizations || [],
-          image: item.image || '/images/placeholder.svg'
-        }));
+    const orders = await (Order as any)
+      .find(query)
+      .sort({ placedAt: -1 })
+      .limit(100)
+      .lean();
 
-        return {
-          _id: order._id,
-          orderNumber: order.orderNumber,
-          customerId: customer && typeof customer === 'object' ? customer._id : order.customerId,
-          customerEmail: customerEmail,
-          customerName: customerName,
-          customerPhone: customerPhone,
-          restaurant: {
-            _id: order.restaurantId || 'unknown',
-            name: order.restaurantName || 'Unknown Restaurant'
-          },
-          totalAmount: order.totalAmount,
-          status: order.status,
-          paymentMethod: order.paymentMethod,
-          paymentStatus: order.paymentStatus,
-          createdAt: order.createdAt,
-          placedAt: order.placedAt || order.createdAt,
-          estimatedDeliveryTime: order.estimatedDeliveryTime,
-          deliveryAddress: order.deliveryAddress,
-          items: items,
-          specialInstructions: order.specialInstructions
-        };
-      }),
-      message: 'Orders retrieved successfully'
-    });
+    const formattedOrders = orders.map((o: any) => ({
+      _id: o._id.toString(),
+      orderNumber: o.orderNumber,
+      restaurantName: o.restaurantName,
+      customerEmail: o.customerEmail,
+      totalAmount: o.totalAmount,
+      status: o.status,
+      paymentStatus: o.paymentStatus,
+      placedAt: o.placedAt,
+      items: o.items || []
+    }));
+
+    return NextResponse.json({ orders: formattedOrders });
 
   } catch (error: any) {
-    console.error('Get admin orders error:', error);
-    if (error.message === 'No token provided' || error.message === 'Invalid token') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    console.error('Get orders error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch orders' },
       { status: 500 }
     );
   }
 }
-
-export async function PUT(request: NextRequest) {
-  try {
-    await connectDB();
-    
-    // Verify admin authentication
-    const user = verifyToken(request);
-    
-    if (user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
-
-    const { orderId, status, notes } = await request.json();
-
-    if (!orderId || !status) {
-      return NextResponse.json(
-        { error: 'Order ID and status are required' },
-        { status: 400 }
-      );
-    }
-
-    // Update order status
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { 
-        status,
-        ...(notes && { adminNotes: notes }),
-        ...(status === 'delivered' && { deliveredAt: new Date() }),
-        ...(status === 'cancelled' && { cancelledAt: new Date() })
-      },
-      { new: true }
-    );
-
-    if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: 'Order status updated successfully',
-      order
-    });
-
-  } catch (error: any) {
-    console.error('Update order status error:', error);
-    if (error.message === 'No token provided' || error.message === 'Invalid token') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-} 

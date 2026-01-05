@@ -4,13 +4,11 @@ import React from "react";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, MapPin, TrendingUp, Star, Clock, Tag, Mic, Brain, Heart, Sparkles, Plus, User, ShoppingCart, Zap, Leaf, Target, Smartphone, ChefHat, Utensils, Flame } from 'lucide-react';
-import SmartRecommendations from '../components/SmartRecommendations';
-import VoiceAssistant from '../components/VoiceAssistant';
+import { Mic, Sparkles, Utensils, Flame } from 'lucide-react';
+import VoiceOrder from '../components/VoiceOrder';
 import AuthPopup from '../components/AuthPopup';
 import LocationSelector from '../components/LocationSelector';
 import { toast } from 'react-hot-toast';
-import { logout } from '@/lib/api';
 import SignupPopup from '../components/SignupPopup';
 
 interface Restaurant {
@@ -65,14 +63,12 @@ interface Address {
 }
 
 export default function HomePage() {
-  const [search, setSearch] = useState('');
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<Address | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
-  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
-  const [showSmartFeatures, setShowSmartFeatures] = useState(false);
+  const [showVoiceOrder, setShowVoiceOrder] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [cartItemCount, setCartItemCount] = useState(0);
@@ -292,9 +288,8 @@ export default function HomePage() {
       }
     }
 
-    // Load restaurants
-    setRestaurants(mockRestaurants);
-    setIsLoading(false);
+    // Load restaurants from API
+    loadRestaurants();
 
     // Load cart count
     updateCartCount();
@@ -321,6 +316,48 @@ export default function HomePage() {
       window.removeEventListener('userLoggedOut', handleLogout);
     };
   }, []);
+
+  const loadRestaurants = async () => {
+    try {
+      const response = await fetch('/api/restaurants');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.restaurants && data.restaurants.length > 0) {
+          // Map API response to match our interface
+          const mappedRestaurants = data.restaurants.map((r: any) => ({
+            _id: r.id,
+            name: r.name,
+            cuisine: Array.isArray(r.cuisine) ? r.cuisine : [r.cuisine || 'Multi-Cuisine'],
+            rating: r.rating || 4.5,
+            deliveryTime: r.deliveryTime || '30-40 mins',
+            minimumOrder: r.minimumOrder || 200,
+            deliveryFee: r.deliveryFee || 40,
+            image: r.image || '/images/restaurants/cafe.jpg',
+            address: {
+              city: r.location?.split(',')[1]?.trim() || 'New Delhi',
+              area: r.location?.split(',')[0]?.trim() || 'Dwarka'
+            },
+            isActive: r.isActive !== false && r.isOpen !== false, // Check both fields
+            offers: r.offers || [],
+            menu: r.menu || []
+          }));
+          setRestaurants(mappedRestaurants);
+        } else {
+          // Fallback to mock data
+          setRestaurants(mockRestaurants);
+        }
+      } else {
+        // Fallback to mock data on error
+        setRestaurants(mockRestaurants);
+      }
+    } catch (error) {
+      console.error('Error loading restaurants:', error);
+      // Fallback to mock data on error
+      setRestaurants(mockRestaurants);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -541,53 +578,17 @@ export default function HomePage() {
     toast.success('Welcome back!');
   };
 
-  // Use centralized logout function instead of local implementation
-
   const handleAIFeatureClick = (feature: string) => {
     if (!isAuthenticated) {
       setShowAuthPopup(true);
       return;
     }
     
-    switch (feature) {
-      case 'voice':
-        setShowVoiceAssistant(true);
-        break;
-      case 'smart':
-        setShowSmartFeatures(true);
-        break;
-      case 'health':
-        window.location.href = '/health';
-        break;
-      default:
-        break;
+    if (feature === 'voice') {
+      setShowVoiceOrder(true);
     }
   };
 
-  const fetchRestaurants = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/restaurants');
-      if (response.ok) {
-        const result = await response.json();
-        setRestaurants(result.data);
-      } else {
-        setRestaurants(mockRestaurants);
-      }
-    } catch (error) {
-      console.error('Error fetching restaurants:', error);
-      setRestaurants(mockRestaurants);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(search)}`;
-    }
-  };
 
   return (
     <React.Fragment>
@@ -643,28 +644,14 @@ export default function HomePage() {
                 </a>
               </div>
 
-            {/* AI Features Quick Access */}
+            {/* Voice Order Quick Access */}
             <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={() => handleAIFeatureClick('voice')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-3 sm:px-4 rounded-lg transition-colors text-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 sm:px-8 rounded-lg transition-colors text-base font-semibold shadow-lg"
               >
-                <Mic className="h-4 w-4" />
+                <Mic className="h-5 w-5" />
                 Voice Order
-              </button>
-              <button
-                onClick={() => handleAIFeatureClick('smart')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 sm:px-4 rounded-lg transition-colors text-sm"
-              >
-                <Brain className="h-4 w-4" />
-                Smart Pick
-              </button>
-              <button
-                onClick={() => handleAIFeatureClick('health')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-3 sm:px-4 rounded-lg transition-colors text-sm"
-              >
-                <Heart className="h-4 w-4" />
-                Healthy Options
               </button>
             </div>
               </div>
@@ -709,13 +696,13 @@ export default function HomePage() {
       </div>
       </section>
 
-      {/* AI Features Section - Only show for authenticated users */}
+      {/* Voice Order Section - Only show for authenticated users */}
       {isAuthenticated && (
         <section className="py-12 sm:py-16 bg-black">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-white">Smart Features</h2>
-              <p className="text-gray-300 max-w-2xl mx-auto text-sm sm:text-base">Experience the future of food ordering with our AI-powered features</p>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-white">Voice Order</h2>
+              <p className="text-gray-300 max-w-2xl mx-auto text-sm sm:text-base">Order food naturally with your voice. Just speak and we'll understand your order.</p>
           </div>
 
             {/* Quick Navigation */}
@@ -743,52 +730,20 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              {/* Voice Order */}
+            <div className="flex justify-center">
+              {/* Voice Order Card */}
               <div 
-                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="bg-gray-900 rounded-xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer max-w-md w-full"
                 onClick={() => handleAIFeatureClick('voice')}
               >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-900 rounded-full mb-3 sm:mb-4">
-                  <Mic className="h-6 w-6 sm:h-8 sm:w-8 text-red-400" />
+                <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-red-900 rounded-full mb-4 mx-auto">
+                  <Mic className="h-8 w-8 sm:h-10 sm:w-10 text-red-400" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Voice Order</h3>
-                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">Order food naturally with your voice. Just speak and we'll understand your preferences.</p>
-                <div className="flex items-center text-xs sm:text-sm text-gray-400">
-                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  AI-Powered
-                </div>
-              </div>
-
-              {/* Smart Pick */}
-              <div 
-                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-                onClick={() => handleAIFeatureClick('smart')}
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-900 rounded-full mb-3 sm:mb-4">
-                  <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Smart Pick</h3>
-                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">Get personalized recommendations based on your taste, weather, and mood.</p>
-                <div className="flex items-center text-xs sm:text-sm text-gray-400">
-                  <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  Personalized
-                </div>
-              </div>
-
-              {/* Healthy Options */}
-              <div 
-                className="bg-gray-900 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-                onClick={() => handleAIFeatureClick('health')}
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-900 rounded-full mb-3 sm:mb-4">
-                  <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Healthy Options</h3>
-                <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">Discover nutritious meals that match your dietary preferences and health goals.</p>
-                <div className="flex items-center text-xs sm:text-sm text-gray-400">
-                  <Leaf className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  Health-Focused
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 text-white text-center">Voice Order</h3>
+                <p className="text-gray-300 mb-4 text-sm sm:text-base text-center">Order food naturally with your voice. Just say what you want and we'll add it to your cart.</p>
+                <div className="flex items-center justify-center text-xs sm:text-sm text-gray-400">
+                  <Sparkles className="h-4 w-4 mr-1" />
+                  AI-Powered Voice Recognition
                 </div>
               </div>
             </div>
@@ -805,115 +760,88 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {/* Symposium Restaurant */}
-            <Link 
-              href="/restaurant/3"
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
-            >
-              <div className="relative h-40 sm:h-48">
-                  <Image
-                  src="/images/restaurants/symposium.jpg"
-                  alt="Symposium Restaurant"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white text-lg sm:text-2xl font-bold">Symposium Restaurant</h3>
-                  <p className="text-white/90 text-xs sm:text-sm">⭐ 4.7 (800+ reviews)</p>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <p className="text-gray-600 text-xs sm:text-sm">Andheri, Mumbai</p>
-                      <p className="text-gray-500 text-xs sm:text-sm mt-1">Open • 11:00 AM - 11:00 PM</p>
-                      <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Open Now</span>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Multi-Cuisine</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
+            {restaurants.map((restaurant) => {
+              // Map restaurant ID to route ID
+              const routeIdMap: Record<string, string> = {
+                'Symposium Restaurant': '3',
+                'Panache': '1',
+                'Cafe After Hours': '2'
+              };
+              const routeId = routeIdMap[restaurant.name] || restaurant._id;
+              
+              // Get image based on restaurant name
+              const getImage = (name: string) => {
+                if (name.includes('Symposium')) return '/images/restaurants/symposium.jpg';
+                if (name.includes('Panache')) return '/images/restaurants/panache.jpg';
+                if (name.includes('Cafe After Hours') || name.includes('Cafe')) return '/images/restaurants/cafe.jpg';
+                return restaurant.image || '/images/restaurants/cafe.jpg';
+              };
 
-            {/* Panache */}
-            <Link 
-              href="/restaurant/1"
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
-            >
-              <div className="relative h-40 sm:h-48">
+              const isClosed = !restaurant.isActive;
+
+              return (
+                <Link 
+                  key={restaurant._id}
+                  href={`/restaurant/${routeId}`}
+                  className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 cursor-pointer ${
+                    isClosed 
+                      ? 'opacity-50 grayscale hover:opacity-60' 
+                      : 'hover:shadow-xl'
+                  }`}
+                >
+                  <div className="relative h-40 sm:h-48">
                     <Image
-                  src="/images/restaurants/panache.jpg"
-                  alt="Panache"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white text-lg sm:text-2xl font-bold">Panache</h3>
-                  <p className="text-white/90 text-xs sm:text-sm">⭐ 4.5 (300+ reviews)</p>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <p className="text-gray-600 text-xs sm:text-sm">Downtown</p>
-                      <p className="text-gray-500 text-xs sm:text-sm mt-1">Open • 12:00 PM - 11:00 PM</p>
-                      <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Open Now</span>
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Multi-Cuisine</span>
+                      src={getImage(restaurant.name)}
+                      alt={restaurant.name}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-t ${isClosed ? 'from-black/80' : 'from-black/70'} to-transparent`} />
+                    {isClosed && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <div className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm sm:text-base">
+                          CLOSED
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-white text-lg sm:text-2xl font-bold">{restaurant.name}</h3>
+                      <p className="text-white/90 text-xs sm:text-sm">⭐ {restaurant.rating} ({Math.floor(restaurant.rating * 100)}+ reviews)</p>
+                    </div>
+                  </div>
+                  <div className="p-4 sm:p-6">
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <p className="text-gray-600 text-xs sm:text-sm">{restaurant.address.area}, {restaurant.address.city}</p>
+                          <p className={`text-xs sm:text-sm mt-1 ${isClosed ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                            {isClosed ? 'Closed' : 'Open'} • {restaurant.deliveryTime}
+                          </p>
+                          <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
+                            {isClosed ? (
+                              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-semibold">Currently Closed</span>
+                            ) : (
+                              <>
+                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Open Now</span>
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                  {restaurant.cuisine[0] || 'Multi-Cuisine'}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </Link>
-
-            {/* Cafe After Hours */}
-            <Link 
-              href="/restaurant/2"
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
-            >
-              <div className="relative h-40 sm:h-48">
-                <Image
-                  src="/images/restaurants/cafe.jpg"
-                  alt="Cafe After Hours"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white text-lg sm:text-2xl font-bold">Cafe After Hours</h3>
-                  <p className="text-white/90 text-xs sm:text-sm">⭐ 4.2 (400+ reviews)</p>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <p className="text-gray-600 text-xs sm:text-sm">City Center</p>
-                      <p className="text-gray-500 text-xs sm:text-sm mt-1">Open • 11:00 AM - 12:00 AM</p>
-                      <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Open Now</span>
-                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Late Night</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
+                </Link>
+              );
+            })}
           </div>
 
           <div className="text-center mt-8 sm:mt-12">
             <Link 
-              href="/restaurant" 
+              href="/menu" 
               className="inline-flex sm:inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-yellow-400 text-[#232323] px-6 py-4 sm:px-8 rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-lg text-base"
             >
               View All Restaurants
@@ -933,14 +861,10 @@ export default function HomePage() {
         />
       )}
 
-      {showVoiceAssistant && (
-        <VoiceAssistant
-          isOpen={showVoiceAssistant}
-          onClose={() => setShowVoiceAssistant(false)}
-          onOrderAction={(action) => {
-            console.log('Voice order action:', action);
-            setShowVoiceAssistant(false);
-          }}
+      {showVoiceOrder && (
+        <VoiceOrder
+          isOpen={showVoiceOrder}
+          onClose={() => setShowVoiceOrder(false)}
         />
       )}
 

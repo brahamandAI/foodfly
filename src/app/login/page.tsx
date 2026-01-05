@@ -173,8 +173,37 @@ function LoginPageContent() {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      setErrors({ submit: error.message || 'Authentication failed' });
-      toast.error(error.message || 'Authentication failed');
+      
+      // Extract error message - handle different error formats
+      let errorMessage = 'Authentication failed';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      // Make error messages more user-friendly
+      if (errorMessage.toLowerCase().includes('invalid email') || 
+          errorMessage.toLowerCase().includes('invalid password') ||
+          errorMessage.toLowerCase().includes('email or password')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      }
+      
+      setErrors({ submit: errorMessage });
+      toast.error(errorMessage, {
+        duration: 4000,
+        style: {
+          background: '#dc2626',
+          color: '#fff',
+          padding: '16px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -192,6 +221,14 @@ function LoginPageContent() {
       setErrors(prev => ({
         ...prev,
         [name]: ''
+      }));
+    }
+    
+    // Clear submit error when user starts typing in any field
+    if (errors.submit) {
+      setErrors(prev => ({
+        ...prev,
+        submit: ''
       }));
     }
   };
@@ -434,8 +471,13 @@ function LoginPageContent() {
 
             {/* Submit Error Display */}
             {errors.submit && (
-              <div className="bg-red-900/50 border-2 border-red-500 rounded-xl p-4 mb-4">
-                <p className="text-red-300 font-semibold text-center">{errors.submit}</p>
+              <div className="bg-red-900/70 border-2 border-red-500 rounded-xl p-4 mb-4 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-red-200 font-semibold text-sm flex-1">{errors.submit}</p>
+                </div>
               </div>
             )}
 

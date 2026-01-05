@@ -223,8 +223,8 @@ export default function OrderSuccessPage() {
   if (isLoading) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+        <div className="min-h-screen bg-[#232323] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
         </div>
       </AuthGuard>
     );
@@ -233,10 +233,12 @@ export default function OrderSuccessPage() {
   if (!order) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[#232323] flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h1>
-            <Link href="/" className="text-red-600 hover:text-red-700">
+            <h1 className="text-xl font-bold text-yellow-400 mb-4" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+              Order Not Found
+            </h1>
+            <Link href="/" className="text-yellow-400 hover:text-yellow-300 font-semibold text-sm" style={{ fontFamily: "'Satoshi', sans-serif" }}>
               Go to Home
             </Link>
           </div>
@@ -247,43 +249,49 @@ export default function OrderSuccessPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
-        {/* Success Header */}
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-          <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+      <div className="min-h-screen bg-[#232323]">
+        {/* Success Header - Black & Yellow Theme */}
+        <div className="bg-[#232323] border-b-4 border-yellow-400">
+          <div className="max-w-4xl mx-auto px-4 py-10 text-center">
             <div className="mb-6">
-              <CheckCircle className="h-20 w-20 mx-auto mb-4" />
-              <h1 className="text-4xl font-bold mb-2">Order Placed Successfully!</h1>
-              <p className="text-xl opacity-90">
+              <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
+              <h1 className="text-3xl font-bold text-green-500 mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                Order Placed Successfully!
+              </h1>
+              <p className="text-base text-gray-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                 Thank you for your order. We're preparing your delicious meal!
               </p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 max-w-md mx-auto">
-              <p className="text-lg font-semibold mb-2">Order Number</p>
-              <p className="text-2xl font-bold tracking-wider">{order.orderNumber}</p>
+            <div className="bg-gray-800 border-2 border-yellow-400 rounded-xl p-5 max-w-md mx-auto">
+              <p className="text-base font-semibold mb-2 text-yellow-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                Order Number
+              </p>
+              <p className="text-2xl font-black tracking-wider text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                {order.orderNumber}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Order Details */}
-            <div className="space-y-6">
-              {/* Delivery Information */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <MapPin className="h-6 w-6 text-red-600 mr-2" />
+            <div className="space-y-5">
+              {/* Delivery Information - Black & Yellow Theme */}
+              <div className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400 p-5">
+                <h2 className="text-lg font-bold text-yellow-400 mb-4 flex items-center" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  <MapPin className="h-5 w-5 text-yellow-400 mr-2" />
                   Delivery Information
                 </h2>
                 
-                <div className="space-y-3">
+                <div className="space-y-2.5" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                   <div>
-                    <p className="font-medium text-gray-900">{order.deliveryAddress.name}</p>
-                    <p className="text-sm text-gray-600">{order.deliveryAddress.phone}</p>
+                    <p className="font-semibold text-yellow-400 text-base">{order.deliveryAddress.name}</p>
+                    <p className="text-sm text-yellow-300/80">{order.deliveryAddress.phone}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-yellow-300/80 leading-relaxed">
                       {order.deliveryAddress.street}, {order.deliveryAddress.city}, 
                       {order.deliveryAddress.state} - {order.deliveryAddress.pincode}
                     </p>
@@ -291,71 +299,77 @@ export default function OrderSuccessPage() {
                 </div>
               </div>
 
-              {/* Restaurant Information */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <Phone className="h-6 w-6 text-red-600 mr-2" />
+              {/* Restaurant Information - Black & Yellow Theme */}
+              <div className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400 p-5">
+                <h2 className="text-lg font-bold text-yellow-400 mb-4 flex items-center" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  <Phone className="h-5 w-5 text-yellow-400 mr-2" />
                   Restaurant Details
                 </h2>
                 
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-900">{order.restaurant.name}</p>
-                  <p className="text-sm text-gray-600">{order.restaurant.phone}</p>
-                  <p className="text-sm text-gray-600">
+                <div className="space-y-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  <p className="font-semibold text-yellow-400 text-base">{order.restaurant.name}</p>
+                  <p className="text-sm text-yellow-300/80">{order.restaurant.phone}</p>
+                  <p className="text-sm text-yellow-300/80">
                     {order.restaurant.address.street}, {order.restaurant.address.area}, {order.restaurant.address.city}
                   </p>
                 </div>
               </div>
 
-              {/* Payment Information */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <Receipt className="h-6 w-6 text-red-600 mr-2" />
+              {/* Payment Information - Black & Yellow Theme */}
+              <div className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400 p-5">
+                <h2 className="text-lg font-bold text-yellow-400 mb-4 flex items-center" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  <Receipt className="h-5 w-5 text-yellow-400 mr-2" />
                   Payment Details
                 </h2>
                 
-                <div className="space-y-2">
+                <div className="space-y-2 text-base" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Method</span>
-                    <span className="font-medium capitalize">{order.paymentMethod.replace('_', ' ')}</span>
+                    <span className="text-yellow-300/80">Payment Method</span>
+                    <span className="font-semibold text-yellow-400 capitalize">{order.paymentMethod.replace('_', ' ')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Status</span>
-                    <span className={`font-medium capitalize ${
-                      order.paymentStatus === 'completed' ? 'text-green-600' : 'text-yellow-600'
+                    <span className="text-yellow-300/80">Payment Status</span>
+                    <span className={`font-semibold capitalize ${
+                      order.paymentStatus === 'completed' ? 'text-green-400' : 'text-yellow-400'
                     }`}>
                       {order.paymentStatus}
                     </span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                    <span>Total Amount</span>
-                    <span className="text-red-600">₹{order.totalAmount}</span>
+                  <div className="flex justify-between text-lg font-black pt-2 border-t-2 border-yellow-400/20">
+                    <span className="text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                      Total Amount
+                    </span>
+                    <span className="text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                      ₹{order.totalAmount}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Order Summary & Status */}
-            <div className="space-y-6">
-              {/* Delivery Status */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <Clock className="h-6 w-6 text-red-600 mr-2" />
+            <div className="space-y-5">
+              {/* Delivery Status - Black & Yellow Theme */}
+              <div className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400 p-5">
+                <h2 className="text-lg font-bold text-yellow-400 mb-4 flex items-center" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  <Clock className="h-5 w-5 text-yellow-400 mr-2" />
                   Delivery Status
                 </h2>
                 
                 <div className="text-center">
-                  <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full inline-block font-semibold mb-4">
+                  <div className="bg-yellow-400/20 text-yellow-400 border-2 border-yellow-400 px-4 py-2 rounded-full inline-block font-bold text-base mb-4" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                     Order Confirmed
                   </div>
                   
-                  <p className="text-2xl font-bold text-gray-900 mb-2">
+                  <p className="text-2xl font-black text-yellow-400 mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                     {getEstimatedDeliveryTime()}
                   </p>
-                  <p className="text-gray-600 mb-4">Estimated delivery time</p>
+                  <p className="text-sm text-yellow-300/80 mb-4" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                    Estimated delivery time
+                  </p>
                   
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800">
+                  <div className="bg-yellow-400/10 border-2 border-yellow-400/30 rounded-lg p-3">
+                    <p className="text-sm text-yellow-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                       🍳 Your order is being prepared by our chef. 
                       You'll receive updates as your order progresses!
                     </p>
@@ -363,18 +377,22 @@ export default function OrderSuccessPage() {
                 </div>
               </div>
 
-              {/* Order Items */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Items</h2>
+              {/* Order Items - Black & Yellow Theme */}
+              <div className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400 p-5">
+                <h2 className="text-lg font-bold text-yellow-400 mb-4" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  Order Items
+                </h2>
                 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {order.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                    <div key={index} className="flex justify-between items-center py-2 border-b-2 border-yellow-400/20 last:border-b-0">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.menuItem.name}</p>
-                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                        <p className="font-semibold text-yellow-400 text-base" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                          {item.menuItem.name}
+                        </p>
+                        <p className="text-sm text-yellow-300/80">Qty: {item.quantity}</p>
                       </div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-bold text-yellow-400 text-base" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                         ₹{item.menuItem.price * item.quantity}
                       </p>
                     </div>
@@ -382,32 +400,37 @@ export default function OrderSuccessPage() {
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">What's Next?</h2>
+              {/* Quick Actions - Black & Yellow Theme */}
+              <div className="bg-gray-800 rounded-xl shadow-md border-2 border-yellow-400 p-5">
+                <h2 className="text-lg font-bold text-yellow-400 mb-4" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  What's Next?
+                </h2>
                 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <Link
                     href="/orders"
-                    className="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-yellow-400 text-[#232323] py-2.5 px-4 rounded-lg hover:bg-yellow-300 transition-colors flex items-center justify-center space-x-2 font-bold text-base border-2 border-yellow-400"
+                    style={{ fontFamily: "'Satoshi', sans-serif" }}
                   >
-                    <Receipt className="h-5 w-5" />
+                    <Receipt className="h-4 w-4" />
                     <span>Track Your Order</span>
-                    <ArrowRight className="h-5 w-5" />
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                   
                   <Link
                     href="/menu"
-                    className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-gray-700 text-yellow-400 py-2.5 px-4 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2 font-semibold text-base border-2 border-yellow-400/30"
+                    style={{ fontFamily: "'Satoshi', sans-serif" }}
                   >
                     <span>Order More Food</span>
                   </Link>
                   
                   <Link
                     href="/"
-                    className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-gray-700 text-yellow-400 py-2.5 px-4 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2 font-semibold text-base border-2 border-yellow-400/30"
+                    style={{ fontFamily: "'Satoshi', sans-serif" }}
                   >
-                    <Home className="h-5 w-5" />
+                    <Home className="h-4 w-4" />
                     <span>Back to Home</span>
                   </Link>
                 </div>
@@ -415,10 +438,10 @@ export default function OrderSuccessPage() {
             </div>
           </div>
 
-          {/* Auto Redirect Notice */}
-          <div className="mt-8 text-center">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 inline-block">
-              <p className="text-sm text-blue-800">
+          {/* Auto Redirect Notice - Black & Yellow Theme */}
+          <div className="mt-6 text-center">
+            <div className="bg-yellow-400/10 border-2 border-yellow-400/30 rounded-lg p-3 inline-block">
+              <p className="text-sm text-yellow-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                 You'll be automatically redirected to order tracking in {countdown} seconds
               </p>
             </div>

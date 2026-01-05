@@ -89,12 +89,28 @@ export default function ClientLayout({
     }
   }, []);
 
+  // Exclude admin routes from showing Header/Footer
+  const isAdminRoute = pathname?.startsWith('/restaurant-admin') || 
+                       pathname?.startsWith('/admin') || 
+                       pathname?.startsWith('/delivery') ||
+                       pathname?.startsWith('/chef');
+
   // Show loading spinner for protected routes while checking auth
   if (isLoading && PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
       </div>
+    );
+  }
+
+  // For admin routes, render without Header/Footer
+  if (isAdminRoute) {
+    return (
+      <>
+        {children}
+        <NotificationSystem />
+      </>
     );
   }
 

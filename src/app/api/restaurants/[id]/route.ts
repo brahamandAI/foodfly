@@ -20,11 +20,15 @@ export async function GET(
         deliveryTime: '30-45 mins',
         deliveryFee: 40,
         image: '/images/restaurants/cafe.jpg',
-        location: 'Downtown',
+        location: 'Sector 13, Dwarka, New Delhi',
         isOpen: true,
         description: 'Authentic Indian cuisine with traditional flavors',
-        address: '123 Main Street, Downtown',
+        address: 'Ground Floor, Soul City Mall, Sector 13, Dwarka, New Delhi, Delhi, 110078',
         phone: '+1234567890',
+        coordinates: {
+          latitude: 28.5891,
+          longitude: 77.0467
+        },
         menu: [
           {
             id: 'chicken-biryani',
@@ -60,11 +64,15 @@ export async function GET(
         deliveryTime: '25-35 mins',
         deliveryFee: 35,
         image: '/images/restaurants/panache.jpg',
-        location: 'City Center',
+        location: 'Sector 17, Dwarka, New Delhi',
         isOpen: true,
         description: 'Authentic Italian pizzas and pasta',
-        address: '456 Pizza Street, City Center',
+        address: '17, Pocket A St, Pocket A, Sector 17 Dwarka, Kakrola, New Delhi, Delhi, 110078',
         phone: '+1234567891',
+        coordinates: {
+          latitude: 28.5967,
+          longitude: 77.0329
+        },
         menu: [
           {
             id: 'margherita-pizza',
@@ -92,11 +100,15 @@ export async function GET(
         deliveryTime: '30-40 mins',
         deliveryFee: 50,
         image: '/images/restaurants/symposium.jpg',
-        location: 'Andheri, Mumbai',
+        location: 'Sector 12, Dwarka, New Delhi',
         isOpen: true,
         description: 'Multi-cuisine restaurant with traditional and modern dishes',
-        address: '789 Food Street, Andheri, Mumbai',
+        address: 'First floor, City Centre Mall, 101, Sector 12 Dwarka, New Delhi, Delhi 110078',
         phone: '+1234567892',
+        coordinates: {
+          latitude: 28.5923,
+          longitude: 77.0406
+        },
         menu: [
           {
             id: 'butter-chicken',

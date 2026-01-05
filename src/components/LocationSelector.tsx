@@ -153,8 +153,8 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
         setLoadingGPS(false);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
+        enableHighAccuracy: false, // Reduced accuracy requirement for faster response
+        timeout: 15000, // Increased timeout
         maximumAge: 300000 // 5 minutes
       }
     );
@@ -210,30 +210,84 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
     if (!validateAddress()) return;
 
     try {
-      // Use database address API exclusively
-      const { addressService } = require('@/lib/api');
+      const token = localStorage.getItem('token');
       
-      await addressService.addAddress({
-        label: formData.label as 'Home' | 'Work' | 'Other',
-        name: formData.name,
-        phone: formData.phone,
-        street: formData.street,
-        landmark: formData.landmark,
-        city: formData.city,
-        state: formData.state,
-        pincode: formData.pincode,
-        isDefault: addresses.length === 0 // First address is default
+      if (!token) {
+        toast.error('Please login to save addresses');
+        return;
+      }
+
+      // Use MongoDB API directly
+      const response = await fetch('/api/users/addresses', {
+        method: editingAddress ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editingAddress ? {
+          addressId: editingAddress._id,
+          label: formData.label,
+          name: formData.name,
+          phone: formData.phone,
+          street: formData.street,
+          landmark: formData.landmark || '',
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          coordinates: formData.coordinates || currentLocation ? {
+            latitude: formData.coordinates?.lat || currentLocation?.lat || 0,
+            longitude: formData.coordinates?.lng || currentLocation?.lng || 0
+          } : undefined,
+          isDefault: formData.isDefault || addresses.length === 0
+        } : {
+          label: formData.label,
+          name: formData.name,
+          phone: formData.phone,
+          street: formData.street,
+          landmark: formData.landmark || '',
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          coordinates: formData.coordinates || currentLocation ? {
+            latitude: formData.coordinates?.lat || currentLocation?.lat || 0,
+            longitude: formData.coordinates?.lng || currentLocation?.lng || 0
+          } : undefined,
+          isDefault: addresses.length === 0 // First address is default
+        })
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save address');
+      }
+
+      const data = await response.json();
+      
+      // Update localStorage backup
+      const { userStorage } = await import('@/lib/api');
+      if (data.address) {
+        const addresses = userStorage.getUserAddresses();
+        if (editingAddress) {
+          const index = addresses.findIndex((a: Address) => a._id === editingAddress._id);
+          if (index !== -1) {
+            addresses[index] = data.address;
+          }
+        } else {
+          addresses.push(data.address);
+        }
+        userStorage.setUserAddresses(addresses);
+      }
       
       // Reload addresses from database
       await loadSavedAddresses();
       
-      // Trigger address update event
+      // Trigger address update event for other components
       window.dispatchEvent(new Event('addressesUpdated'));
       
       setShowAddForm(false);
+      setEditingAddress(null);
       resetForm();
-      toast.success('Address saved successfully!');
+      toast.success(editingAddress ? 'Address updated successfully!' : 'Address saved successfully!');
       
     } catch (error) {
       console.error('Error saving address:', error);
@@ -243,16 +297,46 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
   };
 
   const deleteAddress = async (addressId: string) => {
+    if (!addressId) {
+      toast.error('Address ID is required');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this address?')) {
+      return;
+    }
+
     try {
-      // Use database address API exclusively
-      const { addressService } = require('@/lib/api');
+      const token = localStorage.getItem('token');
       
-      await addressService.deleteAddress(addressId);
+      if (!token) {
+        toast.error('Please login to delete addresses');
+        return;
+      }
+
+      // Use MongoDB API directly
+      const response = await fetch(`/api/users/addresses?addressId=${addressId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete address');
+      }
+
+      // Update localStorage backup
+      const { userStorage } = await import('@/lib/api');
+      const addresses = userStorage.getUserAddresses();
+      const filtered = addresses.filter((a: Address) => a._id !== addressId);
+      userStorage.setUserAddresses(filtered);
       
       // Reload addresses from database
       await loadSavedAddresses();
       
-      // Trigger address update event
+      // Trigger address update event for other components
       window.dispatchEvent(new Event('addressesUpdated'));
       
       toast.success('Address deleted successfully!');
@@ -525,7 +609,10 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
               {/* Action Buttons */}
               <div className="flex space-x-3 pt-6 border-t border-gray-200">
                 <button
-                  onClick={resetForm}
+                  onClick={() => {
+                    resetForm();
+                    setShowAddForm(false);
+                  }}
                   className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all duration-200"
                 >
                   Cancel
@@ -543,7 +630,10 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
             <div className="space-y-4">
               {/* Add New Address Button */}
               <button
-                onClick={() => setShowAddForm(true)}
+                onClick={() => {
+                  resetForm();
+                  setShowAddForm(true);
+                }}
                 className="w-full flex items-center justify-center space-x-3 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200 text-gray-700"
               >
                 <Plus className="h-5 w-5" />

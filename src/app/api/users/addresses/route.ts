@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     
     const user = verifyToken(request);
     
-    const dbUser = await User.findById(user._id).select('addresses');
+    const dbUser = await (User as any).findById(user._id).select('addresses');
     if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Direct mapping - no transformation needed since model matches frontend
-    const addresses = (dbUser.addresses || []).map(addr => ({
+    const addresses = (dbUser.addresses || []).map((addr: any) => ({
       _id: addr._id,
       label: addr.label,
       name: addr.name,
@@ -31,6 +31,10 @@ export async function GET(request: NextRequest) {
       city: addr.city,
       state: addr.state,
       pincode: addr.pincode,
+      coordinates: addr.coordinates ? {
+        latitude: addr.coordinates.latitude,
+        longitude: addr.coordinates.longitude
+      } : undefined,
       isDefault: addr.isDefault,
       createdAt: addr.createdAt
     }));
@@ -61,7 +65,7 @@ export async function POST(request: NextRequest) {
     
     const user = verifyToken(request);
     
-    const { label, name, phone, street, landmark, city, state, pincode, isDefault } = await request.json();
+    const { label, name, phone, street, landmark, city, state, pincode, isDefault, coordinates } = await request.json();
 
     // Validate required fields
     if (!label || !name || !phone || !street || !city || !state || !pincode) {
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const dbUser = await User.findById(user._id);
+    const dbUser = await (User as any).findById(user._id);
     if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -89,13 +93,48 @@ export async function POST(request: NextRequest) {
 
     // If setting as default, make all other addresses non-default
     if (isDefault) {
-      dbUser.addresses.forEach(addr => {
+      dbUser.addresses.forEach((addr: any) => {
         addr.isDefault = false;
       });
     }
 
+    // Geocode address if coordinates not provided
+    let finalCoordinates = coordinates;
+    if (!finalCoordinates || !finalCoordinates.latitude || !finalCoordinates.longitude) {
+      try {
+        const { addressToCoordinates } = await import('@/lib/addressToCoordinates');
+        const fullAddress = `${street}, ${city}, ${state}, ${pincode}, India`;
+        const geocodeResult = await addressToCoordinates(fullAddress);
+        finalCoordinates = {
+          latitude: geocodeResult.latitude,
+          longitude: geocodeResult.longitude
+        };
+        console.log('✅ Geocoded address:', fullAddress, '→', finalCoordinates);
+      } catch (geocodeError) {
+        console.error('⚠️ Geocoding failed, saving address without coordinates:', geocodeError);
+        // Continue without coordinates - address can still be saved
+      }
+    }
+
+    // Validate coordinates if provided
+    if (finalCoordinates) {
+      if (typeof finalCoordinates.latitude !== 'number' || typeof finalCoordinates.longitude !== 'number') {
+        return NextResponse.json(
+          { error: 'Invalid coordinates format' },
+          { status: 400 }
+        );
+      }
+      if (finalCoordinates.latitude < -90 || finalCoordinates.latitude > 90 ||
+          finalCoordinates.longitude < -180 || finalCoordinates.longitude > 180) {
+        return NextResponse.json(
+          { error: 'Coordinates out of valid range' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create new address - direct mapping since model matches frontend
-    const newAddress = {
+    const newAddress: any = {
       label: label.trim(),
       name: name.trim(),
       phone: phone.trim(),
@@ -106,6 +145,14 @@ export async function POST(request: NextRequest) {
       pincode: pincode.trim(),
       isDefault: !!isDefault || dbUser.addresses.length === 0 // First address is default
     };
+
+    // Add coordinates if available
+    if (finalCoordinates) {
+      newAddress.coordinates = {
+        latitude: finalCoordinates.latitude,
+        longitude: finalCoordinates.longitude
+      };
+    }
 
     dbUser.addresses.push(newAddress);
     await dbUser.save();
@@ -125,6 +172,10 @@ export async function POST(request: NextRequest) {
         city: savedAddress.city,
         state: savedAddress.state,
         pincode: savedAddress.pincode,
+        coordinates: savedAddress.coordinates ? {
+          latitude: savedAddress.coordinates.latitude,
+          longitude: savedAddress.coordinates.longitude
+        } : undefined,
         isDefault: savedAddress.isDefault,
         createdAt: savedAddress.createdAt
       }
@@ -151,7 +202,7 @@ export async function PUT(request: NextRequest) {
     
     const user = verifyToken(request);
     
-    const { addressId, label, name, phone, street, landmark, city, state, pincode, isDefault } = await request.json();
+    const { addressId, label, name, phone, street, landmark, city, state, pincode, isDefault, coordinates } = await request.json();
 
     if (!addressId) {
       return NextResponse.json(
@@ -160,7 +211,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const dbUser = await User.findById(user._id);
+    const dbUser = await (User as any).findById(user._id);
     if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -169,7 +220,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Find the address to update
-    const addressIndex = dbUser.addresses.findIndex(addr => addr._id.toString() === addressId);
+    const addressIndex = dbUser.addresses.findIndex((addr: any) => addr._id.toString() === addressId);
     if (addressIndex === -1) {
       return NextResponse.json(
         { error: 'Address not found' },
@@ -179,13 +230,57 @@ export async function PUT(request: NextRequest) {
 
     // If setting as default, make all other addresses non-default
     if (isDefault) {
-      dbUser.addresses.forEach(addr => {
+      dbUser.addresses.forEach((addr: any) => {
         addr.isDefault = false;
       });
     }
 
+    // Geocode address if coordinates not provided and address fields changed
+    let finalCoordinates = coordinates;
+    const addressChanged = street || city || state || pincode;
+    if (addressChanged && (!finalCoordinates || !finalCoordinates.latitude || !finalCoordinates.longitude)) {
+      try {
+        const { addressToCoordinates } = await import('@/lib/addressToCoordinates');
+        const finalStreet = street || dbUser.addresses[addressIndex].street;
+        const finalCity = city || dbUser.addresses[addressIndex].city;
+        const finalState = state || dbUser.addresses[addressIndex].state;
+        const finalPincode = pincode || dbUser.addresses[addressIndex].pincode;
+        const fullAddress = `${finalStreet}, ${finalCity}, ${finalState}, ${finalPincode}, India`;
+        const geocodeResult = await addressToCoordinates(fullAddress);
+        finalCoordinates = {
+          latitude: geocodeResult.latitude,
+          longitude: geocodeResult.longitude
+        };
+        console.log('✅ Geocoded updated address:', fullAddress, '→', finalCoordinates);
+      } catch (geocodeError) {
+        console.error('⚠️ Geocoding failed for update, keeping existing coordinates:', geocodeError);
+        // Keep existing coordinates if geocoding fails
+        finalCoordinates = dbUser.addresses[addressIndex].coordinates;
+      }
+    } else if (!finalCoordinates) {
+      // Keep existing coordinates if not provided and address didn't change
+      finalCoordinates = dbUser.addresses[addressIndex].coordinates;
+    }
+
+    // Validate coordinates if provided
+    if (finalCoordinates) {
+      if (typeof finalCoordinates.latitude !== 'number' || typeof finalCoordinates.longitude !== 'number') {
+        return NextResponse.json(
+          { error: 'Invalid coordinates format' },
+          { status: 400 }
+        );
+      }
+      if (finalCoordinates.latitude < -90 || finalCoordinates.latitude > 90 ||
+          finalCoordinates.longitude < -180 || finalCoordinates.longitude > 180) {
+        return NextResponse.json(
+          { error: 'Coordinates out of valid range' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update the address - direct field mapping
-    const updatedAddress = {
+    const updatedAddress: any = {
       ...dbUser.addresses[addressIndex].toObject(),
       ...(label && { label: label.trim() }),
       ...(name && { name: name.trim() }),
@@ -197,6 +292,14 @@ export async function PUT(request: NextRequest) {
       ...(pincode && { pincode: pincode.trim() }),
       ...(isDefault !== undefined && { isDefault })
     };
+
+    // Update coordinates if available
+    if (finalCoordinates) {
+      updatedAddress.coordinates = {
+        latitude: finalCoordinates.latitude,
+        longitude: finalCoordinates.longitude
+      };
+    }
 
     dbUser.addresses[addressIndex] = updatedAddress;
     await dbUser.save();
@@ -213,6 +316,10 @@ export async function PUT(request: NextRequest) {
         city: updatedAddress.city,
         state: updatedAddress.state,
         pincode: updatedAddress.pincode,
+        coordinates: updatedAddress.coordinates ? {
+          latitude: updatedAddress.coordinates.latitude,
+          longitude: updatedAddress.coordinates.longitude
+        } : undefined,
         isDefault: updatedAddress.isDefault
       }
     });
@@ -248,7 +355,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const dbUser = await User.findById(user._id);
+    const dbUser = await (User as any).findById(user._id);
     if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -257,7 +364,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Find and remove the address
-    const addressIndex = dbUser.addresses.findIndex(addr => addr._id.toString() === addressId);
+    const addressIndex = dbUser.addresses.findIndex((addr: any) => addr._id.toString() === addressId);
     if (addressIndex === -1) {
       return NextResponse.json(
         { error: 'Address not found' },

@@ -1,678 +1,355 @@
-"use client";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
-import { adminApi } from '@/lib/api';
+import Image from 'next/image';
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
+  Store, 
   ShoppingBag, 
-  DollarSign, 
-  Star, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw,
-  Activity,
-  BarChart3,
-  PieChart,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  Eye,
-  UserCheck,
-  Package,
-  Target
+  Users, 
+  BarChart3, 
+  Settings, 
+  LogOut, 
+  Home,
+  DollarSign,
+  ChefHat,
+  Clock
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface DashboardStats {
-  totalOrders: number;
-  totalRevenue: number;
-  totalUsers: number;
   totalRestaurants: number;
-  pendingOrders: number;
-  deliveredOrders: number;
+  activeRestaurants: number;
+  totalOrders: number;
+  todayOrders: number;
+  totalRevenue: number;
+  todayRevenue: number;
+  totalUsers: number;
+  activeUsers: number;
   cancelledOrders: number;
-  averageRating: number;
-  todaysOrders: number;
-  todaysRevenue: number;
-  monthlyOrders: number;
-  monthlyRevenue: number;
-  completionRate: number;
-  cancellationRate: number;
-  orderGrowth: number;
-  revenueGrowth: number;
-  averageOrderValue: number;
-  paymentMethods: {
-    cod: number;
-    online: number;
-    total: number;
-  };
-  ordersByStatus: Record<string, number>;
-  systemHealth: {
-    averageDeliveryTime: number;
-    customerSatisfaction: number;
-    platformUptime: number;
-    activeRestaurants: number;
-  };
-  insights: {
-    topPaymentMethod: string;
-    dailyAverageOrders: number;
-    peakOrderDay: string;
-    popularRestaurant: string;
-  };
-  // Delivery Partner Stats
-  totalDeliveryPartners: number;
-  activeDeliveryPartners: number;
-  avgDeliveryTime: number;
-  deliveryPartnerRating: number;
-  // Chef Stats
+  failedOrders: number;
+  pendingChefs: number;
   totalChefs: number;
-  activeChefs: number;
-  avgChefRating: number;
-  totalChefBookings: number;
 }
 
-interface RecentOrder {
-  _id: string;
-  orderNumber: string;
-  customerName: string;
-  restaurant: {
-    name: string;
-  };
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-}
-
-export default function AdminDashboard() {
+export default function SuperAdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [adminUser, setAdminUser] = useState<any>(null);
 
   useEffect(() => {
-    fetchDashboardData();
+    // Get admin user from localStorage
+    const adminData = localStorage.getItem('adminUser');
+    if (adminData) {
+      setAdminUser(JSON.parse(adminData));
+    }
+
+    fetchDashboardStats();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardStats = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      const [analyticsResponse, ordersResponse] = await Promise.all([
-        adminApi.getDashboardStats(),
-        adminApi.getAllOrders()
-      ]);
-
-      console.log('Analytics response:', analyticsResponse); // Debug log
-      console.log('Orders response:', ordersResponse); // Debug log
-
-      setStats(analyticsResponse);
-      
-      // Map orders to include proper customer name and restaurant name
-      const mappedOrders = ordersResponse.slice(0, 10).map((order: any) => {
-        console.log('Processing order:', order); // Debug log
-        
-        return {
-          _id: order._id,
-          orderNumber: order.orderNumber || `ORD${order._id?.slice(-8)?.toUpperCase()}`,
-          customerName: order.customerName || order.deliveryAddress?.name || order.customerEmail || 'Unknown Customer',
-          restaurant: {
-            name: order.restaurant?.name || order.restaurantName || 'Unknown Restaurant'
-          },
-          totalAmount: order.totalAmount || 0,
-          status: order.status || 'pending',
-          createdAt: order.createdAt || order.placedAt || new Date().toISOString()
-        };
-      });
-      
-      console.log('Mapped orders:', mappedOrders); // Debug log
-      setRecentOrders(mappedOrders);
-      
-      // If no orders from API, try to get some sample data for testing
-      if (!ordersResponse || ordersResponse.length === 0) {
-        console.log('No orders from API, using fallback data');
-        const fallbackOrders = [
-          {
-            _id: '1',
-            orderNumber: 'ORD12345678',
-            customerName: 'John Doe',
-            restaurant: { name: 'Sample Restaurant' },
-            totalAmount: 450,
-            status: 'delivered',
-            createdAt: new Date().toISOString()
-          },
-          {
-            _id: '2',
-            orderNumber: 'ORD87654321',
-            customerName: 'Jane Smith',
-            restaurant: { name: 'Test Restaurant' },
-            totalAmount: 320,
-            status: 'pending',
-            createdAt: new Date(Date.now() - 3600000).toISOString()
-          }
-        ];
-        setRecentOrders(fallbackOrders);
+      const response = await fetch('/api/admin/analytics');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
       }
-    } catch (error: any) {
-      console.error('Failed to fetch dashboard data:', error);
-      setError('Failed to load dashboard data');
-      toast.error('Failed to load dashboard data');
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    toast.success('Logged out successfully');
+    router.push('/admin/login');
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="text-gray-600 text-lg">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-2xl shadow-xl border border-red-100">
-          <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Dashboard</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={fetchDashboardData}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
-          >
-            Try Again
-          </button>
+      <div className="h-screen flex items-center justify-center bg-[#232323]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+          <p className="text-white">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        
+    <div className="h-screen flex bg-[#232323] overflow-hidden" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-800">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images/logo.png"
+              alt="FoodFly"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <div>
+              <h1 className="text-yellow-400 font-black text-lg">FoodFly</h1>
+              <p className="text-gray-400 text-xs">Super Admin</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 px-4 py-3 bg-gray-800 text-white rounded-lg font-semibold"
+          >
+            <BarChart3 className="w-5 h-5" />
+            <span>Dashboard</span>
+          </Link>
+          
+          <Link
+            href="/admin/restaurants"
+            className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+          >
+            <Store className="w-5 h-5" />
+            <span>Restaurants</span>
+          </Link>
+          
+          <Link
+            href="/admin/orders"
+            className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            <span>Orders</span>
+          </Link>
+          
+          <Link
+            href="/admin/users"
+            className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+          >
+            <Users className="w-5 h-5" />
+            <span>Users</span>
+          </Link>
+
+          <Link
+            href="/admin/chefs"
+            className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors relative"
+          >
+            <ChefHat className="w-5 h-5" />
+            <span>Chefs</span>
+            {stats && stats.pendingChefs > 0 && (
+              <span className="ml-auto bg-yellow-400 text-[#232323] text-xs font-bold px-2 py-0.5 rounded-full">
+                {stats.pendingChefs}
+              </span>
+            )}
+          </Link>
+          
+          <Link
+            href="/admin/settings"
+            className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+          >
+            <Settings className="w-5 h-5" />
+            <span>Settings</span>
+          </Link>
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-800 space-y-1">
+          <Link
+            href="/"
+            className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+          >
+            <Home className="w-5 h-5" />
+            <span>Home</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-red-400 rounded-lg transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="text-center py-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl mb-4">
-            <BarChart3 className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            FoodFly Admin Dashboard
-          </h1>
-          <p className="text-xl text-gray-600">Comprehensive food delivery platform analytics</p>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Revenue */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-emerald-100 rounded-xl">
-                <DollarSign className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm ${
-                stats?.revenueGrowth >= 0 
-                  ? 'bg-emerald-100 text-emerald-700' 
-                  : 'bg-red-100 text-red-700'
-              }`}>
-                {stats?.revenueGrowth >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4" />
-                )}
-                <span>{Math.abs(stats?.revenueGrowth || 0)}%</span>
-              </div>
-            </div>
+        <header className="bg-gray-900 border-b border-gray-800 p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-3xl font-bold text-gray-900">₹{(stats?.totalRevenue || 0).toLocaleString()}</p>
-              <p className="text-gray-600 mt-1">Total Revenue</p>
+              <h1 className="text-2xl font-black text-white">Super Admin Dashboard</h1>
+              <p className="text-gray-400 text-sm mt-1">
+                Welcome back, {adminUser?.name || 'Admin'}
+              </p>
             </div>
           </div>
+        </header>
 
-          {/* Total Orders */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <ShoppingBag className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm ${
-                stats?.orderGrowth >= 0 
-                  ? 'bg-emerald-100 text-emerald-700' 
-                  : 'bg-red-100 text-red-700'
-              }`}>
-                {stats?.orderGrowth >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4" />
-                )}
-                <span>{Math.abs(stats?.orderGrowth || 0)}%</span>
-              </div>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-gray-900">{(stats?.totalOrders || 0).toLocaleString()}</p>
-              <p className="text-gray-600 mt-1">Total Orders</p>
-            </div>
-          </div>
-
-          {/* Total Users */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-              <Link href="/admin/users" className="flex items-center space-x-1 px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors">
-                <Eye className="h-4 w-4" />
-                <span>View</span>
-              </Link>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-gray-900">{(stats?.totalUsers || 0).toLocaleString()}</p>
-              <p className="text-gray-600 mt-1">Active Users</p>
-            </div>
-          </div>
-
-          {/* Average Rating */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-amber-100 rounded-xl">
-                <Star className="h-6 w-6 text-amber-600" />
-              </div>
-              <div className="flex items-center space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < Math.floor(stats?.averageRating || 0)
-                        ? 'text-amber-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-gray-900">{stats?.averageRating || 0}</p>
-              <p className="text-gray-600 mt-1">Customer Rating</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Today's Performance */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-indigo-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Today's Performance</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Orders</span>
-                <span className="text-2xl font-bold text-gray-900">{stats?.todaysOrders || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Revenue</span>
-                <span className="text-2xl font-bold text-gray-900">₹{(stats?.todaysRevenue || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Avg. Order Value</span>
-                <span className="text-xl font-semibold text-gray-900">₹{stats?.averageOrderValue || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Target className="h-5 w-5 text-emerald-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Performance Metrics</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Completion Rate</span>
-                <span className="text-2xl font-bold text-emerald-600">{stats?.completionRate || 0}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Cancellation Rate</span>
-                <span className="text-2xl font-bold text-red-500">{stats?.cancellationRate || 0}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Active Restaurants</span>
-                <span className="text-xl font-semibold text-gray-900">{stats?.totalRestaurants || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Activity className="h-5 w-5 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Business Insights</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Peak Day</span>
-                <span className="text-lg font-semibold text-gray-900">{stats?.insights?.peakOrderDay || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Top Payment</span>
-                <span className="text-lg font-semibold text-gray-900 uppercase">{stats?.insights?.topPaymentMethod || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Daily Average</span>
-                <span className="text-lg font-semibold text-gray-900">{stats?.insights?.dailyAverageOrders || 0} orders</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Order Status Distribution */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <PieChart className="h-6 w-6 text-blue-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">Order Status Overview</h2>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-              <div className="p-3 bg-yellow-100 rounded-full w-fit mx-auto mb-3">
-                <Clock className="h-6 w-6 text-yellow-600" />
-              </div>
-              <p className="text-2xl font-bold text-yellow-700">{stats?.pendingOrders || 0}</p>
-              <p className="text-yellow-600 font-medium">Pending</p>
-            </div>
-            
-            <div className="text-center p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-              <div className="p-3 bg-emerald-100 rounded-full w-fit mx-auto mb-3">
-                <CheckCircle className="h-6 w-6 text-emerald-600" />
-              </div>
-              <p className="text-2xl font-bold text-emerald-700">{stats?.deliveredOrders || 0}</p>
-              <p className="text-emerald-600 font-medium">Delivered</p>
-            </div>
-            
-            <div className="text-center p-4 bg-red-50 rounded-xl border border-red-200">
-              <div className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-3">
-                <XCircle className="h-6 w-6 text-red-600" />
-              </div>
-              <p className="text-2xl font-bold text-red-700">{stats?.cancelledOrders || 0}</p>
-              <p className="text-red-600 font-medium">Cancelled</p>
-            </div>
-            
-            <div className="text-center p-4 bg-indigo-50 rounded-xl border border-indigo-200">
-              <div className="p-3 bg-indigo-100 rounded-full w-fit mx-auto mb-3">
-                <Package className="h-6 w-6 text-indigo-600" />
-              </div>
-              <p className="text-2xl font-bold text-indigo-700">{stats?.totalRestaurants || 0}</p>
-              <p className="text-indigo-600 font-medium">Restaurants</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Orders */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <ShoppingBag className="h-6 w-6 text-indigo-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">Recent Orders</h2>
-            </div>
-            <Link 
-              href="/admin/orders" 
-              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center space-x-2"
-            >
-              <span>View All</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
-          
-          <div className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-4 px-4 text-gray-700 font-semibold text-sm">Order ID</th>
-                    <th className="text-left py-4 px-4 text-gray-700 font-semibold text-sm">Customer</th>
-                    <th className="text-left py-4 px-4 text-gray-700 font-semibold text-sm">Restaurant</th>
-                    <th className="text-left py-4 px-4 text-gray-700 font-semibold text-sm">Amount</th>
-                    <th className="text-left py-4 px-4 text-gray-700 font-semibold text-sm">Status</th>
-                    <th className="text-left py-4 px-4 text-gray-700 font-semibold text-sm">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders && recentOrders.length > 0 ? (
-                    recentOrders.slice(0, 8).map((order) => (
-                      <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td className="py-4 px-4">
-                          <span className="font-mono text-sm bg-gray-200 text-gray-900 px-3 py-1 rounded-md font-medium border">
-                            {order.orderNumber || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="font-semibold text-gray-900 text-base">
-                            {order.customerName || 'Unknown Customer'}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="text-gray-700 font-medium">
-                            {order.restaurant?.name || 'Unknown Restaurant'}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="font-bold text-lg text-green-600">
-                            ₹{(order.totalAmount || 0).toLocaleString('en-IN')}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            order.status === 'delivered' 
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : order.status === 'cancelled'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {order.status || 'pending'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600 text-sm">
-                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }) : 'N/A'}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-500">
-                        <div className="flex flex-col items-center">
-                          <ShoppingBag className="h-12 w-12 text-gray-300 mb-2" />
-                          <p className="text-lg font-medium">No recent orders</p>
-                          <p className="text-sm">Orders will appear here once they are placed</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Delivery Partners & Chefs Management */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Delivery Partners Section */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Package className="h-6 w-6 text-blue-600" />
+        {/* Dashboard Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Restaurants */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <Store className="w-5 h-5 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Delivery Partners</h2>
               </div>
-              <Link href="/admin/delivery-partners" className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                View All →
-              </Link>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-blue-700">
-                  {stats?.totalDeliveryPartners || 0}
-                </div>
-                <div className="text-sm text-blue-600">Total Partners</div>
-              </div>
-              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-green-700">
-                  {stats?.activeDeliveryPartners || 0}
-                </div>
-                <div className="text-sm text-green-600">Online Now</div>
-              </div>
-              <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-purple-700">
-                  {stats?.deliveryPartnerRating || 0}⭐
-                </div>
-                <div className="text-sm text-purple-600">Avg Rating</div>
-              </div>
-              <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-orange-700">
-                  {stats?.avgDeliveryTime || 0}m
-                </div>
-                <div className="text-sm text-orange-600">Avg Delivery</div>
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
+                  {stats?.totalRestaurants || 0}
+                </p>
+                <p className="text-sm text-gray-400">Restaurants</p>
+                <p className="text-xs text-gray-500 mt-1">{stats?.activeRestaurants || 0} active</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/admin/delivery-partners" className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-center font-medium transition-colors">
-                Manage Partners
-              </Link>
-              <Link href="/admin/delivery-assignments" className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg text-center font-medium transition-colors">
-                Live Tracking
-              </Link>
+
+            {/* Orders */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <ShoppingBag className="w-5 h-5 text-green-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
+                  {stats?.totalOrders || 0}
+                </p>
+                <p className="text-sm text-gray-400">Total Orders</p>
+                <p className="text-xs text-gray-500 mt-1">{stats?.todayOrders || 0} today</p>
+              </div>
+            </div>
+
+            {/* Revenue */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                  <DollarSign className="w-5 h-5 text-yellow-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
+                  ₹{stats?.totalRevenue?.toLocaleString() || 0}
+                </p>
+                <p className="text-sm text-gray-400">Total Revenue</p>
+                <p className="text-xs text-gray-500 mt-1">₹{stats?.todayRevenue?.toLocaleString() || 0} today</p>
+              </div>
+            </div>
+
+            {/* Users */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-purple-500/20 rounded-lg">
+                  <Users className="w-5 h-5 text-purple-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
+                  {stats?.totalUsers || 0}
+                </p>
+                <p className="text-sm text-gray-400">Users</p>
+                <p className="text-xs text-gray-500 mt-1">{stats?.activeUsers || 0} active</p>
+              </div>
             </div>
           </div>
 
-          {/* Chefs Section */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Star className="h-6 w-6 text-orange-600" />
+          {/* Additional Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Chefs */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <ChefHat className="w-5 h-5 text-orange-400" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Chef Services</h2>
               </div>
-              <Link href="/admin/chefs" className="text-orange-600 hover:text-orange-800 font-medium text-sm">
-                View All →
-              </Link>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-orange-700">
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
                   {stats?.totalChefs || 0}
-                </div>
-                <div className="text-sm text-orange-600">Total Chefs</div>
-              </div>
-              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-green-700">
-                  {stats?.activeChefs || 0}
-                </div>
-                <div className="text-sm text-green-600">Available</div>
-              </div>
-              <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-purple-700">
-                  {stats?.avgChefRating || 0}⭐
-                </div>
-                <div className="text-sm text-purple-600">Avg Rating</div>
-              </div>
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4">
-                <div className="text-2xl font-bold text-blue-700">
-                  {stats?.totalChefBookings || 0}
-                </div>
-                <div className="text-sm text-blue-600">Total Bookings</div>
+                </p>
+                <p className="text-sm text-gray-400">Chefs</p>
+                {stats && stats.pendingChefs > 0 && (
+                  <p className="text-xs text-yellow-400 mt-1 font-semibold">
+                    {stats.pendingChefs} pending approval
+                  </p>
+                )}
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/admin/chefs" className="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg text-center font-medium transition-colors">
-                Manage Chefs
+
+            {/* Cancelled Orders */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-red-500/20 rounded-lg">
+                  <Clock className="w-5 h-5 text-red-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
+                  {stats?.cancelledOrders || 0}
+                </p>
+                <p className="text-sm text-gray-400">Cancelled Orders</p>
+              </div>
+            </div>
+
+            {/* Failed Orders */}
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-red-500/20 rounded-lg">
+                  <ShoppingBag className="w-5 h-5 text-red-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white mb-1">
+                  {stats?.failedOrders || 0}
+                </p>
+                <p className="text-sm text-gray-400">Failed Orders</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+            <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link
+                href="/admin/restaurants"
+                className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors text-center"
+              >
+                Manage Restaurants
               </Link>
-              <Link href="/admin/chef-bookings" className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg text-center font-medium transition-colors">
-                View Bookings
+              <Link
+                href="/admin/orders"
+                className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors text-center"
+              >
+                View All Orders
+              </Link>
+              <Link
+                href="/admin/chefs"
+                className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors text-center relative"
+              >
+                Review Chefs
+                {stats && stats.pendingChefs > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-yellow-400 text-[#232323] text-xs font-bold px-2 py-0.5 rounded-full">
+                    {stats.pendingChefs}
+                  </span>
+                )}
+              </Link>
+              <Link
+                href="/admin/settings"
+                className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors text-center"
+              >
+                System Settings
               </Link>
             </div>
           </div>
         </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <UserCheck className="h-6 w-6 text-purple-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Quick Actions</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-8 gap-4">
-            <Link href="/admin/orders" className="flex flex-col items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors group">
-              <ShoppingBag className="h-8 w-8 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-blue-700">Orders</span>
-            </Link>
-            
-            <Link href="/admin/users" className="flex flex-col items-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group">
-              <Users className="h-8 w-8 text-purple-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-purple-700">Users</span>
-            </Link>
-            
-            <Link href="/admin/restaurants" className="flex flex-col items-center p-4 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors group">
-              <Package className="h-8 w-8 text-emerald-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-emerald-700">Restaurants</span>
-            </Link>
-            
-            <Link href="/admin/analytics" className="flex flex-col items-center p-4 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors group">
-              <BarChart3 className="h-8 w-8 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-indigo-700">Analytics</span>
-            </Link>
-            
-            <button onClick={fetchDashboardData} className="flex flex-col items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
-              <RefreshCw className="h-8 w-8 text-gray-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-gray-700">Refresh</span>
-            </button>
-            
-            <Link href="/admin/delivery-partners" className="flex flex-col items-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors group">
-              <Package className="h-8 w-8 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-blue-700">Delivery</span>
-            </Link>
-            
-            <Link href="/admin/chefs" className="flex flex-col items-center p-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors group">
-              <Star className="h-8 w-8 text-orange-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-orange-700">Chefs</span>
-            </Link>
-            
-            <Link href="/admin/support" className="flex flex-col items-center p-4 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group">
-              <Activity className="h-8 w-8 text-amber-600 mb-2 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium text-amber-700">Support</span>
-            </Link>
-          </div>
-        </div>
-
       </div>
     </div>
   );
-} 
+}

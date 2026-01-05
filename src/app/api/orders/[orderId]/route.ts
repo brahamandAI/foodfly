@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
 import Order from '@/lib/backend/models/order.model';
+import { Restaurant } from '@/lib/backend/models/restaurant.model';
 import { verifyToken } from '@/lib/backend/utils/jwt';
+import { sanitizeImageUrl } from '@/lib/menuUtils';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -61,35 +63,51 @@ export async function GET(
       );
     }
 
+    // Fetch restaurant details from database
+    let restaurantData: any = null;
+    if (order.restaurantId) {
+      try {
+        restaurantData = await (Restaurant as any).findById(order.restaurantId).lean();
+      } catch (error) {
+        console.error('Error fetching restaurant:', error);
+      }
+    }
+
     // Format the response to match the actual order structure
     const formattedOrder = {
       _id: order._id,
       orderNumber: order.orderNumber,
       restaurant: {
         _id: order.restaurantId || 'default-restaurant',
-        name: order.restaurantName || 'FoodFly Kitchen',
-        image: '/images/restaurants/cafe.jpg', // Default image
-        phone: '+91 9876543210', // Default phone
+        name: order.restaurantName || restaurantData?.name || 'FoodFly Kitchen',
+        image: sanitizeImageUrl(
+          (restaurantData?.images && restaurantData.images.length > 0) 
+            ? restaurantData.images[0] 
+            : '/images/restaurants/cafe.jpg'
+        ),
+        phone: restaurantData?.phone || '+91 9876543210',
         address: {
-          street: 'Main Street',
-          city: 'Your City',
-          area: 'Food District'
+          street: restaurantData?.address?.street || 'Main Street',
+          city: restaurantData?.address?.city || 'Your City',
+          area: restaurantData?.address?.area || restaurantData?.address?.locality || restaurantData?.address?.city || 'Food District',
+          state: restaurantData?.address?.state || '',
+          pincode: restaurantData?.address?.zipCode || restaurantData?.address?.pincode || ''
         }
       },
       items: order.items.map((item: any) => ({
-        _id: item._id,
+        _id: item._id || item.menuItemId || `item-${Date.now()}`,
         menuItem: {
-          _id: item.menuItemId || item._id,
-          name: item.name,
-          price: item.price,
-          image: '/images/placeholder.svg', // Default image
-          isVeg: true, // Default value
-          description: item.description,
-          category: 'Main Course' // Default category
+          _id: item.menuItemId || item._id || `menu-${Date.now()}`,
+          name: item.name || 'Unknown Item',
+          price: item.price || 0,
+          image: sanitizeImageUrl(item.image || '/images/placeholder.svg'),
+          isVeg: item.isVeg !== undefined ? item.isVeg : true,
+          description: item.description || '',
+          category: item.category || 'Main Course'
         },
-        quantity: item.quantity,
-        price: item.price,
-        customization: item.customizations ? item.customizations.join(', ') : ''
+        quantity: item.quantity || 1,
+        price: (item.price || 0) * (item.quantity || 1), // Total price for this item
+        customization: item.customizations ? (Array.isArray(item.customizations) ? item.customizations.join(', ') : item.customizations) : ''
       })),
       status: order.status,
       totalAmount: order.totalAmount,

@@ -13,6 +13,7 @@ import {
   UserProfile 
 } from '../lib/recommendations';
 import { toast } from 'react-hot-toast';
+import { sanitizeImageUrl } from '@/lib/imageUtils';
 
 interface MenuItem {
   _id: string;
@@ -220,7 +221,7 @@ export default function SmartRecommendations({
         item.description || '',
         item.price,
         1, // quantity
-        item.image || '',
+        sanitizeImageUrl(item.image) || '',
         item.restaurantId || 'default-restaurant',
         item.restaurantName || 'Restaurant',
         [] // customizations
@@ -455,7 +456,7 @@ export default function SmartRecommendations({
                                      <Link href={`/dish/${encodeURIComponent(rec.dish.name)}`}>
                        <div className="relative h-48">
                          <Image
-                           src={rec.dish.image}
+                           src={sanitizeImageUrl(rec.dish.image)}
                            alt={rec.dish.name}
                            fill
                            className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -546,7 +547,7 @@ export default function SmartRecommendations({
               >
                 <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden">
                   <Image
-                    src={meal.image}
+                    src={sanitizeImageUrl(meal.image)}
                     alt={meal.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"

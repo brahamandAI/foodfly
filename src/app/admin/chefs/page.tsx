@@ -1,409 +1,446 @@
-"use client";
+'use client';
+
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowLeft, CheckCircle, XCircle, Eye, FileText, Clock, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { adminApi } from '@/lib/api';
-import { 
-  ChefHat, 
-  Star, 
-  Users, 
-  Calendar, 
-  DollarSign, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  Filter,
-  Search,
-  Eye,
-  Phone,
-  Mail,
-  MapPin,
-  Award,
-  TrendingUp,
-  RefreshCw
-} from 'lucide-react';
 
 interface Chef {
   _id: string;
   name: string;
   email: string;
-  phone: string;
-  isEmailVerified: boolean;
-  createdAt: string;
+  phone?: string;
+  picture?: string;
   chefProfile: {
     specialization: string[];
     experience: number;
     rating: number;
-    totalBookings: number;
-    completedEvents: number;
-    totalRevenue: number;
-    avgRating: number;
-    efficiency: number;
-    avgEarnings: number;
-    isOnline: boolean;
-    isActive: boolean;
+    portfolio: {
+      description: string;
+      signature_dishes: string[];
+    };
     verification: {
       isVerified: boolean;
+      documents: {
+        certifications: string[];
+        experience_letters: string[];
+        health_certificate?: string;
+      };
     };
-    availability: {
-      status: string;
-    };
-    priceRange: {
-      min: number;
-      max: number;
-      currency: string;
+    location: {
+      serviceAreas: string[];
     };
   };
+  createdAt: string;
 }
 
-interface ChefSummary {
-  totalChefs: number;
-  verifiedChefs: number;
-  availableChefs: number;
-  busyChefs: number;
-  avgRating: number;
-  totalChefBookings: number;
-}
-
-export default function AdminChefsPage() {
+export default function ChefsPage() {
   const [chefs, setChefs] = useState<Chef[]>([]);
-  const [summary, setSummary] = useState<ChefSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    status: '',
-    specialization: '',
-    verified: ''
-  });
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0
-  });
+  const [pendingChefs, setPendingChefs] = useState<Chef[]>([]);
+  const [approvedChefs, setApprovedChefs] = useState<Chef[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedChef, setSelectedChef] = useState<Chef | null>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
 
   useEffect(() => {
     fetchChefs();
-  }, [filters, pagination.currentPage]);
+  }, []);
 
   const fetchChefs = async () => {
     try {
-      setLoading(true);
-      const params = {
-        ...filters,
-        page: pagination.currentPage,
-        limit: 20
-      };
-      
-      const data = await adminApi.getAllChefs(params);
-      setChefs(data.chefs);
-      setSummary(data.summary);
-      setPagination(data.pagination);
-    } catch (error: any) {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/admin/chefs', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const allChefs = data.chefs || [];
+        setChefs(allChefs);
+        
+        const pending = allChefs.filter((c: Chef) => !c.chefProfile?.verification?.isVerified);
+        const approved = allChefs.filter((c: Chef) => c.chefProfile?.verification?.isVerified);
+        
+        setPendingChefs(pending);
+        setApprovedChefs(approved);
+      } else {
+        if (response.status === 401 || response.status === 403) {
+          toast.error('Unauthorized. Please login again.');
+          window.location.href = '/admin/login';
+        }
+      }
+    } catch (error) {
       console.error('Error fetching chefs:', error);
       toast.error('Failed to load chefs');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleChefAction = async (chefId: string, action: string) => {
+  const handleApprove = async (chefId: string) => {
     try {
-      await adminApi.updateChefStatus(chefId, action);
-      toast.success(`Chef ${action} successful`);
-      fetchChefs(); // Refresh data
-    } catch (error: any) {
-      console.error('Error updating chef:', error);
-      toast.error('Failed to update chef');
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/chefs/${chefId}/approve`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        toast.success('Chef approved successfully');
+        fetchChefs();
+        setSelectedChef(null);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to approve chef');
+      }
+    } catch (error) {
+      toast.error('Failed to approve chef');
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available': return 'text-green-600 bg-green-100';
-      case 'busy': return 'text-orange-600 bg-orange-100';
-      case 'offline': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const handleReject = async (chefId: string, reason: string) => {
+    if (!reason.trim()) {
+      toast.error('Please provide a reason for rejection');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/chefs/${chefId}/reject`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      if (response.ok) {
+        toast.success('Chef rejected and deleted');
+        fetchChefs();
+        setSelectedChef(null);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to reject chef');
+      }
+    } catch (error) {
+      toast.error('Failed to reject chef');
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'available': return <CheckCircle className="h-4 w-4" />;
-      case 'busy': return <Clock className="h-4 w-4" />;
-      case 'offline': return <XCircle className="h-4 w-4" />;
-      default: return <XCircle className="h-4 w-4" />;
+  const handleDeleteChef = async (chefId: string, chefName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete chef "${chefName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/chefs/${chefId}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        toast.success('Chef deleted permanently');
+        fetchChefs();
+        if (selectedChef?._id === chefId) {
+          setSelectedChef(null);
+        }
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to delete chef');
+      }
+    } catch (error) {
+      toast.error('Failed to delete chef');
     }
   };
 
-  if (loading && chefs.length === 0) {
+  const displayChefs = activeTab === 'pending' ? pendingChefs : approvedChefs;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-          <p className="text-gray-600 text-lg">Loading chefs...</p>
+      <div className="h-screen flex items-center justify-center bg-[#232323]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+          <p className="text-white">Loading chefs...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="h-screen flex flex-col bg-[#232323] overflow-hidden" style={{ fontFamily: "'Satoshi', sans-serif" }}>
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <ChefHat className="h-8 w-8 mr-3 text-orange-600" />
-              Chef Management
-            </h1>
-            <p className="text-gray-600 mt-2">Manage and monitor all registered chefs</p>
+      <div className="bg-gray-900 border-b border-gray-800 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin"
+              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-400" />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-black text-white">Chef Management</h1>
+              <p className="text-gray-400 text-sm mt-1">Review and approve chef registrations</p>
+            </div>
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2">
           <button
-            onClick={fetchChefs}
-            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            onClick={() => setActiveTab('pending')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors relative ${
+              activeTab === 'pending'
+                ? 'bg-gray-800 text-white border border-gray-700'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
           >
-            <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
+            Pending Approval
+            {pendingChefs.length > 0 && (
+              <span className="ml-2 bg-yellow-400 text-[#232323] text-xs font-bold px-2 py-0.5 rounded-full">
+                {pendingChefs.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('approved')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+              activeTab === 'approved'
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            }`}
+          >
+            Approved ({approvedChefs.length})
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Chefs</p>
-                <p className="text-2xl font-bold text-gray-900">{summary.totalChefs}</p>
+      {/* Chefs List */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {displayChefs.map((chef) => (
+            <div
+              key={chef._id}
+              className="bg-gray-900 border border-gray-800 rounded-lg p-5 hover:border-gray-700 transition-colors cursor-pointer"
+              onClick={() => setSelectedChef(chef)}
+            >
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0">
+                  {chef.picture ? (
+                    <Image
+                      src={chef.picture}
+                      alt={chef.name}
+                      width={64}
+                      height={64}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-bold text-gray-400">
+                      {chef.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-white mb-1 truncate">
+                    {chef.name}
+                  </h3>
+                  <p className="text-sm text-gray-400 truncate">{chef.email}</p>
+                  {chef.phone && (
+                    <p className="text-xs text-gray-500 mt-1">{chef.phone}</p>
+                  )}
+                </div>
+                {activeTab === 'pending' && (
+                  <Clock className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                )}
+                {activeTab === 'approved' && (
+                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                )}
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <ChefHat className="h-6 w-6 text-blue-600" />
+
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-gray-400">Specialization: </span>
+                  <span className="text-white">
+                    {chef.chefProfile?.specialization?.slice(0, 2).join(', ') || 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Experience: </span>
+                  <span className="text-white">{chef.chefProfile?.experience || 0} years</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Service Areas: </span>
+                  <span className="text-white">
+                    {chef.chefProfile?.location?.serviceAreas?.slice(0, 2).join(', ') || 'N/A'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedChef(chef);
+                  }}
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View Profile</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteChef(chef._id, chef.name);
+                  }}
+                  className="bg-red-500/20 hover:bg-red-500/30 text-red-400 py-2 px-3 rounded-lg font-semibold transition-colors flex items-center justify-center"
+                  title="Delete permanently"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          </div>
+          ))}
+        </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Available</p>
-                <p className="text-2xl font-bold text-green-600">{summary.availableChefs}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+        {displayChefs.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-gray-400 text-lg">
+              {activeTab === 'pending' ? 'No pending chefs' : 'No approved chefs'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Chef Detail Modal */}
+      {selectedChef && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-800">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black text-white">Chef Profile</h2>
+                <button
+                  onClick={() => setSelectedChef(null)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
+            <div className="p-6 space-y-6">
+              {/* Basic Info */}
               <div>
-                <p className="text-sm font-medium text-gray-600">Verified</p>
-                <p className="text-2xl font-bold text-purple-600">{summary.verifiedChefs}</p>
+                <h3 className="text-lg font-bold text-white mb-4">Basic Information</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <span className="text-gray-400">Name: </span>
+                    <span className="text-white font-semibold">{selectedChef.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Email: </span>
+                    <span className="text-white">{selectedChef.email}</span>
+                  </div>
+                  {selectedChef.phone && (
+                    <div>
+                      <span className="text-gray-400">Phone: </span>
+                      <span className="text-white">{selectedChef.phone}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-400">Experience: </span>
+                    <span className="text-white">{selectedChef.chefProfile?.experience || 0} years</span>
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Award className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
+              {/* Specialization */}
               <div>
-                <p className="text-sm font-medium text-gray-600">Avg Rating</p>
-                <p className="text-2xl font-bold text-yellow-600">{summary.avgRating.toFixed(1)}</p>
+                <h3 className="text-lg font-bold text-white mb-4">Specialization</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedChef.chefProfile?.specialization?.map((spec, idx) => (
+                    <span key={idx} className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">
+                      {spec}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <Star className="h-6 w-6 text-yellow-600" />
+
+              {/* Service Areas */}
+              <div>
+                <h3 className="text-lg font-bold text-white mb-4">Service Areas</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedChef.chefProfile?.location?.serviceAreas?.map((area, idx) => (
+                    <span key={idx} className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">
+                      {area}
+                    </span>
+                  ))}
+                </div>
               </div>
+
+              {/* Documents */}
+              <div>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Documents
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-gray-400">Certifications: </span>
+                    <span className="text-white">
+                      {selectedChef.chefProfile?.verification?.documents?.certifications?.length || 0}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Experience Letters: </span>
+                    <span className="text-white">
+                      {selectedChef.chefProfile?.verification?.documents?.experience_letters?.length || 0}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Health Certificate: </span>
+                    <span className="text-white">
+                      {selectedChef.chefProfile?.verification?.documents?.health_certificate ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              {activeTab === 'pending' && (
+                <div className="flex gap-3 pt-4 border-t border-gray-800">
+                  <button
+                    onClick={() => handleApprove(selectedChef._id)}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Approve</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const reason = prompt('Reason for rejection:');
+                      if (reason) {
+                        handleReject(selectedChef._id, reason);
+                      }
+                    }}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Filter Chefs</span>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          >
-            <option value="">All Status</option>
-            <option value="available">Available</option>
-            <option value="busy">Busy</option>
-            <option value="offline">Offline</option>
-          </select>
-
-          <select
-            value={filters.verified}
-            onChange={(e) => setFilters(prev => ({ ...prev, verified: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          >
-            <option value="">All Verification</option>
-            <option value="true">Verified</option>
-            <option value="false">Not Verified</option>
-          </select>
-
-          <input
-            type="text"
-            placeholder="Search by specialization..."
-            value={filters.specialization}
-            onChange={(e) => setFilters(prev => ({ ...prev, specialization: e.target.value }))}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      {/* Chefs Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">All Chefs</h2>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chef
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Performance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Earnings
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rating
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {chefs.map((chef) => (
-                <tr key={chef._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                          <ChefHat className="h-5 w-5 text-orange-600" />
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{chef.name}</div>
-                        <div className="text-sm text-gray-500">{chef.email}</div>
-                        <div className="flex items-center text-xs text-gray-400">
-                          <Phone className="h-3 w-3 mr-1" />
-                          {chef.phone}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(chef.chefProfile.availability.status)}`}>
-                        {getStatusIcon(chef.chefProfile.availability.status)}
-                        <span className="ml-1 capitalize">{chef.chefProfile.availability.status}</span>
-                      </span>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                        {chef.chefProfile.completedEvents} completed
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {chef.chefProfile.efficiency}% efficiency
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-1 text-green-500" />
-                        ₹{chef.chefProfile.totalRevenue.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Avg: ₹{chef.chefProfile.avgEarnings.toLocaleString()}
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {chef.chefProfile.avgRating.toFixed(1)}
-                      </span>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleChefAction(chef._id, chef.chefProfile.verification.isVerified ? 'deactivate' : 'verify')}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          chef.chefProfile.verification.isVerified
-                            ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                            : 'bg-green-100 text-green-800 hover:bg-green-200'
-                        }`}
-                      >
-                        {chef.chefProfile.verification.isVerified ? 'Deactivate' : 'Verify'}
-                      </button>
-                      <button className="text-blue-600 hover:text-blue-800">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing page {pagination.currentPage} of {pagination.totalPages}
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setPagination(prev => ({ ...prev, currentPage: Math.max(1, prev.currentPage - 1) }))}
-                  disabled={pagination.currentPage === 1}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPagination(prev => ({ ...prev, currentPage: Math.min(pagination.totalPages, prev.currentPage + 1) }))}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

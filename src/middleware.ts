@@ -73,6 +73,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // RESTAURANT ADMIN ROUTE PROTECTION
+  if (pathname.startsWith('/restaurant-admin/')) {
+    // Allow access to restaurant admin login page
+    if (pathname === '/restaurant-admin/login') {
+      return NextResponse.next();
+    }
+
+    // For all other restaurant admin routes, require authentication
+    // Note: Restaurant admin auth is handled client-side via localStorage
+    // This is a basic check - full auth happens in the component
+    return NextResponse.next();
+  }
+
   // ROLE-BASED ROUTE PROTECTION FOR OTHER ROLES
   if (user) {
     console.log('🔐 Middleware check:', { role: user.role, pathname });

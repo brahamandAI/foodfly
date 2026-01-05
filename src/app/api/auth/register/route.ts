@@ -47,13 +47,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new user
+    const now = new Date();
     const newUser = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
       phone: phone?.trim(),
       role: 'customer',
-      isEmailVerified: false
+      isEmailVerified: false,
+      createdAt: now, // Explicitly set createdAt
+      updatedAt: now
     });
 
     await newUser.save();
@@ -85,7 +88,8 @@ export async function POST(request: NextRequest) {
       role: newUser.role,
       isEmailVerified: newUser.isEmailVerified,
       addresses: newUser.addresses,
-      createdAt: newUser.createdAt
+      createdAt: (newUser as any).createdAt ? (newUser as any).createdAt.toISOString() : now.toISOString(),
+      joinedAt: (newUser as any).createdAt ? (newUser as any).createdAt.toISOString() : now.toISOString() // Use createdAt as joinedAt for consistency
     };
 
     return NextResponse.json({

@@ -177,17 +177,21 @@ export default function ProfilePage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      <div className="min-h-screen bg-[#232323]">
         {/* Header */}
-                  <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 shadow-2xl border-b border-gray-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-[#232323] shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 mr-4">
+              <div className="bg-gray-800 rounded-full p-3 mr-4">
                 <User className="h-8 w-8 text-white" />
               </div>
               <div>
-                            <h1 className="text-3xl font-bold text-white tracking-wide">My Profile</h1>
-            <p className="text-gray-300 text-sm mt-1">Manage your account and bookings</p>
+                <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  My Profile
+                </h1>
+                <p className="text-gray-300 text-sm mt-1" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  Manage your account and bookings
+                </p>
               </div>
             </div>
           </div>
@@ -195,16 +199,24 @@ export default function ProfilePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* User Info Card */}
-          <div className="bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-gray-700/50">
+          <div className="bg-gray-800 rounded-xl shadow-md p-6 mb-6">
             <div className="flex items-center space-x-6">
-              <div className="w-20 h-20 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                <User className="h-10 w-10 text-white" />
+              <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center">
+                <User className="h-10 w-10 text-[#232323]" />
               </div>
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white">{user?.name || 'User'}</h2>
-                <p className="text-gray-300">{user?.email}</p>
-                {user?.phone && <p className="text-gray-300">{user.phone}</p>}
-                <p className="text-sm text-gray-400 mt-2">
+                <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  {user?.name || 'User'}
+                </h2>
+                <p className="text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  {user?.email}
+                </p>
+                {user?.phone && (
+                  <p className="text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                    {user.phone}
+                  </p>
+                )}
+                <p className="text-sm text-gray-400 mt-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                   Member since {user?.joinedAt || user?.createdAt ? new Date((user?.joinedAt || user?.createdAt) as string).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
@@ -212,16 +224,17 @@ export default function ProfilePage() {
           </div>
 
           {/* Tabs */}
-          <div className="bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-xl border border-gray-700/50 overflow-hidden">
-                          <div className="border-b border-gray-700">
-              <nav className="flex space-x-8 px-8">
+          <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden">
+            <div className="border-b border-gray-700">
+              <nav className="flex space-x-8 px-6">
                 <button
                   onClick={() => setActiveTab('bookings')}
                   className={`py-4 px-2 border-b-2 font-semibold text-sm transition-all duration-300 ${
                     activeTab === 'bookings'
-                      ? 'border-orange-500 text-orange-400'
+                      ? 'border-yellow-400 text-yellow-400'
                       : 'border-transparent text-gray-400 hover:text-gray-300'
                   }`}
+                  style={{ fontFamily: "'Satoshi', sans-serif" }}
                 >
                   <div className="flex items-center space-x-2">
                     <ChefHat className="h-5 w-5" />
@@ -232,14 +245,17 @@ export default function ProfilePage() {
             </div>
 
             {/* Chef Bookings Content */}
-            <div className="p-8">
+            <div className="p-6">
               {activeTab === 'bookings' && (
                 <div>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-2xl font-bold text-white">Your Chef Booking Requests</h3>
+                    <h3 className="text-2xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                      Your Chef Booking Requests
+                    </h3>
                     <button
                       onClick={() => window.location.href = '/chef-services'}
-                      className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-bold hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                      className="bg-yellow-400 text-[#232323] px-6 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-all duration-200 shadow-lg"
+                      style={{ fontFamily: "'Satoshi', sans-serif" }}
                     >
                       Book Another Chef
                     </button>
@@ -251,18 +267,23 @@ export default function ProfilePage() {
                       <p className="text-gray-300">Loading your bookings...</p>
                     </div>
                   ) : chefBookings.length > 0 ? (
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                       {chefBookings.map((booking) => (
-                        <div key={booking._id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+                        <div key={booking._id} className="bg-gray-700 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300">
                           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-3">
-                                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold border-2 ${getStatusColor(booking.status)}`}>
+                                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                                    booking.status === 'confirmed' ? 'bg-green-500 text-white' :
+                                    booking.status === 'completed' ? 'bg-blue-500 text-white' :
+                                    booking.status === 'cancelled' ? 'bg-red-500 text-white' :
+                                    'bg-yellow-400 text-[#232323]'
+                                  }`}>
                                     {getStatusIcon(booking.status)}
                                     <span className="ml-2 capitalize">{booking.status}</span>
                                   </span>
-                                  <span className="text-sm text-gray-500">
+                                  <span className="text-sm text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     Booked on {new Date(booking.timeline.bookedAt).toLocaleDateString()}
                                   </span>
                                 </div>
@@ -270,12 +291,12 @@ export default function ProfilePage() {
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                  <h4 className="text-xl font-bold text-gray-900 mb-3 capitalize">
+                                  <h4 className="text-xl font-bold text-white mb-3 capitalize" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     {booking.bookingDetails.eventType.replace('_', ' ')} Event
                                   </h4>
-                                  <div className="space-y-2 text-sm text-gray-600">
+                                  <div className="space-y-2 text-sm text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     <div className="flex items-center space-x-2">
-                                      <Calendar className="h-4 w-4 text-orange-500" />
+                                      <Calendar className="h-4 w-4 text-yellow-400" />
                                       <span>{new Date(booking.bookingDetails.eventDate).toLocaleDateString('en-US', {
                                         weekday: 'long',
                                         year: 'numeric',
@@ -284,20 +305,20 @@ export default function ProfilePage() {
                                       })}</span>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                      <Clock className="h-4 w-4 text-orange-500" />
+                                      <Clock className="h-4 w-4 text-yellow-400" />
                                       <span>{booking.bookingDetails.eventTime} • {booking.bookingDetails.duration} hours</span>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                      <User className="h-4 w-4 text-orange-500" />
+                                      <User className="h-4 w-4 text-yellow-400" />
                                       <span>{booking.bookingDetails.guestCount} guests</span>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                      <ChefHat className="h-4 w-4 text-orange-500" />
+                                      <ChefHat className="h-4 w-4 text-yellow-400" />
                                       <span>{booking.bookingDetails.cuisine.join(', ')}</span>
                                     </div>
                                     {booking.location && (
                                       <div className="flex items-center space-x-2">
-                                        <MapPin className="h-4 w-4 text-orange-500" />
+                                        <MapPin className="h-4 w-4 text-yellow-400" />
                                         <span>{booking.location.city}, {booking.location.state}</span>
                                       </div>
                                     )}
@@ -305,31 +326,33 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div>
-                                  <h5 className="font-semibold text-gray-900 mb-3">Chef Details</h5>
+                                  <h5 className="font-semibold text-white mb-3" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                                    Chef Details
+                                  </h5>
                                   {booking.chef ? (
-                                    <div className="space-y-2 text-sm text-gray-600">
+                                    <div className="space-y-2 text-sm text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                       <div className="flex items-center space-x-2">
-                                        <ChefHat className="h-4 w-4 text-orange-500" />
+                                        <ChefHat className="h-4 w-4 text-yellow-400" />
                                         <span className="font-medium">{booking.chef.name}</span>
                                       </div>
                                       <div className="flex items-center space-x-2">
-                                        <Star className="h-4 w-4 text-yellow-500" />
+                                        <Star className="h-4 w-4 text-yellow-400" />
                                         <span>{(booking.chef.rating ?? 5).toFixed?.(1) || Number(booking.chef.rating ?? 5).toFixed(1)} rating</span>
                                       </div>
                                       <div className="flex items-center space-x-2">
-                                        <DollarSign className="h-4 w-4 text-green-500" />
-                                        <span className="font-bold text-lg text-green-600">
+                                        <DollarSign className="h-4 w-4 text-yellow-400" />
+                                        <span className="font-bold text-lg text-yellow-400">
                                           ₹{booking.pricing.totalAmount.toLocaleString()}
                                         </span>
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="space-y-2 text-sm">
-                                      <p className="text-gray-700 font-medium">Awaiting chef acceptance</p>
-                                      <p className="text-gray-600">Your request is visible to available chefs. The first to accept will be assigned.</p>
+                                    <div className="space-y-2 text-sm text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                                      <p className="font-medium">Awaiting chef acceptance</p>
+                                      <p>Your request is visible to available chefs. The first to accept will be assigned.</p>
                                       <div className="flex items-center space-x-2">
-                                        <DollarSign className="h-4 w-4 text-green-500" />
-                                        <span className="font-bold text-green-600">Estimated total: ₹{booking.pricing.totalAmount.toLocaleString()}</span>
+                                        <DollarSign className="h-4 w-4 text-yellow-400" />
+                                        <span className="font-bold text-yellow-400">Estimated total: ₹{booking.pricing.totalAmount.toLocaleString()}</span>
                                       </div>
                                     </div>
                                   )}
@@ -337,34 +360,34 @@ export default function ProfilePage() {
                               </div>
 
                               {/* Status Messages */}
-                              <div className="mt-4 p-4 rounded-lg bg-gray-50">
+                              <div className="mt-4 p-4 rounded-lg bg-gray-800">
                                 {booking.status === 'pending' && (
-                                  <p className="text-sm text-yellow-700 font-medium">
+                                  <p className="text-sm text-yellow-400 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     ⏳ Waiting for chef confirmation. You'll be notified once a chef accepts your request.
                                   </p>
                                 )}
                                 {booking.status === 'confirmed' && (
-                                  <p className="text-sm text-green-700 font-medium">
+                                  <p className="text-sm text-green-400 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     ✅ Your booking is confirmed! The chef will contact you closer to the event date with final details.
                                     {booking.timeline.respondedAt && (
-                                      <span className="block text-xs text-gray-500 mt-1">
+                                      <span className="block text-xs text-gray-400 mt-1">
                                         Confirmed on {new Date(booking.timeline.respondedAt).toLocaleDateString()}
                                       </span>
                                     )}
                                   </p>
                                 )}
                                 {booking.status === 'cancelled' && (
-                                  <p className="text-sm text-red-700 font-medium">
+                                  <p className="text-sm text-red-400 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     ❌ This booking has been cancelled.
                                     {booking.timeline.respondedAt && (
-                                      <span className="block text-xs text-gray-500 mt-1">
+                                      <span className="block text-xs text-gray-400 mt-1">
                                         Cancelled on {new Date(booking.timeline.respondedAt).toLocaleDateString()}
                                       </span>
                                     )}
                                   </p>
                                 )}
                                 {booking.status === 'completed' && (
-                                  <p className="text-sm text-blue-700 font-medium">
+                                  <p className="text-sm text-green-400 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     🎉 Event completed! We hope you had a wonderful experience.
                                   </p>
                                 )}
@@ -376,16 +399,19 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-16">
-                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <div className="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
                         <ChefHat className="h-12 w-12 text-gray-400" />
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">No Chef Bookings Yet</h3>
-                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                      <h3 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        No Chef Bookings Yet
+                      </h3>
+                      <p className="text-gray-300 mb-6 max-w-md mx-auto" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                         You haven't made any chef booking requests yet. Start by browsing our amazing chefs and book your first culinary experience!
                       </p>
                       <button
                         onClick={() => window.location.href = '/chef-services'}
-                        className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-xl font-bold hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                        className="bg-yellow-400 text-[#232323] px-8 py-4 rounded-lg font-bold hover:bg-yellow-300 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                        style={{ fontFamily: "'Satoshi', sans-serif" }}
                       >
                         Browse Chefs
                       </button>

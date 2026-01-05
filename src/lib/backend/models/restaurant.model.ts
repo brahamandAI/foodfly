@@ -28,6 +28,12 @@ export interface IRestaurant extends Document {
   minimumOrder: number;
   isActive: boolean;
   images: string[];
+  menu?: any[];
+  menuCategories?: Array<{
+    name: string;
+    items: any[];
+  }>;
+  preparationTime?: number;
 }
 
 const restaurantSchema = new Schema<IRestaurant>(
@@ -112,10 +118,23 @@ const restaurantSchema = new Schema<IRestaurant>(
     images: [{
       type: String,
     }],
+    menu: [{
+      type: Schema.Types.Mixed,
+    }],
+    menuCategories: [{
+      name: String,
+      items: [{
+        type: Schema.Types.Mixed,
+      }]
+    }],
+    preparationTime: {
+      type: Number,
+      default: 30, // minutes
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export const Restaurant = mongoose.model<IRestaurant>('Restaurant', restaurantSchema); 
+export const Restaurant = mongoose.models.Restaurant || mongoose.model<IRestaurant>('Restaurant', restaurantSchema); 

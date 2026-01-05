@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import { sanitizeImageUrl } from '@/lib/imageUtils';
 import Link from 'next/link';
 import { Star, Clock, MapPin, Tag, Plus, Minus, ArrowLeft, Filter, Heart, Leaf } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -889,7 +890,7 @@ export default function DishPage() {
                   {/* Dish Image */}
                   <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden flex-shrink-0">
                     <Image
-                      src={offering.image}
+                      src={sanitizeImageUrl(offering.image)}
                       alt={offering.name}
                       fill
                       className="object-cover"

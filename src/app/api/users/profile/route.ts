@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
         preferences: dbUser.preferences,
         healthProfile: dbUser.healthProfile,
         lastLogin: dbUser.lastLogin,
-        createdAt: dbUser.createdAt
+        createdAt: (dbUser as any).createdAt ? (dbUser as any).createdAt.toISOString() : undefined,
+        joinedAt: (dbUser as any).createdAt ? (dbUser as any).createdAt.toISOString() : undefined // Use createdAt as joinedAt for consistency
       }
     });
 
@@ -94,7 +95,8 @@ export async function PUT(request: NextRequest) {
         preferences: updatedUser.preferences,
         healthProfile: updatedUser.healthProfile,
         lastLogin: updatedUser.lastLogin,
-        createdAt: updatedUser.createdAt
+        createdAt: (updatedUser as any).createdAt ? (updatedUser as any).createdAt.toISOString() : undefined,
+        joinedAt: (updatedUser as any).createdAt ? (updatedUser as any).createdAt.toISOString() : undefined // Use createdAt as joinedAt for consistency
       }
     });
 
