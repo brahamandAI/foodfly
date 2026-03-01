@@ -8,9 +8,9 @@ module.exports = {
       cwd: process.env.PM2_CWD || '/home/ubuntu/htdocs/foodfly',
       
       // ---- START USING PNPM (IMPORTANT) ----
-      script: '/usr/local/bin/pnpm',
+      script: '/home/ubuntu/.local/share/pnpm/pnpm',
       args: 'start',
-      interpreter: 'node',
+      interpreter: 'sh',
       
       // ---- ABSOLUTE SAFETY ----
       instances: 1,          // NEVER > 1
