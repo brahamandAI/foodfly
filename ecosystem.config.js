@@ -1,48 +1,31 @@
 module.exports = {
   apps: [
     {
-      name: 'foodfly-nextjs',
-      
-      // ---- WORKING DIRECTORY ----
-      // Update this path to your actual deployment directory
-      cwd: process.env.PM2_CWD || '/home/ubuntu/htdocs/foodfly',
-      
-      // ---- START USING PNPM (IMPORTANT) ----
-      script: '/home/ubuntu/.local/share/pnpm/pnpm',
-      args: 'start',
-      interpreter: 'sh',
-      
-      // ---- ABSOLUTE SAFETY ----
-      instances: 1,          // NEVER > 1
-      exec_mode: 'fork',     // NEVER cluster
-      
-      // ---- RESTART CONTROL ----
+      name: 'foodfly',
+      cwd: '/home/robustrix/htdocs/foodfly',
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start -p 3002',
+      interpreter: 'node',
+      instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       max_restarts: 5,
-      restart_delay: 5000,       // 5 seconds delay
-      exp_backoff_restart_delay: 200, // exponential backoff
-      
-      // ---- HARD MEMORY LIMIT ----
+      min_uptime: '30s',
+      restart_delay: 5000,
+      exp_backoff_restart_delay: 200,
       max_memory_restart: '1G',
-      
-      // ---- ENV ----
       env: {
         NODE_ENV: 'production',
-        PORT: 3002
+        PORT: 3002,
       },
-      
-      // ---- LOGGING (LOCAL, ROTATABLE) ----
       error_file: './logs/err.log',
       out_file: './logs/out.log',
       log_file: './logs/combined.log',
       time: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      
-      // ---- SHUTDOWN SAFETY ----
       kill_timeout: 5000,
       listen_timeout: 30000,
-      wait_ready: false,
-      watch: false
-    }
-  ]
-}; 
+      watch: false,
+    },
+  ],
+};
