@@ -153,9 +153,9 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
         setLoadingGPS(false);
       },
       {
-        enableHighAccuracy: false, // Reduced accuracy requirement for faster response
-        timeout: 15000, // Increased timeout
-        maximumAge: 300000 // 5 minutes
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
       }
     );
   };
@@ -175,9 +175,10 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
         };
       }
       
-      // Fallback to OpenCage if Google Maps not configured
+      // Fallback to Nominatim (OpenStreetMap) - free, no API key needed
       const response = await fetch(
-        `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=YOUR_OPENCAGE_API_KEY`
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+        { headers: { 'User-Agent': 'FoodFly-App/1.0' } }
       );
       
       if (!response.ok) {
@@ -186,15 +187,19 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
       
       const data = await response.json();
       
-      if (data.results && data.results.length > 0) {
-        const result = data.results[0];
-        const components = result.components;
+      if (data && data.address) {
+        const a = data.address;
+        const street = [
+          a.house_number,
+          a.road || a.pedestrian || a.footway,
+          a.neighbourhood || a.suburb
+        ].filter(Boolean).join(', ');
         
         return {
-          street: `${components.house_number || ''} ${components.road || ''} ${components.neighbourhood || ''}`.trim(),
-          city: components.city || components.town || components.village || '',
-          state: components.state || '',
-          pincode: components.postcode || ''
+          street: street || data.display_name?.split(',')[0] || '',
+          city: a.city || a.town || a.village || a.county || '',
+          state: a.state || '',
+          pincode: a.postcode || ''
         };
       }
       

@@ -13,7 +13,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.3,
       preparationTime: '10-15 mins',
-      image: '/images/categories/french-fries.jpg'
+      image: '/images/categories/Fast-food.jpg'
     },
     {
       _id: 'bm_002',
@@ -26,7 +26,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.2,
       preparationTime: '8-12 mins',
-      image: '/images/categories/garlic-bread.jpg'
+      image: '/images/categories/Italian.jpg'
     },
     {
       _id: 'bm_003',
@@ -39,7 +39,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.5,
       preparationTime: '12-18 mins',
-      image: '/images/categories/nachos.jpg'
+      image: '/images/categories/Fast-food.jpg'
     },
     {
       _id: 'bm_004',
@@ -52,7 +52,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.4,
       preparationTime: '10-15 mins',
-      image: '/images/categories/bruschetta.jpg'
+      image: '/images/categories/Italian.jpg'
     }
   ],
 
@@ -80,7 +80,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.3,
       preparationTime: '12-18 mins',
-      image: '/images/categories/tomato-soup.jpg'
+      image: '/images/categories/soup.jpg'
     },
     {
       _id: 'soup_003',
@@ -93,7 +93,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.4,
       preparationTime: '15-20 mins',
-      image: '/images/categories/manchow-soup.jpg'
+      image: '/images/categories/soup.jpg'
     }
   ],
 
@@ -110,7 +110,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.6,
       preparationTime: '8-12 mins',
-      image: '/images/categories/greek-salad.jpg'
+      image: '/images/categories/salad.jpg'
     },
     {
       _id: 'salad_002',
@@ -121,7 +121,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.7,
       preparationTime: '10-15 mins',
-      image: '/images/categories/quinoa-salad.jpg'
+      image: '/images/categories/salad.jpg'
     }
   ],
 
@@ -136,7 +136,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.4,
       preparationTime: '15-20 mins',
-      image: '/images/categories/mushroom-duplex.jpg'
+      image: '/images/categories/European.jpg'
     },
     {
       _id: 'ca_002',
@@ -147,7 +147,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.6,
       preparationTime: '20-25 mins',
-      image: '/images/categories/chicken-wings.jpg'
+      image: '/images/categories/broast.jpg'
     },
     {
       _id: 'ca_003',
@@ -158,7 +158,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.5,
       preparationTime: '18-25 mins',
-      image: '/images/categories/fish-chips.jpg'
+      image: '/images/categories/European.jpg'
     }
   ],
 
@@ -173,7 +173,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.3,
       preparationTime: '12-18 mins',
-      image: '/images/categories/spring-rolls.jpg'
+      image: '/images/categories/Chinese.jpg'
     },
     {
       _id: 'oa_002',
@@ -186,7 +186,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.5,
       preparationTime: '15-20 mins',
-      image: '/images/categories/dumplings.jpg'
+      image: '/images/categories/Chinese.jpg'
     }
   ],
 
@@ -203,7 +203,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.7,
       preparationTime: '25-30 mins',
-      image: '/images/categories/tandoori-chicken.jpg'
+      image: '/images/categories/Mughlai.jpg'
     },
     {
       _id: 'ta_002',
@@ -214,7 +214,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.6,
       preparationTime: '20-25 mins',
-      image: '/images/categories/fish-tikka.jpg'
+      image: '/images/categories/Mughlai.jpg'
     }
   ],
 
@@ -229,7 +229,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.4,
       preparationTime: '20-25 mins',
-      image: '/images/categories/stroganoff.jpg'
+      image: '/images/categories/European.jpg'
     },
     {
       _id: 'cm_002',
@@ -240,7 +240,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.6,
       preparationTime: '25-30 mins',
-      image: '/images/categories/chicken-steak.jpg'
+      image: '/images/categories/broast.jpg'
     }
   ],
 
@@ -257,7 +257,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.5,
       preparationTime: '20-25 mins',
-      image: '/images/categories/sizzler.jpg'
+      image: '/images/categories/broast.jpg'
     },
     {
       _id: 'sizz_002',
@@ -268,7 +268,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.7,
       preparationTime: '25-30 mins',
-      image: '/images/categories/chicken-sizzler.jpg'
+      image: '/images/categories/broast.jpg'
     }
   ],
 
@@ -283,7 +283,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.6,
       preparationTime: '15-20 mins',
-      image: '/images/categories/margherita-pizza.jpg'
+      image: '/images/categories/pizza-2.jpeg'
     },
     {
       _id: 'pizza_002',
@@ -294,7 +294,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.5,
       preparationTime: '18-25 mins',
-      image: '/images/categories/pepperoni-pizza.jpg'
+      image: '/images/categories/pizza-2.jpeg'
     },
     {
       _id: 'pizza_003',
@@ -305,7 +305,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.7,
       preparationTime: '20-25 mins',
-      image: '/images/categories/chicken-tikka-pizza.jpg'
+      image: '/images/categories/pizza-2.jpeg'
     }
   ],
 
@@ -322,7 +322,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.3,
       preparationTime: '12-18 mins',
-      image: '/images/categories/club-sandwich.jpg'
+      image: '/images/categories/sandwhich.jpg'
     }
   ],
 
@@ -336,7 +336,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.5,
       preparationTime: '15-20 mins',
-      image: '/images/categories/chicken-burger.jpg'
+      image: '/images/categories/burger-2.jpg'
     }
   ],
 
@@ -353,7 +353,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.6,
       preparationTime: '20-25 mins',
-      image: '/images/categories/thai-curry.jpg'
+      image: '/images/categories/Oriental.jpg'
     },
     {
       _id: 'om_002',
@@ -364,7 +364,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.5,
       preparationTime: '18-25 mins',
-      image: '/images/categories/kung-pao-chicken.jpg'
+      image: '/images/categories/Chinese.jpg'
     }
   ],
 
@@ -379,7 +379,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.7,
       preparationTime: '20-25 mins',
-      image: '/images/categories/paneer-butter-masala.jpg'
+      image: '/images/categories/North-indian.jpg'
     },
     {
       _id: 'im_002',
@@ -392,7 +392,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.8,
       preparationTime: '25-30 mins',
-      image: '/images/categories/butter-chicken.jpg'
+      image: '/images/categories/chicken.jpg'
     },
     {
       _id: 'im_003',
@@ -403,7 +403,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.6,
       preparationTime: '30-35 mins',
-      image: '/images/categories/kashmiri-mutton.jpg'
+      image: '/images/categories/Mughlai.jpg'
     }
   ],
 
@@ -418,7 +418,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.8,
       preparationTime: '30-35 mins',
-      image: '/images/categories/chicken-biryani.jpg'
+      image: '/images/categories/North-indian.jpg'
     },
     {
       _id: 'rb_002',
@@ -429,7 +429,7 @@ export const symposiumRestaurantMenu = {
       isVeg: false,
       rating: 4.4,
       preparationTime: '15-20 mins',
-      image: '/images/categories/fried-rice.jpg'
+      image: '/images/categories/Chinese.jpg'
     }
   ],
 
@@ -444,7 +444,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.3,
       preparationTime: '8-12 mins',
-      image: '/images/categories/garlic-naan.jpg'
+      image: '/images/categories/North-indian.jpg'
     },
     {
       _id: 'bread_002',
@@ -455,7 +455,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.5,
       preparationTime: '10-15 mins',
-      image: '/images/categories/cheese-naan.jpg'
+      image: '/images/categories/North-indian.jpg'
     }
   ],
 
@@ -470,7 +470,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.6,
       preparationTime: '5-10 mins',
-      image: '/images/categories/cheesecake.jpg'
+      image: '/images/categories/desserts.jpg'
     },
     {
       _id: 'dessert_002',
@@ -481,7 +481,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.7,
       preparationTime: '5-10 mins',
-      image: '/images/categories/tiramisu.jpg'
+      image: '/images/categories/desserts.jpg'
     }
   ],
 
@@ -496,7 +496,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.4,
       preparationTime: '5-8 mins',
-      image: '/images/categories/mojito.jpg'
+      image: '/images/categories/Bevarages.jpg'
     },
     {
       _id: 'mock_002',
@@ -507,7 +507,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.3,
       preparationTime: '5-8 mins',
-      image: '/images/categories/orange-mocktail.jpg'
+      image: '/images/categories/Bevarages.jpg'
     }
   ],
 
@@ -522,7 +522,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.5,
       preparationTime: '5-8 mins',
-      image: '/images/categories/chocolate-shake.jpg'
+      image: '/images/categories/shakes.jpg'
     },
     {
       _id: 'shake_002',
@@ -533,7 +533,7 @@ export const symposiumRestaurantMenu = {
       isVeg: true,
       rating: 4.6,
       preparationTime: '8-12 mins',
-      image: '/images/categories/brownie-shake.jpg'
+      image: '/images/categories/shakes.jpg'
     }
   ]
 };

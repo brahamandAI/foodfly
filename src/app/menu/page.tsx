@@ -39,6 +39,14 @@ export default function MenuPage() {
       const data = await response.json();
       
       if (data.restaurants && data.restaurants.length > 0) {
+        // Same image-by-name logic used on the home page
+        const getRestaurantImage = (name: string, fallback?: string): string => {
+          if (name.includes('Symposium')) return '/images/restaurants/symposium.jpg';
+          if (name.includes('Panache')) return '/images/restaurants/panache.jpg';
+          if (name.includes('Cafe After Hours') || name.includes('Cafe')) return '/images/restaurants/cafe.jpg';
+          return fallback || '/images/restaurants/cafe.jpg';
+        };
+
         // Map restaurant data to match expected format
         const formattedRestaurants = data.restaurants.map((r: any) => ({
           id: r.id || r._id?.toString() || '',
@@ -49,7 +57,7 @@ export default function MenuPage() {
           deliveryFee: r.deliveryFee || 40,
           location: r.location || `${r.address?.city || ''}, ${r.address?.state || ''}`,
           address: r.address || '',
-          image: r.image || '/images/restaurants/cafe.jpg',
+          image: getRestaurantImage(r.name || '', r.image),
           isActive: r.isActive !== false
         }));
         setRestaurants(formattedRestaurants);

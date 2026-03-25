@@ -97,7 +97,7 @@ export default function DishPage() {
               deliveryTime: '25-30 mins',
               deliveryFee: 40,
               minimumOrder: 200,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Bandra', city: 'Mumbai' },
               offers: ['20% OFF on orders above ₹500']
             }
@@ -120,7 +120,7 @@ export default function DishPage() {
               deliveryTime: '20-25 mins',
               deliveryFee: 30,
               minimumOrder: 250,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Powai', city: 'Mumbai' },
               offers: ['Free garlic bread with pizza']
             }
@@ -143,7 +143,7 @@ export default function DishPage() {
               deliveryTime: '30-40 mins',
               deliveryFee: 50,
               minimumOrder: 300,
-              image: '/images/restaurent/symposium.jpg',
+              image: '/images/restaurants/symposium.jpg',
               address: { area: 'Andheri', city: 'Mumbai' },
               offers: ['Premium ingredients guarantee']
             }
@@ -174,7 +174,7 @@ export default function DishPage() {
               deliveryTime: '20-25 mins',
               deliveryFee: 30,
               minimumOrder: 150,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Powai', city: 'Mumbai' },
               offers: ['Buy 1 Get 1 Free on Burgers']
             }
@@ -197,7 +197,7 @@ export default function DishPage() {
               deliveryTime: '25-35 mins',
               deliveryFee: 45,
               minimumOrder: 200,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Bandra', city: 'Mumbai' },
               offers: ['Premium beef sourced locally']
             }
@@ -228,7 +228,7 @@ export default function DishPage() {
               deliveryTime: '30-40 mins',
               deliveryFee: 50,
               minimumOrder: 300,
-              image: '/images/restaurent/symposium.jpg',
+              image: '/images/restaurants/symposium.jpg',
               address: { area: 'Andheri', city: 'Mumbai' },
               offers: ['Free Dessert on orders above ₹600']
             }
@@ -251,7 +251,7 @@ export default function DishPage() {
               deliveryTime: '25-35 mins',
               deliveryFee: 35,
               minimumOrder: 200,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Goregaon', city: 'Mumbai' },
               offers: ['Authentic village style cooking']
             }
@@ -281,7 +281,7 @@ export default function DishPage() {
               deliveryTime: '25-35 mins',
               deliveryFee: 45,
               minimumOrder: 250,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Malad', city: 'Mumbai' },
               offers: ['30% OFF on Chinese Combos']
             }
@@ -304,7 +304,7 @@ export default function DishPage() {
               deliveryTime: '20-30 mins',
               deliveryFee: 30,
               minimumOrder: 150,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Borivali', city: 'Mumbai' },
               offers: ['Quick delivery promise']
             }
@@ -327,7 +327,7 @@ export default function DishPage() {
               deliveryTime: '30-40 mins',
               deliveryFee: 55,
               minimumOrder: 350,
-              image: '/images/restaurent/symposium.jpg',
+              image: '/images/restaurants/symposium.jpg',
               address: { area: 'Worli', city: 'Mumbai' },
               offers: ['Premium Asian cuisine']
             }
@@ -357,7 +357,7 @@ export default function DishPage() {
               deliveryTime: '15-25 mins',
               deliveryFee: 25,
               minimumOrder: 100,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Juhu', city: 'Mumbai' },
               offers: ['Buy 2 Get 1 Free on Cakes']
             }
@@ -380,7 +380,7 @@ export default function DishPage() {
               deliveryTime: '20-30 mins',
               deliveryFee: 35,
               minimumOrder: 150,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Vile Parle', city: 'Mumbai' },
               offers: ['Fresh baked daily']
             }
@@ -410,7 +410,7 @@ export default function DishPage() {
               deliveryTime: '30-40 mins',
               deliveryFee: 50,
               minimumOrder: 300,
-              image: '/images/restaurent/symposium.jpg',
+              image: '/images/restaurants/symposium.jpg',
               address: { area: 'Andheri', city: 'Mumbai' },
               offers: ['Free Dessert on orders above ₹600']
             }
@@ -433,7 +433,7 @@ export default function DishPage() {
               deliveryTime: '25-35 mins',
               deliveryFee: 40,
               minimumOrder: 250,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Malad', city: 'Mumbai' },
               offers: ['Authentic Punjabi flavors']
             }
@@ -456,7 +456,7 @@ export default function DishPage() {
               deliveryTime: '35-45 mins',
               deliveryFee: 60,
               minimumOrder: 400,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Juhu', city: 'Mumbai' },
               offers: ['Royal dining experience']
             }
@@ -487,7 +487,7 @@ export default function DishPage() {
               deliveryTime: '30-40 mins',
               deliveryFee: 50,
               minimumOrder: 300,
-              image: '/images/restaurent/symposium.jpg',
+              image: '/images/restaurants/symposium.jpg',
               address: { area: 'Andheri', city: 'Mumbai' },
               offers: ['Free Dessert on orders above ₹600']
             }
@@ -511,7 +511,7 @@ export default function DishPage() {
               deliveryTime: '30-40 mins',
               deliveryFee: 50,
               minimumOrder: 300,
-              image: '/images/restaurent/symposium.jpg',
+              image: '/images/restaurants/symposium.jpg',
               address: { area: 'Andheri', city: 'Mumbai' },
               offers: ['Free Dessert on orders above ₹600']
             }
@@ -542,7 +542,7 @@ export default function DishPage() {
               deliveryTime: '20-30 mins',
               deliveryFee: 35,
               minimumOrder: 100,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Thane', city: 'Mumbai' },
               offers: ['Authentic South Indian taste']
             }
@@ -565,7 +565,7 @@ export default function DishPage() {
               deliveryTime: '18-25 mins',
               deliveryFee: 25,
               minimumOrder: 80,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Dadar', city: 'Mumbai' },
               offers: ['Traditional recipes']
             }
@@ -596,7 +596,7 @@ export default function DishPage() {
               deliveryTime: '25-35 mins',
               deliveryFee: 45,
               minimumOrder: 300,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Bandra', city: 'Mumbai' },
               offers: ['Authentic Italian flavors']
             }
@@ -619,7 +619,7 @@ export default function DishPage() {
               deliveryTime: '20-30 mins',
               deliveryFee: 30,
               minimumOrder: 200,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Powai', city: 'Mumbai' },
               offers: ['Fresh pasta daily']
             }
@@ -650,7 +650,7 @@ export default function DishPage() {
               deliveryTime: '15-25 mins',
               deliveryFee: 25,
               minimumOrder: 100,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Juhu', city: 'Mumbai' },
               offers: ['Buy 2 Get 1 Free on Cakes']
             }
@@ -673,7 +673,7 @@ export default function DishPage() {
               deliveryTime: '20-30 mins',
               deliveryFee: 35,
               minimumOrder: 150,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Vile Parle', city: 'Mumbai' },
               offers: ['Fresh sweets daily']
             }
@@ -704,7 +704,7 @@ export default function DishPage() {
               deliveryTime: '15-20 mins',
               deliveryFee: 20,
               minimumOrder: 50,
-              image: '/images/restaurent/cafe.jpg',
+              image: '/images/restaurants/cafe.jpg',
               address: { area: 'Andheri', city: 'Mumbai' },
               offers: ['Fresh juices daily']
             }
@@ -727,7 +727,7 @@ export default function DishPage() {
               deliveryTime: '12-18 mins',
               deliveryFee: 25,
               minimumOrder: 80,
-              image: '/images/restaurent/panache.jpg',
+              image: '/images/restaurants/panache.jpg',
               address: { area: 'Malad', city: 'Mumbai' },
               offers: ['Traditional lassi recipes']
             }

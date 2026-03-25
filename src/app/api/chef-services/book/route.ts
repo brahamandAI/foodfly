@@ -96,16 +96,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure customer has required fields
-    if (!customer.phone) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Customer phone number is required. Please update your profile.' 
-        },
-        { status: 400 }
-      );
-    }
+    // Phone is optional — use placeholder if not set so booking can proceed
 
     // Check for existing bookings on the same date
     const requestedDate = new Date(eventDate);

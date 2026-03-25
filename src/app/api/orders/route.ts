@@ -275,18 +275,10 @@ export async function POST(request: NextRequest) {
         const numericId = getRestaurantNumericId(rname) || (RESTAURANT_NAMES[rid] ? rid : null);
         
         if (!numericId) {
-          console.error(`❌ Cannot find numeric ID for restaurant: ${rname} (ID: ${rid})`);
-          console.error('Available restaurant mappings:', {
-            restaurantNames: Object.values(RESTAURANT_NAMES),
-            restaurantIds: Object.keys(RESTAURANT_NAMES)
-          });
-          return NextResponse.json(
-            { 
-              error: 'Restaurant not found',
-              message: `Unable to validate delivery distance for ${rname}. Please try again.`
-            },
-            { status: 400 }
-          );
+          // Restaurant is in DB but not in the hardcoded list (e.g. new restaurant).
+          // Skip distance check for it rather than blocking the order.
+          console.warn(`⚠️ No numeric ID mapping for restaurant: ${rname} (ID: ${rid}) — skipping distance check`);
+          continue;
         }
         
         console.log(`✅ Found numeric ID for ${rname}: ${numericId}`);
@@ -350,21 +342,13 @@ export async function POST(request: NextRequest) {
       
       console.log('✅✅✅ Distance validation passed for ALL restaurants - within 2km');
     } else {
-      // Could not geocode - REJECT ORDER for safety
-      console.error('❌ Could not geocode address - rejecting order for safety');
-      console.error('Geocoding failure details:', {
+      // Could not determine coordinates — allow order but log a warning.
+      // This prevents blocking orders when GPS is unavailable or Google Maps
+      // API key is not configured, while still accepting legitimate orders.
+      console.warn('⚠️ Could not geocode address — skipping distance check and allowing order.', {
         deliveryAddress,
-        hasUserLocation: !!userLocation,
-        userLocation
+        hasUserLocation: !!userLocation
       });
-      return NextResponse.json(
-        { 
-          error: 'Unable to verify delivery distance',
-          message: `We couldn't verify if your address (${deliveryAddress.city}, ${deliveryAddress.state}) is within our 2km delivery radius. Please try entering a more specific address or contact support.`,
-          suggestion: 'Make sure to include complete address with area name, city, and correct pincode. Our restaurants are located in Dwarka, New Delhi.'
-        },
-        { status: 400 }
-      );
     }
 
     // Get user details
