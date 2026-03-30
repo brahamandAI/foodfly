@@ -93,12 +93,40 @@ export function isLoggedIn(): boolean {
 }
 
 /**
- * Redirect to login with current page as redirect parameter
+ * Build the customer `/login` URL with return path and optional signup mode.
+ * Use this instead of a separate auth modal so guest, phone, email OTP, Google, and
+ * forgot password all use the same page.
+ */
+export function getCustomerLoginPath(options?: {
+  returnTo?: string;
+  signup?: boolean;
+}): string {
+  let ret = options?.returnTo;
+  if (!ret) {
+    if (typeof window !== 'undefined') {
+      ret = `${window.location.pathname}${window.location.search}` || '/';
+    } else {
+      ret = '/';
+    }
+  }
+  if (ret.startsWith('/login')) {
+    ret = '/';
+  }
+  const params = new URLSearchParams();
+  params.set('redirect', ret);
+  if (options?.signup) {
+    params.set('mode', 'signup');
+  }
+  return `/login?${params.toString()}`;
+}
+
+/**
+ * Full-page redirect to login with current URL as post-login destination.
  */
 export function redirectToLogin(): void {
-  const currentPath = window.location.pathname;
-  const redirectUrl = encodeURIComponent(currentPath);
-  window.location.href = `/login?redirect=${redirectUrl}`;
+  if (typeof window === 'undefined') return;
+  const returnTo = `${window.location.pathname}${window.location.search}`;
+  window.location.href = getCustomerLoginPath({ returnTo });
 }
 
 /**

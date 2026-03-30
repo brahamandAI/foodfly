@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
 import { Restaurant } from '@/lib/backend/models/restaurant.model';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -21,8 +23,8 @@ export async function GET(request: NextRequest) {
         image: r.images && r.images.length > 0 ? r.images[0] : '/images/restaurants/cafe.jpg',
         location: `${r.address.city}, ${r.address.state}`,
         address: `${r.address.street}, ${r.address.city}, ${r.address.state} ${r.address.zipCode}`,
-        isOpen: r.isActive !== false && r.isActive !== undefined ? r.isActive : true, // Default to true if not set
-        isActive: r.isActive !== false && r.isActive !== undefined ? r.isActive : true,
+        isOpen: r.isActive === undefined ? true : !!r.isActive,
+        isActive: r.isActive === undefined ? true : !!r.isActive,
         coordinates: r.address.coordinates || {
           latitude: 28.5891,
           longitude: 77.0467

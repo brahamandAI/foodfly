@@ -5,7 +5,7 @@ export interface IChefBooking extends Document {
   customerId: string;
   chefId: string | null;
   bookingDetails: {
-    eventType: 'private_dining' | 'catering' | 'cooking_class' | 'meal_prep' | 'consultation';
+    eventType: 'private_dining' | 'catering' | 'cooking_class' | 'meal_prep' | 'consultation' | 'birthday_party' | 'anniversary_celebration' | 'wedding_catering' | 'corporate_event' | 'family_gathering' | 'custom_event';
     eventDate: Date;
     eventTime: string;
     duration: number; // in hours
@@ -116,7 +116,7 @@ const ChefBookingSchema = new Schema<IChefBooking>({
   bookingDetails: {
     eventType: {
       type: String,
-      enum: ['private_dining', 'catering', 'cooking_class', 'meal_prep', 'consultation'],
+      enum: ['private_dining', 'catering', 'cooking_class', 'meal_prep', 'consultation', 'birthday_party', 'anniversary_celebration', 'wedding_catering', 'corporate_event', 'family_gathering', 'custom_event'],
       required: true
     },
     eventDate: {

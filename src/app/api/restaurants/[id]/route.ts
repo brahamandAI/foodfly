@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
+import { Restaurant } from '@/lib/backend/models/restaurant.model';
+import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
@@ -9,8 +11,25 @@ export async function GET(
     await connectDB();
     
     const restaurantId = params.id;
-    
-    // Mock restaurant data - in real app, this would query database
+
+    // Try to get live isActive status from database
+    let dbIsActive: boolean | undefined = undefined;
+    try {
+      let dbRestaurant = null;
+      if (mongoose.Types.ObjectId.isValid(restaurantId)) {
+        dbRestaurant = await (Restaurant as any).findById(restaurantId).select('isActive');
+      }
+      if (!dbRestaurant) {
+        const nameMap: Record<string, string> = { '1': 'Panache', '2': 'Cafe After Hours', '3': 'Symposium Restaurant' };
+        const rname = nameMap[restaurantId];
+        if (rname) dbRestaurant = await (Restaurant as any).findOne({ name: rname }).select('isActive');
+      }
+      if (dbRestaurant) {
+        dbIsActive = dbRestaurant.isActive === undefined ? true : !!dbRestaurant.isActive;
+      }
+    } catch { /* fallback to true */ }
+
+    // Static restaurant data (info only - menu is served by /api/restaurants/[id]/menu)
     const restaurants = {
       '1': {
         id: '1',
@@ -147,8 +166,15 @@ export async function GET(
       );
     }
 
+    // Override static isOpen with live DB value if available
+    const finalRestaurant = {
+      ...restaurant,
+      isOpen: dbIsActive !== undefined ? dbIsActive : restaurant.isOpen,
+      isActive: dbIsActive !== undefined ? dbIsActive : restaurant.isOpen,
+    };
+
     return NextResponse.json({
-      restaurant,
+      restaurant: finalRestaurant,
       message: 'Restaurant retrieved successfully'
     });
 

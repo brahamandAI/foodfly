@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/backend/database';
 import User from '@/lib/backend/models/user.model';
 import { verifyToken } from '@/lib/backend/middleware/auth';
+import bcrypt from 'bcryptjs';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,50 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  }
+}
+
+// Change password
+export async function PATCH(request: NextRequest) {
+  try {
+    await connectDB();
+    const user = verifyToken(request);
+    const { currentPassword, newPassword } = await request.json();
+
+    if (!currentPassword || !newPassword) {
+      return NextResponse.json({ error: 'Current password and new password are required' }, { status: 400 });
+    }
+    if (newPassword.length < 8) {
+      return NextResponse.json({ error: 'New password must be at least 8 characters' }, { status: 400 });
+    }
+
+    const dbUser = await User.findById(user._id);
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Users who signed up via Google may not have a password set
+    if (!dbUser.password) {
+      return NextResponse.json({ error: 'Your account uses Google Sign-In. Password change is not available for Google accounts.' }, { status: 400 });
+    }
+
+    const isMatch = await (dbUser as any).comparePassword(currentPassword);
+    if (!isMatch) {
+      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
+    }
+
+    // Hash manually and use updateOne to bypass the pre-save hook (which would double-hash)
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    await User.updateOne({ _id: user._id }, { $set: { password: hashedPassword } });
+
+    return NextResponse.json({ message: 'Password changed successfully' });
+  } catch (error: any) {
+    console.error('Change password error:', error);
+    if (error.message === 'No token provided' || error.message === 'Invalid token') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

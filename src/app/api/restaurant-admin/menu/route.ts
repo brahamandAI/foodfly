@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
       _id: new Date().getTime().toString(),
       name: item.name,
       price: typeof item.price === 'string' ? item.price : item.price.toString(),
+      discount: typeof item.discount === 'number' ? Math.max(0, Math.min(100, item.discount)) : 0,
       description: item.description || '',
       isVeg: item.isVeg !== undefined ? item.isVeg : true,
       image: item.image || '/images/placeholder.svg',
@@ -241,6 +242,7 @@ export async function PUT(request: NextRequest) {
         _id: new Date().getTime().toString(),
         name: updates.name,
         price: updates.price,
+        discount: typeof updates.discount === 'number' ? Math.max(0, Math.min(100, updates.discount)) : 0,
         description: updates.description || '',
         isVeg: updates.isVeg !== undefined ? updates.isVeg : true,
         image: updates.image || '/images/placeholder.svg',
@@ -285,6 +287,7 @@ export async function PUT(request: NextRequest) {
     // Explicitly set all fields and mark as modified
     menuItem.name = updates.name || menuItem.name;
     menuItem.price = priceValue;
+    menuItem.discount = typeof updates.discount === 'number' ? Math.max(0, Math.min(100, updates.discount)) : (menuItem.discount || 0);
     menuItem.description = updates.description !== undefined ? updates.description : menuItem.description;
     menuItem.isVeg = updates.isVeg !== undefined ? updates.isVeg : menuItem.isVeg;
     menuItem.isAvailable = updates.isAvailable !== undefined ? updates.isAvailable : menuItem.isAvailable;
@@ -321,6 +324,7 @@ export async function PUT(request: NextRequest) {
           
           catItem.name = updates.name || catItem.name;
           catItem.price = catPriceValue;
+          catItem.discount = typeof updates.discount === 'number' ? Math.max(0, Math.min(100, updates.discount)) : (catItem.discount || 0);
           catItem.description = updates.description !== undefined ? updates.description : catItem.description;
           catItem.isVeg = updates.isVeg !== undefined ? updates.isVeg : catItem.isVeg;
           catItem.isAvailable = updates.isAvailable !== undefined ? updates.isAvailable : catItem.isAvailable;

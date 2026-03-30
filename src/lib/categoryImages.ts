@@ -1,99 +1,82 @@
 /**
- * Category Image Mapping
- * Maps menu categories to images in public/images/categories
+ * Category image mapping → files in public/images/categories
+ * Filenames may contain spaces; paths are encoded for next/image and browsers.
  */
+
+function cat(filename: string): string {
+  return `/images/categories/${encodeURIComponent(filename)}`;
+}
 
 export const categoryImageMap: Record<string, string> = {
-  // Soups — use North-indian.jpg (dal/curry) as closest match
-  // Add public/images/categories/soup.jpg for a dedicated image
-  'Soups': '/images/categories/soup.jpg',
+  Soups: cat('soup.jpg'),
 
-  // Salads — use European.jpg (Mediterranean salads) as closest match
-  // Add public/images/categories/salad.jpg for a dedicated image
-  'Salads': '/images/categories/salad.jpg',
-  'Salad Station': '/images/categories/European.jpg',
-  'Gourmet Healthy Salads': '/images/categories/European.jpg',
+  Salads: cat('salad.jpg'),
+  'Salad Station': cat('salad station.jpeg'),
+  'Gourmet Healthy Salads': cat('gourment healthy salads.jpg'),
 
-  // Appetizers
-  'Bar Munchies': '/images/categories/broast.jpg',
-  'Bar Tidbits': '/images/categories/broast.jpg',
-  'European Appetizers': '/images/categories/European.jpg',
-  'Continental Appetizers': '/images/categories/European.jpg',
-  'Indian Appetizers (Veg)': '/images/categories/North-indian.jpg',
-  'Indian Appetizers (Non-Veg)': '/images/categories/chicken.jpg',
-  'Oriental Appetizers (Veg)': '/images/categories/Oriental.jpg',
-  'Oriental Appetizers (Non-Veg)': '/images/categories/Oriental.jpg',
-  'Oriental Appetizers': '/images/categories/Oriental.jpg',
-  'Oriental': '/images/categories/Oriental.jpg',
+  'Bar Munchies': cat('bar munchies.avif'),
+  'Bar Tidbits': cat('bar tidbits.jpg'),
+  'European Appetizers': cat('European apetizers.webp'),
+  'Continental Appetizers': cat('European apetizers.webp'),
+  'Indian Appetizers (Veg)': cat('North-indian.jpg'),
+  'Indian Appetizers (Non-Veg)': cat('chicken.jpg'),
+  'Oriental Appetizers (Veg)': cat('Veg oriental.png'),
+  'Oriental Appetizers (Non-Veg)': cat('oriental apetizers non veg.jpg'),
+  'Oriental Appetizers': cat('Oriental.jpg'),
+  'Oriental (Veg & Non-Veg)': cat('Oriental.jpg'),
+  Oriental: cat('Oriental.jpg'),
 
-  // Platters
-  'Platters & Boards': '/images/categories/North-indian.jpg',
-  'Wholesome Sharing Platters': '/images/categories/North-indian.jpg',
+  'Platters & Boards': cat('platters and boards.webp'),
+  'Wholesome Sharing Platters': cat('wholesome sharing platters.jpg'),
 
-  // Toasts & Bruschettas
-  'Sourdough Toasts & Bruschettas': '/images/categories/Italian.jpg',
+  'Sourdough Toasts & Bruschettas': cat('Italian.jpg'),
 
-  // Small Plates
-  'Mediterranean (Veg & Non-Veg)': '/images/categories/European.jpg',
-  'European (Veg & Non-Veg)': '/images/categories/European.jpg',
-  'Clay Oven (Veg & Non-Veg)': '/images/categories/Mughlai.jpg',
-  'Charcoal (Clay Oven)': '/images/categories/Mughlai.jpg',
+  'Mediterranean (Veg & Non-Veg)': cat('Mediterranean veg and non veg.jpg'),
+  'European (Veg & Non-Veg)': cat('European apetizers.webp'),
+  'Clay Oven (Veg & Non-Veg)': cat('clay oven veg and non veg.jpg'),
+  'Charcoal (Clay Oven)': cat('charcoal clay and oven.jpg'),
 
-  // Sandwiches & Burgers
-  'Sandwiches': '/images/categories/sandwhich.jpg',
-  'Burgers': '/images/categories/burger-2.jpg',
-  'Sandwiches & Burgers': '/images/categories/burger-2.jpg',
-  'Rolls': '/images/categories/sandwhich.jpg',
+  Sandwiches: cat('sandwhich.jpg'),
+  Burgers: cat('burger-2.jpg'),
+  'Sandwiches & Burgers': cat('burger-2.jpg'),
+  Rolls: cat('Rolls.jpg'),
 
-  // Pizza & Pasta
-  'Pizza': '/images/categories/pizza-2.jpeg',
-  'Wood Fired Pizzas': '/images/categories/pizza-2.jpeg',
-  'Artisans Pizza & Pasta': '/images/categories/pizza-2.jpeg',
-  'Home Made Pasta': '/images/categories/pasta.jpg',
-  'Pizza & Pasta': '/images/categories/pizza-2.jpeg',
+  Pizza: cat('pizza-2.jpeg'),
+  'Wood Fired Pizzas': cat('pizza-2.jpeg'),
+  'Artisans Pizza & Pasta': cat('pizza-2.jpeg'),
+  'Home Made Pasta': cat('pasta.jpg'),
+  'Pizza & Pasta': cat('pizza-2.jpeg'),
 
-  // Main Courses
-  'Main Courses': '/images/categories/North-indian.jpg',
-  'Continental Main Course': '/images/categories/European.jpg',
-  'European Main Course': '/images/categories/European.jpg',
-  'Indian Main Course (Veg)': '/images/categories/North-indian.jpg',
-  'Indian Main Course (Non-Veg)': '/images/categories/chicken.jpg',
-  'Indian Main Course': '/images/categories/North-indian.jpg',
-  'Soulful Indian Delights': '/images/categories/North-indian.jpg',
-  'Oriental Main Course': '/images/categories/Chinese.jpg',
+  'Main Courses': cat('North-indian.jpg'),
+  'Continental Main Course': cat('continental main course.png'),
+  'European Main Course': cat('European main course.jpg'),
+  'Indian Main Course (Veg)': cat('indian main course veg.png'),
+  'Indian Main Course (Non-Veg)': cat('Indian main course Non veg.jpg'),
+  'Indian Main Course': cat('indian main course.webp'),
+  'Soulful Indian Delights': cat('soulful indian delights.jpg'),
+  'Oriental Main Course': cat('oriental main course.jpg'),
 
-  // Sizzlers — broast.jpg (fried/grilled food) is the best available match
-  'Sizzlers': '/images/categories/broast.jpg',
-  'Continental & Sizzlers': '/images/categories/broast.jpg',
+  Sizzlers: cat('continental-sizzler-1.jpg'),
+  'Continental & Sizzlers': cat('continental-sizzler-1.jpg'),
 
-  // Rice & Biryani
-  'Rice & Biryani': '/images/categories/North-indian.jpg',
+  'Rice & Biryani': cat('rice and biryani.jpg'),
 
-  // Breads
-  'Breads & Sides': '/images/categories/North-indian.jpg',
+  'Breads & Sides': cat('Breads and sides.jpeg'),
 
-  // Dumplings & Sushi — Chinese.jpg is the right image here
-  'Dumplings & Sushi': '/images/categories/Chinese.jpg',
+  'Dumplings & Sushi': cat('Chinese.jpg'),
 
-  // Desserts
-  'Desserts': '/images/categories/desserts.jpg',
+  Desserts: cat('desserts.jpg'),
 
-  // Beverages
-  'Beverages': '/images/categories/Bevarages.jpg',
-  'Mocktails': '/images/categories/Bevarages.jpg',
-  'Mocktails & Juices': '/images/categories/Bevarages.jpg',
-  'Shakes & Smoothies': '/images/categories/shakes.jpg',
-  'Quenchers': '/images/categories/Bevarages.jpg',
-  'Quenchers & Cafe': '/images/categories/Bevarages.jpg',
+  Beverages: cat('Bevarages.jpg'),
+  Mocktails: cat('Mocktails.webp'),
+  'Mocktails & Juices': cat('Mocktails.webp'),
+  'Shakes & Smoothies': cat('shakes.jpg'),
+  Quenchers: cat('quenchers.png'),
+  'Quenchers & Cafe': cat('quenchers.png'),
 
-  // Default fallback
-  'default': '/images/categories/Fast-food.jpg'
+  default: cat('Fast-food.jpg'),
 };
 
-/**
- * Get image for a category
- */
 export function getCategoryImage(categoryName: string): string {
   return categoryImageMap[categoryName] || categoryImageMap['default'];
 }
-

@@ -13,7 +13,10 @@ import {
   Loader,
   ChefHat,
   Eye,
-  MessageCircle
+  EyeOff,
+  MessageCircle,
+  Lock,
+  Shield
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import AuthGuard from '@/components/AuthGuard';
@@ -68,6 +71,13 @@ export default function ProfilePage() {
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('bookings');
 
+  // Change password state
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   useEffect(() => {
     loadUserProfile();
     loadChefBookings();
@@ -85,12 +95,52 @@ export default function ProfilePage() {
       }
 
       if (authState.user) {
-        const profileData: UserProfile = authState.user;
-        // Fallback: if joinedAt not present, use createdAt
-        if (!profileData?.joinedAt && (authState.user as any)?.createdAt) {
-          profileData.joinedAt = (authState.user as any).createdAt;
-        }
+        const profileData: UserProfile = {
+          name: authState.user.name,
+          email: authState.user.email,
+          phone: authState.user.phone,
+          joinedAt: authState.user.joinedAt || (authState.user as any)?.createdAt,
+          createdAt: (authState.user as any)?.createdAt,
+        };
         setUser(profileData);
+      }
+
+      const token = authState.token;
+      if (token) {
+        const res = await fetch('/api/users/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const u = data.user;
+          if (u) {
+            const merged: UserProfile = {
+              name: u.name,
+              email: u.email,
+              phone: u.phone,
+              joinedAt: u.joinedAt || u.createdAt,
+              createdAt: u.createdAt,
+            };
+            setUser(merged);
+            try {
+              const prev = authState.user ? { ...authState.user } : {};
+              const stored = {
+                ...prev,
+                ...u,
+                id: u.id ?? prev.id ?? (prev as any)._id,
+                _id: u.id ?? (prev as any)._id,
+              };
+              const serial = JSON.stringify(stored);
+              if (localStorage.getItem('user')) localStorage.setItem('user', serial);
+              if (sessionStorage.getItem('user')) sessionStorage.setItem('user', serial);
+            } catch {
+              /* ignore storage errors */
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -129,6 +179,49 @@ export default function ProfilePage() {
       setChefBookings([]);
     } finally {
       setBookingsLoading(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (!pwForm.current || !pwForm.newPw || !pwForm.confirm) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+    if (pwForm.newPw.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (pwForm.newPw !== pwForm.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (pwForm.current === pwForm.newPw) {
+      toast.error('New password must be different from current password');
+      return;
+    }
+
+    try {
+      setPwLoading(true);
+      const authState = checkAuthState();
+      const res = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${authState.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.newPw }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Password changed successfully! 🔐');
+        setPwForm({ current: '', newPw: '', confirm: '' });
+      } else {
+        toast.error(data.error || 'Failed to change password');
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setPwLoading(false);
     }
   };
 
@@ -211,11 +304,10 @@ export default function ProfilePage() {
                 <p className="text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                   {user?.email}
                 </p>
-                {user?.phone && (
-                  <p className="text-gray-300" style={{ fontFamily: "'Satoshi', sans-serif" }}>
-                    {user.phone}
-                  </p>
-                )}
+                <p className="text-gray-300 mt-1" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                  <span className="text-gray-500 text-sm">Mobile </span>
+                  {user?.phone || 'Not added yet'}
+                </p>
                 <p className="text-sm text-gray-400 mt-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                   Member since {user?.joinedAt || user?.createdAt ? new Date((user?.joinedAt || user?.createdAt) as string).toLocaleDateString() : 'N/A'}
                 </p>
@@ -226,10 +318,10 @@ export default function ProfilePage() {
           {/* Tabs */}
           <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden">
             <div className="border-b border-gray-700">
-              <nav className="flex space-x-8 px-6">
+              <nav className="flex space-x-8 px-6 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('bookings')}
-                  className={`py-4 px-2 border-b-2 font-semibold text-sm transition-all duration-300 ${
+                  className={`py-4 px-2 border-b-2 font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                     activeTab === 'bookings'
                       ? 'border-yellow-400 text-yellow-400'
                       : 'border-transparent text-gray-400 hover:text-gray-300'
@@ -241,11 +333,174 @@ export default function ProfilePage() {
                     <span>Chef Bookings ({chefBookings.length})</span>
                   </div>
                 </button>
+                <button
+                  onClick={() => setActiveTab('security')}
+                  className={`py-4 px-2 border-b-2 font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
+                    activeTab === 'security'
+                      ? 'border-yellow-400 text-yellow-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-300'
+                  }`}
+                  style={{ fontFamily: "'Satoshi', sans-serif" }}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-5 w-5" />
+                    <span>Security</span>
+                  </div>
+                </button>
               </nav>
             </div>
 
-            {/* Chef Bookings Content */}
+            {/* Tab Content */}
             <div className="p-6">
+              {/* Security - Change Password */}
+              {activeTab === 'security' && (
+                <div className="max-w-md">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-yellow-400/10 rounded-full flex items-center justify-center">
+                      <Lock className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        Change Password
+                      </h3>
+                      <p className="text-sm text-gray-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        Keep your account secure by using a strong, unique password.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Current Password */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-1.5" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showCurrent ? 'text' : 'password'}
+                          value={pwForm.current}
+                          onChange={(e) => setPwForm(f => ({ ...f, current: e.target.value }))}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent pr-12"
+                          placeholder="Enter your current password"
+                          style={{ fontFamily: "'Satoshi', sans-serif" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrent(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                        >
+                          {showCurrent ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* New Password */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-1.5" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showNew ? 'text' : 'password'}
+                          value={pwForm.newPw}
+                          onChange={(e) => setPwForm(f => ({ ...f, newPw: e.target.value }))}
+                          className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent pr-12"
+                          placeholder="At least 8 characters"
+                          style={{ fontFamily: "'Satoshi', sans-serif" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNew(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                        >
+                          {showNew ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                      {/* Password strength indicator */}
+                      {pwForm.newPw.length > 0 && (
+                        <div className="mt-2">
+                          <div className="flex gap-1 mb-1">
+                            {[1,2,3,4].map(i => (
+                              <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
+                                pwForm.newPw.length >= i * 3
+                                  ? i <= 1 ? 'bg-red-500' : i === 2 ? 'bg-yellow-500' : i === 3 ? 'bg-blue-500' : 'bg-green-500'
+                                  : 'bg-gray-600'
+                              }`} />
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            {pwForm.newPw.length < 4 ? 'Too short' : pwForm.newPw.length < 7 ? 'Weak' : pwForm.newPw.length < 10 ? 'Fair' : pwForm.newPw.length < 13 ? 'Strong' : 'Very strong'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Confirm New Password */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-1.5" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                        Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showConfirm ? 'text' : 'password'}
+                          value={pwForm.confirm}
+                          onChange={(e) => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                          className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent pr-12 ${
+                            pwForm.confirm && pwForm.newPw !== pwForm.confirm ? 'border-red-500' : 'border-gray-600'
+                          }`}
+                          placeholder="Re-enter new password"
+                          style={{ fontFamily: "'Satoshi', sans-serif" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                        >
+                          {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                      {pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
+                        <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                      )}
+                      {pwForm.confirm && pwForm.newPw === pwForm.confirm && pwForm.confirm.length > 0 && (
+                        <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" /> Passwords match
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={changePassword}
+                      disabled={pwLoading || !pwForm.current || !pwForm.newPw || !pwForm.confirm || pwForm.newPw !== pwForm.confirm}
+                      className="w-full mt-2 bg-yellow-400 text-[#232323] py-3 px-6 rounded-lg font-bold hover:bg-yellow-300 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      style={{ fontFamily: "'Satoshi', sans-serif" }}
+                    >
+                      {pwLoading ? (
+                        <>
+                          <Loader className="h-4 w-4 animate-spin" />
+                          <span>Changing Password...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-4 w-4" />
+                          <span>Change Password</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
+                    <p className="text-xs text-gray-400 font-semibold mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>Password tips:</p>
+                    <ul className="text-xs text-gray-400 space-y-1" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                      <li>• Use at least 8 characters</li>
+                      <li>• Mix uppercase, lowercase, numbers and symbols</li>
+                      <li>• Avoid using personal information</li>
+                      <li>• Don't reuse passwords from other sites</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'bookings' && (
                 <div>
                   <div className="flex justify-between items-center mb-6">
@@ -340,9 +595,9 @@ export default function ProfilePage() {
                                         <span>{(booking.chef.rating ?? 5).toFixed?.(1) || Number(booking.chef.rating ?? 5).toFixed(1)} rating</span>
                                       </div>
                                       <div className="flex items-center space-x-2">
-                                        <DollarSign className="h-4 w-4 text-yellow-400" />
+                                        <span className="text-yellow-400 font-bold text-lg">₹</span>
                                         <span className="font-bold text-lg text-yellow-400">
-                                          ₹{booking.pricing.totalAmount.toLocaleString()}
+                                          {booking.pricing.totalAmount.toLocaleString()}
                                         </span>
                                       </div>
                                     </div>
@@ -351,7 +606,7 @@ export default function ProfilePage() {
                                       <p className="font-medium">Awaiting chef acceptance</p>
                                       <p>Your request is visible to available chefs. The first to accept will be assigned.</p>
                                       <div className="flex items-center space-x-2">
-                                        <DollarSign className="h-4 w-4 text-yellow-400" />
+                                        <span className="text-yellow-400 font-bold">₹</span>
                                         <span className="font-bold text-yellow-400">Estimated total: ₹{booking.pricing.totalAmount.toLocaleString()}</span>
                                       </div>
                                     </div>

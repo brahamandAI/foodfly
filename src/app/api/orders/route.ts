@@ -5,6 +5,7 @@ import Order from '@/lib/backend/models/order.model';
 import Cart from '@/lib/backend/models/cart.model';
 import Notification from '@/lib/backend/models/notification.model';
 import User from '@/lib/backend/models/user.model';
+import { Restaurant } from '@/lib/backend/models/restaurant.model';
 import { isWithinDeliveryRadius, getDistanceToRestaurant, MAX_DELIVERY_RADIUS_KM, RESTAURANT_NAMES, RESTAURANT_ADDRESSES, getRestaurantNumericId } from '@/lib/distanceService';
 import { sanitizeImageUrl } from '@/lib/menuUtils';
 
@@ -264,15 +265,29 @@ export async function POST(request: NextRequest) {
       
       console.log('✅ Coordinates are within India bounds, proceeding with distance validation');
       
+      // Fetch per-restaurant delivery radius from DB (keyed by string ID)
+      const restaurantRadiusMap: Record<string, number> = {};
+      try {
+        const dbRestaurants = await (Restaurant as any).find({ _id: { $in: restaurantIds } }).select('_id deliveryRadius');
+        for (const r of dbRestaurants) {
+          restaurantRadiusMap[String(r._id)] = r.deliveryRadius || MAX_DELIVERY_RADIUS_KM;
+        }
+      } catch { /* fallback to global default */ }
+
       // Validate distance for EACH restaurant
       for (const rid of restaurantIds) {
         const restaurantItems = itemsByRestaurant[rid];
         const rname = restaurantItems[0]?.restaurantName || RESTAURANT_NAMES[rid] || 'Restaurant';
+        const effectiveRadius = restaurantRadiusMap[rid] || MAX_DELIVERY_RADIUS_KM;
         
-        console.log(`🔍 Validating distance for restaurant: ${rname} (ID: ${rid})`);
+        console.log(`🔍 Validating distance for restaurant: ${rname} (ID: ${rid}), radius: ${effectiveRadius}km`);
         
-        // Convert restaurant ID/name to numeric ID for distance calculation
-        const numericId = getRestaurantNumericId(rname) || (RESTAURANT_NAMES[rid] ? rid : null);
+        // Map MongoDB id or numeric mock id to 1|2|3 for hardcoded coordinates
+        const ridStr = String(rid).trim();
+        const numericId =
+          ridStr === '1' || ridStr === '2' || ridStr === '3'
+            ? ridStr
+            : getRestaurantNumericId(rname) || (RESTAURANT_NAMES[rid] ? rid : null);
         
         if (!numericId) {
           // Restaurant is in DB but not in the hardcoded list (e.g. new restaurant).
@@ -283,8 +298,8 @@ export async function POST(request: NextRequest) {
         
         console.log(`✅ Found numeric ID for ${rname}: ${numericId}`);
         
-        const canDeliver = isWithinDeliveryRadius(numericId, userCoordinates);
         const distance = getDistanceToRestaurant(numericId, userCoordinates);
+        const canDeliver = distance !== null ? distance <= effectiveRadius : isWithinDeliveryRadius(numericId, userCoordinates);
         
         console.log('📏 Distance validation result:', {
           restaurant: rname,
@@ -292,28 +307,28 @@ export async function POST(request: NextRequest) {
           numericId,
           distance: distance ? distance.toFixed(2) + 'km' : 'unknown',
           canDeliver,
-          maxRadius: MAX_DELIVERY_RADIUS_KM + 'km',
+          maxRadius: effectiveRadius + 'km',
           userCoords: userCoordinates
         });
         
-        // STRICT VALIDATION: Reject if distance is greater than 2km OR if canDeliver is false
-        if (!canDeliver || (distance && distance > MAX_DELIVERY_RADIUS_KM)) {
+        // STRICT VALIDATION: Reject if distance exceeds the restaurant's own radius
+        if (!canDeliver || (distance && distance > effectiveRadius)) {
           const restaurantAddress = RESTAURANT_ADDRESSES[numericId] || 'our restaurant location';
           
           console.error(`❌ Distance validation FAILED for ${rname}:`, {
             distance: distance ? distance.toFixed(2) + 'km' : 'unknown',
             canDeliver,
-            maxRadius: MAX_DELIVERY_RADIUS_KM + 'km'
+            maxRadius: effectiveRadius + 'km'
           });
           
           return NextResponse.json(
             { 
               error: `We can't deliver to this location 😔`,
-              message: `${rname} is ${distance ? distance.toFixed(1) : 'more than'}km away from your delivery address. To ensure your food arrives fresh and hot, we can only deliver within ${MAX_DELIVERY_RADIUS_KM}km.`,
+              message: `${rname} is ${distance ? distance.toFixed(1) : 'more than'}km away from your delivery address. To ensure your food arrives fresh and hot, we can only deliver within ${effectiveRadius}km.`,
               distance: distance ? distance.toFixed(1) : 'unknown',
-              maxRadius: MAX_DELIVERY_RADIUS_KM,
+              maxRadius: effectiveRadius,
               restaurantAddress,
-              suggestion: `Please select a delivery address within ${MAX_DELIVERY_RADIUS_KM}km of ${rname}. Our restaurant is located at ${restaurantAddress}.`,
+              suggestion: `Please select a delivery address within ${effectiveRadius}km of ${rname}. Our restaurant is located at ${restaurantAddress}.`,
               addressInfo: {
                 city: deliveryAddress.city,
                 state: deliveryAddress.state,
@@ -337,7 +352,7 @@ export async function POST(request: NextRequest) {
           );
         }
         
-        console.log(`✅ Distance validation PASSED for ${rname}: ${distance.toFixed(2)}km (within ${MAX_DELIVERY_RADIUS_KM}km limit)`);
+        console.log(`✅ Distance validation PASSED for ${rname}: ${distance.toFixed(2)}km (within ${effectiveRadius}km limit)`);
       }
       
       console.log('✅✅✅ Distance validation passed for ALL restaurants - within 2km');

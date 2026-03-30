@@ -322,20 +322,20 @@ export default function ChefRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <div className="min-h-screen bg-[#232323]" style={{ fontFamily: "'Satoshi', sans-serif" }}>
       {/* Header */}
-      <div className="bg-gray-900/90 shadow-sm border-b border-gray-700">
+      <div className="bg-gray-900 shadow-lg border-b border-gray-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center space-x-4">
             <Link
               href="/chef-services"
-              className="flex items-center space-x-2 text-gray-300 hover:text-white"
+              className="flex items-center space-x-2 text-gray-400 hover:text-yellow-400 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Chef Services</span>
             </Link>
             <div className="flex items-center space-x-2">
-              <ChefHat className="h-6 w-6 text-orange-500" />
+              <ChefHat className="h-6 w-6 text-yellow-400" />
               <Image
                 src="/images/logo.png"
                 alt="FoodFly"
@@ -351,17 +351,17 @@ export default function ChefRegisterPage() {
 
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl p-8 border border-gray-700/50">
+        <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 border border-gray-800">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ChefHat className="h-10 w-10 text-white" />
+            <div className="w-20 h-20 bg-yellow-400/10 border-2 border-yellow-400/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ChefHat className="h-10 w-10 text-yellow-400" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">Join FoodFly as a Chef</h2>
-            <p className="text-gray-300">Share your culinary skills and earn by cooking for special events</p>
-            <div className="mt-4 px-4 py-2 bg-orange-900/30 border-l-4 border-orange-500 rounded-r-lg">
-              <p className="text-sm text-orange-300 font-medium flex items-center">
-                <span className="mr-2">👨‍🍳</span>
-                CHEF REGISTRATION - This creates a chef-only account, separate from regular customers
+            <h2 className="text-3xl font-black text-white mb-2">Join FoodFly as a Chef</h2>
+            <p className="text-gray-400">Share your culinary skills and earn by cooking for special events</p>
+            <div className="mt-4 px-4 py-2 bg-yellow-400/10 border border-yellow-400/30 rounded-xl">
+              <p className="text-sm text-yellow-400 font-semibold flex items-center justify-center gap-2">
+                <ChefHat className="h-4 w-4" />
+                Chef-only account — separate from regular customers
               </p>
             </div>
           </div>
@@ -408,7 +408,7 @@ export default function ChefRegisterPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800/70 text-white placeholder-gray-400"
+                    className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-gray-800/70 text-white placeholder-gray-400"
                     placeholder="Enter your full name"
                     required
                   />
@@ -424,7 +424,7 @@ export default function ChefRegisterPage() {
                         ? 'border-red-500 focus:ring-red-500' 
                         : clearedFields.phone
                         ? 'border-green-500 focus:ring-green-500'
-                        : 'border-gray-600 focus:ring-orange-500'
+                        : 'border-gray-600 focus:ring-yellow-400'
                     }`}
                     placeholder="Enter your phone number"
                     required
@@ -455,7 +455,7 @@ export default function ChefRegisterPage() {
                       ? 'border-red-500 focus:ring-red-500' 
                       : clearedFields.email
                       ? 'border-green-500 focus:ring-green-500'
-                      : 'border-gray-600 focus:ring-orange-500'
+                      : 'border-gray-600 focus:ring-yellow-400'
                   }`}
                   placeholder="Enter your email address"
                   required
@@ -482,7 +482,7 @@ export default function ChefRegisterPage() {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 bg-gray-800/70 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 pr-10 bg-gray-800/70 text-white placeholder-gray-400"
                       placeholder="Enter your password"
                       required
                     />
@@ -502,7 +502,7 @@ export default function ChefRegisterPage() {
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 bg-gray-800/70 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 pr-10 bg-gray-800/70 text-white placeholder-gray-400"
                       placeholder="Confirm your password"
                       required
                     />
@@ -529,7 +529,7 @@ export default function ChefRegisterPage() {
                   value={formData.experience}
                   onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
                   min="0"
-                  className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800/70 text-white placeholder-gray-400"
+                  className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-gray-800/70 text-white placeholder-gray-400"
                   placeholder="Enter years of experience"
                   required
                 />
@@ -548,8 +548,8 @@ export default function ChefRegisterPage() {
                       onClick={() => toggleSpecialization(cuisine)}
                       className={`px-4 py-3 border-2 rounded-lg text-sm font-medium transition-all ${
                         formData.specialization.includes(cuisine)
-                          ? 'border-orange-500 bg-orange-500 text-white shadow-lg scale-105'
-                          : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-orange-500 hover:shadow-md hover:bg-gray-600'
+                          ? 'border-yellow-400 bg-yellow-400 text-white shadow-lg scale-105'
+                          : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-yellow-400 hover:shadow-md hover:bg-gray-600'
                       }`}
                     >
                       {cuisine}
@@ -570,7 +570,7 @@ export default function ChefRegisterPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Tell us about your cooking style, experience, and what makes you unique..."
                   rows={3}
-                  className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800/70 text-white placeholder-gray-400"
+                  className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-gray-800/70 text-white placeholder-gray-400"
                 />
               </div>
 
@@ -584,7 +584,7 @@ export default function ChefRegisterPage() {
                         value={dish}
                         onChange={(e) => updateSignatureDish(index, e.target.value)}
                         placeholder="Enter a signature dish"
-                        className="flex-1 px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800/70 text-white placeholder-gray-400"
+                        className="flex-1 px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-gray-800/70 text-white placeholder-gray-400"
                       />
                       <button
                         type="button"
@@ -598,7 +598,7 @@ export default function ChefRegisterPage() {
                   <button
                     type="button"
                     onClick={addSignatureDish}
-                    className="text-orange-400 hover:text-orange-300 text-sm"
+                    className="text-yellow-400 hover:text-yellow-300 text-sm"
                   >
                     + Add Signature Dish
                   </button>
@@ -615,7 +615,7 @@ export default function ChefRegisterPage() {
                   Service Areas *
                   <span className="text-sm font-normal text-gray-300 block">Select cities where you provide chef services</span>
                 </label>
-                <div className="bg-gray-700/50 border-2 border-orange-500/30 rounded-lg p-4">
+                <div className="bg-gray-700/50 border-2 border-yellow-400/30 rounded-lg p-4">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
                     {indianCities.map((city) => (
                       <button
@@ -624,8 +624,8 @@ export default function ChefRegisterPage() {
                         onClick={() => toggleServiceArea(city)}
                         className={`px-4 py-3 border-2 rounded-lg text-sm font-medium transition-all ${
                           formData.serviceAreas.includes(city)
-                            ? 'border-orange-500 bg-orange-500 text-white shadow-lg scale-105'
-                            : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-orange-500 hover:shadow-md hover:bg-gray-600'
+                            ? 'border-yellow-400 bg-yellow-400 text-white shadow-lg scale-105'
+                            : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-yellow-400 hover:shadow-md hover:bg-gray-600'
                         }`}
                       >
                         {city}
@@ -659,7 +659,7 @@ export default function ChefRegisterPage() {
                       placeholder="Minimum price"
                       min="1000"
                       step="500"
-                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800/70 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-gray-800/70 text-white placeholder-gray-400"
                       required
                     />
                   </div>
@@ -674,7 +674,7 @@ export default function ChefRegisterPage() {
                       placeholder="Maximum price"
                       min="1000"
                       step="500"
-                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-800/70 text-white placeholder-gray-400"
+                      className="w-full px-3 py-2 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-gray-800/70 text-white placeholder-gray-400"
                       required
                     />
                   </div>
@@ -688,10 +688,10 @@ export default function ChefRegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-4 px-4 rounded-xl font-bold text-lg shadow-xl transition duration-200 transform hover:scale-105 ${
+                className={`w-full py-4 px-4 rounded-xl font-bold text-lg shadow-xl transition-all duration-200 ${
                   loading
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700'
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-yellow-400 text-[#232323] hover:bg-yellow-300'
                 }`}
               >
                 {loading ? 'Creating Account...' : 'Register as Chef'}
@@ -701,7 +701,7 @@ export default function ChefRegisterPage() {
             <div className="text-center">
               <p className="text-gray-300">
                 Already have an account?{' '}
-                <Link href="/chef/login" className="text-orange-400 hover:text-orange-300 font-medium">
+                <Link href="/chef/login" className="text-yellow-400 hover:text-yellow-300 font-medium">
                   Login here
                 </Link>
               </p>

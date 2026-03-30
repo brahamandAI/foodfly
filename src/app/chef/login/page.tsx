@@ -7,95 +7,51 @@ import { ChefHat, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function ChefLoginPage() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.email || !formData.password) {
       toast.error('Please fill in all fields');
       return;
     }
-
     setLoading(true);
-
     try {
       const response = await fetch('/api/auth/chef-login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
       if (response.ok) {
         const data = await response.json();
-        
-        if (typeof window !== 'undefined') {
-          console.log('✅ Chef login success:', data); // Debug log
-        }
-        
-        // Store CHEF-ONLY auth data (client-side only with chef-specific keys)
-        if (typeof window !== 'undefined') {
-          // Ensure we're storing chef data only
-          if (data.chef && data.chef.role === 'chef' && data.userType === 'chef') {
-            // Use CHEF-SPECIFIC localStorage keys to prevent mixing
-            localStorage.setItem('chef-token', data.token);
-            localStorage.setItem('chef-user', JSON.stringify(data.chef));
-            localStorage.setItem('chef-isLoggedIn', 'true');
-            localStorage.setItem('chef-userType', 'chef'); // Explicit chef marking
-            localStorage.setItem('chef-sessionId', data.sessionId); // Store session ID for database tracking
-            
-            // Clear any regular user data to prevent mixing
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userType');
-            
-            // Trigger storage events for real-time updates (chef-specific)
-            window.dispatchEvent(new StorageEvent('storage', {
-              key: 'chef-isLoggedIn',
-              newValue: 'true',
-              oldValue: null
-            }));
-            
-            toast.success('Chef login successful! Redirecting to chef dashboard...');
-            
-            // Use the redirect URL from response
-            const redirectUrl = data.redirectTo || '/chef/dashboard';
-            console.log('🍳 Redirecting to:', redirectUrl);
-            
-            // Force immediate redirect
-            window.location.href = redirectUrl;
-          } else {
-            throw new Error('Invalid chef authentication data');
-          }
+        if (data.chef && data.chef.role === 'chef' && data.userType === 'chef') {
+          localStorage.setItem('chef-token', data.token);
+          localStorage.setItem('chef-user', JSON.stringify(data.chef));
+          localStorage.setItem('chef-isLoggedIn', 'true');
+          localStorage.setItem('chef-userType', 'chef');
+          localStorage.setItem('chef-sessionId', data.sessionId);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('userType');
+          window.dispatchEvent(new StorageEvent('storage', { key: 'chef-isLoggedIn', newValue: 'true', oldValue: null }));
+          toast.success('Chef login successful!');
+          window.location.href = data.redirectTo || '/chef/dashboard';
+        } else {
+          throw new Error('Invalid chef authentication data');
         }
       } else {
         const error = await response.json();
-        console.error('❌ Chef login failed:', error);
-        
-        // Handle role-specific errors
         if (error.userRole && error.redirectTo) {
-          const shouldRedirect = window.confirm(
-            `${error.error} Would you like to go to the ${error.userRole} login instead?`
-          );
-          
-          if (shouldRedirect) {
-            window.location.href = error.redirectTo;
-            return;
-          }
+          const shouldRedirect = window.confirm(`${error.error} Go to ${error.userRole} login instead?`);
+          if (shouldRedirect) { window.location.href = error.redirectTo; return; }
         }
-        
         toast.error(error.error || 'Chef login failed');
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       toast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -103,114 +59,87 @@ export default function ChefLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      {/* Header */}
-      <div className="bg-gray-900/90 shadow-sm border-b border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/chef-services"
-              className="flex items-center space-x-2 text-gray-300 hover:text-white"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Back to Chef Services</span>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <ChefHat className="h-6 w-6 text-orange-500" />
-              <Image
-                src="/images/logo.png"
-                alt="FoodFly"
-                width={24}
-                height={24}
-                className="rounded"
-              />
-              <h1 className="text-xl font-bold text-white">Chef Login</h1>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#232323] flex items-center justify-center p-4" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+      <div className="w-full max-w-md">
+        {/* Back link */}
+        <div className="mb-6">
+          <Link href="/chef-services" className="flex items-center gap-2 text-gray-400 hover:text-yellow-400 transition-colors text-sm">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Chef Services
+          </Link>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] py-12">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-lg p-8 border border-gray-700/50">
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ChefHat className="h-10 w-10 text-white" />
+        <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 border border-gray-800">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-block mb-4">
+              <div className="relative w-16 h-16 mx-auto">
+                <Image src="/images/logo.png" alt="FoodFly" fill className="object-contain" priority />
               </div>
-              <h2 className="text-3xl font-bold text-white mb-2">Chef Login</h2>
-              <p className="text-gray-300">Welcome back to FoodFly Chef Portal</p>
-              <div className="mt-4 px-3 py-2 bg-green-900/30 border-l-4 border-green-500 rounded-r-lg">
-                <p className="text-xs text-green-300 font-medium flex items-center">
-                  <span className="mr-2">🍳</span>
-                  CHEF-ONLY LOGIN - For registered chefs only
-                </p>
-              </div>
+            </Link>
+            <div className="w-14 h-14 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-yellow-400/30">
+              <ChefHat className="h-7 w-7 text-yellow-400" />
+            </div>
+            <h1 className="text-3xl font-black text-white mb-1">Chef Login</h1>
+            <p className="text-gray-400 text-sm">FoodFly Chef Portal</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-1.5">Email Address</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all"
+                placeholder="chef@example.com"
+                required
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Email Address</label>
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-1.5">Password</label>
+              <div className="relative">
                 <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-800/70 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-white placeholder-gray-400"
-                  placeholder="Enter your email"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-4 py-3 pr-12 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all"
+                  placeholder="Enter your password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Chef Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-800/70 border-2 border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 text-white placeholder-gray-400"
-                    placeholder="Enter your chef password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full py-3 px-4 rounded-lg font-bold transition duration-200 text-lg ${
-                  loading
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-orange-500 to-red-600 text-white hover:from-orange-600 hover:to-red-700 shadow-lg transform hover:scale-105'
-                }`}
-              >
-                {loading ? '🔄 Signing In...' : '👨‍🍳 Sign In as Chef'}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-gray-300">
-                Don't have a chef account?{' '}
-                <Link href="/chef/register" className="text-orange-400 hover:text-orange-300 font-medium">
-                  Register here
-                </Link>
-              </p>
             </div>
 
-            <div className="mt-4 text-center">
-              <Link href="/login" className="text-sm text-gray-400 hover:text-gray-300">
-                Looking for customer login?
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-yellow-400 text-[#232323] font-bold py-3 rounded-lg hover:bg-yellow-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+            >
+              <ChefHat className="h-5 w-5" />
+              {loading ? 'Signing In...' : 'Sign In as Chef'}
+            </button>
+          </form>
+
+          <div className="mt-6 space-y-3 text-center">
+            <p className="text-gray-400 text-sm">
+              Don&apos;t have a chef account?{' '}
+              <Link href="/chef/register" className="text-yellow-400 hover:text-yellow-300 font-semibold">
+                Register here
               </Link>
-            </div>
-
-
+            </p>
+            <Link href="/login" className="block text-xs text-gray-500 hover:text-gray-400 transition-colors">
+              Looking for customer login?
+            </Link>
           </div>
         </div>
       </div>

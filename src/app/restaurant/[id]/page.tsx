@@ -14,6 +14,7 @@ export default function RestaurantPage() {
   const searchParams = useSearchParams();
   const [menu, setMenu] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState<boolean | null>(null);
   
   // Restaurant mapping with their menus (fallback)
   const restaurantInfo = {
@@ -56,21 +57,29 @@ export default function RestaurantPage() {
     if (showLoading) setIsLoading(true);
     
     try {
-      // Add cache-busting timestamp to ensure fresh data
+      // Fetch restaurant status and menu in parallel
       const timestamp = new Date().getTime();
-      const response = await fetch(`/api/restaurants/${restaurantId}/menu?t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      const data = await response.json();
-      
+      const [menuResponse, statusResponse] = await Promise.all([
+        fetch(`/api/restaurants/${restaurantId}/menu?t=${timestamp}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        }),
+        fetch(`/api/restaurants/${restaurantId}`, { cache: 'no-store' })
+      ]);
+
+      const data = await menuResponse.json();
       if (data.menu && data.menu.length > 0) {
         setMenu(data.menu);
       } else {
         setMenu([]);
+      }
+
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        const restaurantData = statusData.restaurant;
+        if (restaurantData) {
+          setIsOpen(restaurantData.isActive !== undefined ? restaurantData.isActive : restaurantData.isOpen !== false);
+        }
       }
     } catch (error) {
       console.error('Error fetching menu:', error);
@@ -161,6 +170,14 @@ export default function RestaurantPage() {
           </div>
         </div>
       </div>
+
+      {/* Closed Banner */}
+      {isOpen === false && (
+        <div className="bg-red-600 text-white text-center py-4 font-bold text-lg tracking-wide flex items-center justify-center gap-3">
+          <span className="text-2xl">⛔</span>
+          <span>This restaurant is currently CLOSED. Please check back later.</span>
+        </div>
+      )}
 
       {/* Menu Component - Shows restaurant-specific menu */}
       {!isLoading && (

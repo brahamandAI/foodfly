@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const isValid = verifyOtp(email.toLowerCase(), otp);
+    const isValid = await verifyOtp(email.toLowerCase(), String(otp).trim(), 'reset');
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid or expired OTP. Please request a new one.' }, { status: 400 });
     }

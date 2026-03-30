@@ -145,7 +145,6 @@ export default function CategoryMenuPage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [cartItems, setCartItems] = useState<Record<string, { name: string; price: number; quantity: number }>>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
 
   useEffect(() => {
     // Check authentication status

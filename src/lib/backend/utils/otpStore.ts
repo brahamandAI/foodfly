@@ -1,50 +1,68 @@
 /**
- * In-memory OTP store with automatic expiry.
- * OTPs expire after 10 minutes.
+ * Email OTP storage in MongoDB so signup/reset work across Next.js instances and HMR.
+ * (In-memory Map fails when send-otp and register run on different workers.)
  */
 
-interface OtpEntry {
-  otp: string;
-  expiresAt: number;
-  email: string;
-}
+import EmailOtp from '@/lib/backend/models/emailOtp.model';
 
-const store = new Map<string, OtpEntry>();
+export type OtpPurpose = 'reset' | 'signup';
 
-const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const OTP_TTL_MS = 10 * 60 * 1000;
 
 export function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export function saveOtp(email: string, otp: string): void {
-  const key = email.toLowerCase();
-  store.set(key, {
-    otp,
-    email: key,
-    expiresAt: Date.now() + OTP_TTL_MS,
-  });
+function normalizeEmail(email: string): string {
+  return email.toLowerCase().trim();
 }
 
-export function verifyOtp(email: string, otp: string): boolean {
-  const key = email.toLowerCase();
-  const entry = store.get(key);
-  if (!entry) return false;
-  if (Date.now() > entry.expiresAt) {
-    store.delete(key);
+export async function saveOtp(
+  email: string,
+  otp: string,
+  purpose: OtpPurpose = 'reset'
+): Promise<void> {
+  const e = normalizeEmail(email);
+  await EmailOtp.findOneAndUpdate(
+    { email: e, purpose },
+    {
+      $set: {
+        otp,
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      },
+    },
+    { upsert: true, new: true }
+  );
+}
+
+export async function verifyOtp(
+  email: string,
+  otp: string,
+  purpose: OtpPurpose = 'reset'
+): Promise<boolean> {
+  const e = normalizeEmail(email);
+  const code = String(otp).trim();
+
+  const doc = await EmailOtp.findOne({ email: e, purpose });
+  if (!doc) return false;
+
+  if (new Date() > doc.expiresAt) {
+    await EmailOtp.deleteOne({ _id: doc._id });
     return false;
   }
-  if (entry.otp !== otp) return false;
-  store.delete(key); // one-time use
+
+  if (doc.otp !== code) return false;
+
+  await EmailOtp.deleteOne({ _id: doc._id });
   return true;
 }
 
-export function otpExists(email: string): boolean {
-  const key = email.toLowerCase();
-  const entry = store.get(key);
-  if (!entry) return false;
-  if (Date.now() > entry.expiresAt) {
-    store.delete(key);
+export async function otpExists(email: string, purpose: OtpPurpose = 'reset'): Promise<boolean> {
+  const e = normalizeEmail(email);
+  const doc = await EmailOtp.findOne({ email: e, purpose });
+  if (!doc) return false;
+  if (new Date() > doc.expiresAt) {
+    await EmailOtp.deleteOne({ _id: doc._id });
     return false;
   }
   return true;

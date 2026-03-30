@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle, XCircle, Eye, FileText, Clock, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Eye, FileText, Clock, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface Chef {
@@ -178,7 +178,7 @@ export default function ChefsPage() {
     <div className="h-screen flex flex-col bg-[#232323] overflow-hidden" style={{ fontFamily: "'Satoshi', sans-serif" }}>
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-800 p-6">
-        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <Link
               href="/admin"
@@ -191,6 +191,13 @@ export default function ChefsPage() {
               <p className="text-gray-400 text-sm mt-1">Review and approve chef registrations</p>
             </div>
           </div>
+          <button
+            onClick={fetchChefs}
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-yellow-400"
+            title="Refresh"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Tabs */}

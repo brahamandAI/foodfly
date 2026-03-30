@@ -187,6 +187,39 @@ export interface Order {
   updatedAt: Date;
 }
 
+/**
+ * /api/cart requires a valid Bearer JWT. If the token is expired, wrong secret, or missing,
+ * the app still had a token in localStorage so isAuthenticated() was true → 401 and broken cart.
+ * Clear stale auth and fall back to local / guest cart (except preserve guest profile when guest=true).
+ */
+function clearStaleAuthAfterCart401(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    delete axiosInstance.defaults.headers.Authorization;
+
+    if (localStorage.getItem('guest') === 'true') {
+      window.dispatchEvent(new Event('cartUpdated'));
+      return;
+    }
+
+    localStorage.removeItem('user');
+    localStorage.setItem('isLoggedIn', 'false');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('isLoggedIn');
+    window.dispatchEvent(
+      new CustomEvent('authStateChanged', {
+        detail: { isLoggedIn: false, user: null, source: 'cart401' },
+      })
+    );
+    window.dispatchEvent(new Event('cartUpdated'));
+  } catch (e) {
+    console.warn('clearStaleAuthAfterCart401', e);
+  }
+}
+
 // UNIFIED CART SERVICE - Works for both guest and authenticated users
 export const unifiedCartService = {
   // Check if user is authenticated (real token, not guest, not chef)
@@ -234,6 +267,12 @@ export const unifiedCartService = {
             'Authorization': `Bearer ${token}`,
           },
         });
+
+        if (response.status === 401) {
+          console.warn('Cart GET 401 — clearing stale auth, using local cart');
+          clearStaleAuthAfterCart401();
+          return unifiedCartService.getLocalCart();
+        }
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -286,7 +325,7 @@ export const unifiedCartService = {
   },
 
   // Add item to cart
-  addToCart: async (menuItemId: string, name: string, description: string, price: number, quantity: number, image: string, restaurantId: string, restaurantName: string, customizations: any[] = []): Promise<void> => {
+  addToCart: async (menuItemId: string, name: string, description: string, price: number, quantity: number, image: string, restaurantId: string, restaurantName: string, customizations: any[] = [], originalPrice?: number, discount?: number): Promise<void> => {
     console.log('Adding to cart:', { menuItemId, name, quantity, isAuthenticated: unifiedCartService.isAuthenticated() });
     
     if (unifiedCartService.isAuthenticated()) {
@@ -310,12 +349,33 @@ export const unifiedCartService = {
           image,
           restaurantId,
           restaurantName,
-          customizations
+          customizations,
+          ...(originalPrice !== undefined && { originalPrice }),
+          ...(discount !== undefined && discount > 0 && { discount }),
         }),
       });
 
+      if (response.status === 401) {
+        console.warn('Cart POST 401 — clearing stale auth, saving to local cart');
+        clearStaleAuthAfterCart401();
+        unifiedCartService.addToLocalCart(
+          menuItemId,
+          name,
+          description,
+          price,
+          quantity,
+          image,
+          restaurantId,
+          restaurantName,
+          customizations,
+          originalPrice,
+          discount
+        );
+        return;
+      }
+
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         console.error('Database cart error:', error);
         throw new Error(error.error || 'Failed to add item to cart');
       }
@@ -324,7 +384,7 @@ export const unifiedCartService = {
     } else {
       // Use localStorage for guests and unauthenticated users
       console.log('Using localStorage cart for guest user');
-      unifiedCartService.addToLocalCart(menuItemId, name, description, price, quantity, image, restaurantId, restaurantName, customizations);
+      unifiedCartService.addToLocalCart(menuItemId, name, description, price, quantity, image, restaurantId, restaurantName, customizations, originalPrice, discount);
     }
 
     // Trigger cart update event
@@ -332,7 +392,7 @@ export const unifiedCartService = {
   },
 
   // Add item to localStorage cart
-  addToLocalCart: (menuItemId: string, name: string, description: string, price: number, quantity: number, image: string, restaurantId: string, restaurantName: string, customizations: any[] = []): void => {
+  addToLocalCart: (menuItemId: string, name: string, description: string, price: number, quantity: number, image: string, restaurantId: string, restaurantName: string, customizations: any[] = [], originalPrice?: number, discount?: number): void => {
     try {
       const userId = unifiedCartService.getCurrentUserId();
       const cartKey = `cart_${userId}`;
@@ -352,7 +412,7 @@ export const unifiedCartService = {
         console.log('Updated existing item:', cart.items[existingItemIndex]);
       } else {
         // Add new item
-        const newItem = {
+        const newItem: any = {
           menuItemId,
           name,
           description: description || '',
@@ -364,6 +424,12 @@ export const unifiedCartService = {
           customizations: customizations || [],
           addedAt: new Date().toISOString()
         };
+        if (originalPrice !== undefined && originalPrice > price) {
+          newItem.originalPrice = originalPrice;
+        }
+        if (discount !== undefined && discount > 0) {
+          newItem.discount = discount;
+        }
         cart.items.push(newItem);
         console.log('Added new item:', newItem);
       }
@@ -408,8 +474,11 @@ export const unifiedCartService = {
         body: JSON.stringify({ quantity }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (response.status === 401) {
+        clearStaleAuthAfterCart401();
+        unifiedCartService.updateLocalItemQuantity(menuItemId, quantity);
+      } else if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.error || 'Failed to update cart item');
       }
     } else {
@@ -465,8 +534,11 @@ export const unifiedCartService = {
         },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (response.status === 401) {
+        clearStaleAuthAfterCart401();
+        unifiedCartService.updateLocalItemQuantity(menuItemId, 0);
+      } else if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.error || 'Failed to remove item from cart');
       }
     } else {
@@ -491,8 +563,12 @@ export const unifiedCartService = {
         },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (response.status === 401) {
+        clearStaleAuthAfterCart401();
+        const userId = unifiedCartService.getCurrentUserId();
+        localStorage.removeItem(`cart_${userId}`);
+      } else if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.error || 'Failed to clear cart');
       }
     } else {
@@ -1042,12 +1118,15 @@ class ApiClient {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       localStorage.setItem('isLoggedIn', 'true');
+      if (typeof document !== 'undefined') {
+        ensureAuthInCookies();
+      }
     }
 
     return response;
   }
 
-  async register(userData: { name: string; email: string; password: string; phone?: string }) {
+  async register(userData: { name: string; email: string; password: string; phone: string; emailOtp: string }) {
     const response = await this.request('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData)
@@ -1057,6 +1136,9 @@ class ApiClient {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       localStorage.setItem('isLoggedIn', 'true');
+      if (typeof document !== 'undefined') {
+        ensureAuthInCookies();
+      }
     }
 
     return response;
@@ -2114,26 +2196,33 @@ export const authApi = {
     name: string;
     email: string;
     password: string;
+    phone: string;
+    emailOtp: string;
   }) => {
     try {
-      // Validate input
       if (!userData.name || !userData.email || !userData.password) {
         throw new Error('All fields are required');
+      }
+      if (!userData.phone?.trim()) {
+        throw new Error('Mobile number is required');
+      }
+      if (!userData.emailOtp?.trim() || String(userData.emailOtp).trim().length !== 6) {
+        throw new Error('Enter the 6-digit email verification code');
       }
 
       if (userData.password.length < 6) {
         throw new Error('Password must be at least 6 characters');
       }
 
-      // Format data exactly as backend expects
       const formattedData = {
         name: userData.name.trim(),
         email: userData.email.trim().toLowerCase(),
         password: userData.password,
-        role: 'customer'
+        phone: userData.phone.trim(),
+        emailOtp: String(userData.emailOtp).trim(),
       };
 
-      console.log('Attempting registration with:', { email: formattedData.email, data: formattedData });
+      console.log('Attempting registration with:', { email: formattedData.email });
       const response = await axiosInstance.post('/api/auth/register', formattedData);
       console.log('Full registration response:', response);
       console.log('Registration response data:', response.data);

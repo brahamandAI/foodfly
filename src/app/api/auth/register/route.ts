@@ -3,6 +3,8 @@ import connectDB from '@/lib/backend/database';
 import User from '@/lib/backend/models/user.model';
 import Notification from '@/lib/backend/models/notification.model';
 import { generateToken } from '@/lib/backend/utils/jwt';
+import { verifyOtp } from '@/lib/backend/utils/otpStore';
+import { isValidIndianMobile, normalizeIndianPhone } from '@/lib/phone';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -11,12 +13,42 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     
-    const { name, email, password, phone } = await request.json();
+    const { name, email, password, phone, emailOtp } = await request.json();
 
     // Validation
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: 'Name, email, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    const phoneRaw = typeof phone === 'string' ? phone.trim() : '';
+    if (!phoneRaw) {
+      return NextResponse.json(
+        { error: 'Phone number is required' },
+        { status: 400 }
+      );
+    }
+    if (!isValidIndianMobile(phoneRaw)) {
+      return NextResponse.json(
+        { error: 'Enter a valid 10-digit Indian mobile number (e.g. 9876543210 or +91 9876543210)' },
+        { status: 400 }
+      );
+    }
+    const normalizedPhone = normalizeIndianPhone(phoneRaw)!;
+
+    if (!emailOtp || String(emailOtp).length !== 6) {
+      return NextResponse.json(
+        { error: 'Email verification code is required. Request a code from the sign-up form first.' },
+        { status: 400 }
+      );
+    }
+
+    const otpOk = await verifyOtp(email.toLowerCase().trim(), String(emailOtp).trim(), 'signup');
+    if (!otpOk) {
+      return NextResponse.json(
+        { error: 'Invalid or expired verification code. Request a new code and try again.' },
         { status: 400 }
       );
     }
@@ -46,15 +78,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const existingPhone = await User.findOne({ phone: normalizedPhone });
+    if (existingPhone) {
+      return NextResponse.json(
+        { error: 'An account with this phone number already exists' },
+        { status: 400 }
+      );
+    }
+
     // Create new user
     const now = new Date();
     const newUser = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
-      phone: phone?.trim(),
+      phone: normalizedPhone,
       role: 'customer',
-      isEmailVerified: false,
+      isEmailVerified: true,
       createdAt: now, // Explicitly set createdAt
       updatedAt: now
     });

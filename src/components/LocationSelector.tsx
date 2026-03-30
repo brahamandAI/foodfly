@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPin, Plus, Edit2, Trash2, Home, Briefcase, MapIcon, Loader2, X, Navigation } from 'lucide-react';
+import { MapPin, Plus, Edit2, Trash2, Home, Briefcase, MapIcon, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import CheckoutDeliveryMapPicker from '@/components/CheckoutDeliveryMapPicker';
+import { checkAnyRestaurantInRange } from '@/lib/checkoutDeliveryRadius';
 
 interface Address {
   _id?: string;
-  label: 'Home' | 'Work' | 'Other';
+  label: 'Home' | 'Work' | 'Other' | 'Custom';
   name: string;
   phone: string;
   street: string;
@@ -16,8 +18,44 @@ interface Address {
   pincode: string;
   isDefault: boolean;
   coordinates?: {
-    lat: number;
-    lng: number;
+    lat?: number;
+    lng?: number;
+    latitude?: number;
+    longitude?: number;
+  };
+}
+
+function coordsFromForm(formData: Address): { lat: number; lng: number } | null {
+  const c = formData.coordinates;
+  if (!c) return null;
+  const lat = c.latitude ?? c.lat;
+  const lng = c.longitude ?? c.lng;
+  if (typeof lat === 'number' && typeof lng === 'number' && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+    return { lat, lng };
+  }
+  return null;
+}
+
+function normalizeAddressFromApi(addr: any): Address {
+  const lat = addr?.coordinates?.latitude ?? addr?.coordinates?.lat;
+  const lng = addr?.coordinates?.longitude ?? addr?.coordinates?.lng;
+  const coordinates =
+    typeof lat === 'number' && typeof lng === 'number' ? { lat, lng } : undefined;
+  const label = addr?.label;
+  const safeLabel: Address['label'] =
+    label === 'Home' || label === 'Work' || label === 'Other' || label === 'Custom' ? label : 'Home';
+  return {
+    _id: addr._id,
+    label: safeLabel,
+    name: addr.name || '',
+    phone: addr.phone || '',
+    street: addr.street || '',
+    landmark: addr.landmark || '',
+    city: addr.city || '',
+    state: addr.state || '',
+    pincode: addr.pincode || '',
+    isDefault: !!addr.isDefault,
+    coordinates,
   };
 }
 
@@ -30,9 +68,8 @@ interface LocationSelectorProps {
 export default function LocationSelector({ isOpen, onClose, onLocationSelect }: LocationSelectorProps) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [addressFormStep, setAddressFormStep] = useState<'map' | 'details'>('map');
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [loadingGPS, setLoadingGPS] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [formData, setFormData] = useState<Address>({
     label: 'Home',
     name: '',
@@ -67,7 +104,7 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
 
           if (response.ok) {
             const data = await response.json();
-            const serverAddresses = data.addresses || [];
+            const serverAddresses = (data.addresses || []).map(normalizeAddressFromApi);
             
             // Update localStorage with fresh data from server
             const { userStorage } = await import('@/lib/api');
@@ -83,7 +120,7 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
       
       // Fallback to localStorage
       const { userStorage } = await import('@/lib/api');
-      const localAddresses = userStorage.getUserAddresses();
+      const localAddresses = userStorage.getUserAddresses().map(normalizeAddressFromApi);
       setAddresses(localAddresses);
       
     } catch (error) {
@@ -92,127 +129,22 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
     }
   };
 
-  const getCurrentLocation = () => {
-    setLoadingGPS(true);
-    
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by this browser');
-      setLoadingGPS(false);
+  const saveAddress = async () => {
+    if (!validateAddress()) return;
+
+    const pin = coordsFromForm(formData);
+    if (!pin) {
+      toast.error('Set your delivery pin on the map first.');
+      setAddressFormStep('map');
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setCurrentLocation({ lat: latitude, lng: longitude });
-        
-        try {
-          // Reverse geocoding to get address details
-          const address = await reverseGeocode(latitude, longitude);
-          setFormData(prev => ({
-            ...prev,
-            street: address.street || '',
-            city: address.city || '',
-            state: address.state || '',
-            pincode: address.pincode || '',
-            coordinates: { lat: latitude, lng: longitude }
-          }));
-          
-          toast.success('Location detected successfully!');
-    } catch (error) {
-          console.error('Error getting address details:', error);
-          toast.error('Location detected, but could not get address details. Please enter manually.');
-          setFormData(prev => ({
-            ...prev,
-            coordinates: { lat: latitude, lng: longitude }
-          }));
-        }
-        
-        setLoadingGPS(false);
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        let errorMessage = 'Unable to get your location. ';
-        
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage += 'Please allow location access and try again.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage += 'Location information is unavailable.';
-            break;
-          case error.TIMEOUT:
-            errorMessage += 'Location request timed out.';
-            break;
-          default:
-            errorMessage += 'An unknown error occurred.';
-            break;
-        }
-        
-        toast.error(errorMessage);
-        setLoadingGPS(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      }
-    );
-  };
-
-  const reverseGeocode = async (lat: number, lng: number): Promise<Partial<Address>> => {
-    try {
-      // Try Google Maps geocoding first
-      const { googleMapsService } = await import('@/lib/googleMapsService');
-      
-      if (googleMapsService.isConfigured()) {
-        const result = await googleMapsService.reverseGeocode(lat, lng);
-        return {
-          street: result.components.street || '',
-          city: result.components.city || '',
-          state: result.components.state || '',
-          pincode: result.components.pincode || ''
-        };
-      }
-      
-      // Fallback to Nominatim (OpenStreetMap) - free, no API key needed
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
-        { headers: { 'User-Agent': 'FoodFly-App/1.0' } }
-      );
-      
-      if (!response.ok) {
-        throw new Error('Geocoding failed');
-      }
-      
-      const data = await response.json();
-      
-      if (data && data.address) {
-        const a = data.address;
-        const street = [
-          a.house_number,
-          a.road || a.pedestrian || a.footway,
-          a.neighbourhood || a.suburb
-        ].filter(Boolean).join(', ');
-        
-        return {
-          street: street || data.display_name?.split(',')[0] || '',
-          city: a.city || a.town || a.village || a.county || '',
-          state: a.state || '',
-          pincode: a.postcode || ''
-        };
-      }
-      
-      throw new Error('No results found');
-    } catch (error) {
-      // Fallback: Use a mock geocoding or ask user to enter manually
-      console.error('Reverse geocoding error:', error);
-      throw error;
+    const { ok } = checkAnyRestaurantInRange(pin.lat, pin.lng);
+    if (!ok) {
+      toast.error('This address is outside FoodFly delivery range. Move the pin on the map.');
+      setAddressFormStep('map');
+      return;
     }
-  };
-
-  const saveAddress = async () => {
-    if (!validateAddress()) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -222,7 +154,8 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
         return;
       }
 
-      // Use MongoDB API directly
+      const coordPayload = { latitude: pin.lat, longitude: pin.lng };
+
       const response = await fetch('/api/users/addresses', {
         method: editingAddress ? 'PUT' : 'POST',
         headers: {
@@ -239,10 +172,7 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode,
-          coordinates: formData.coordinates || currentLocation ? {
-            latitude: formData.coordinates?.lat || currentLocation?.lat || 0,
-            longitude: formData.coordinates?.lng || currentLocation?.lng || 0
-          } : undefined,
+          coordinates: coordPayload,
           isDefault: formData.isDefault || addresses.length === 0
         } : {
           label: formData.label,
@@ -253,11 +183,8 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode,
-          coordinates: formData.coordinates || currentLocation ? {
-            latitude: formData.coordinates?.lat || currentLocation?.lat || 0,
-            longitude: formData.coordinates?.lng || currentLocation?.lng || 0
-          } : undefined,
-          isDefault: addresses.length === 0 // First address is default
+          coordinates: coordPayload,
+          isDefault: addresses.length === 0
         })
       });
 
@@ -268,28 +195,25 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
 
       const data = await response.json();
       
-      // Update localStorage backup
       const { userStorage } = await import('@/lib/api');
       if (data.address) {
-        const addresses = userStorage.getUserAddresses();
+        const normalized = normalizeAddressFromApi(data.address);
+        const stored = userStorage.getUserAddresses().map(normalizeAddressFromApi);
         if (editingAddress) {
-          const index = addresses.findIndex((a: Address) => a._id === editingAddress._id);
-          if (index !== -1) {
-            addresses[index] = data.address;
-          }
+          const index = stored.findIndex((a: Address) => a._id === editingAddress._id);
+          if (index !== -1) stored[index] = normalized;
+          else stored.push(normalized);
         } else {
-          addresses.push(data.address);
+          stored.push(normalized);
         }
-        userStorage.setUserAddresses(addresses);
+        userStorage.setUserAddresses(stored);
       }
       
-      // Reload addresses from database
       await loadSavedAddresses();
-      
-      // Trigger address update event for other components
       window.dispatchEvent(new Event('addressesUpdated'));
       
       setShowAddForm(false);
+      setAddressFormStep('map');
       setEditingAddress(null);
       resetForm();
       toast.success(editingAddress ? 'Address updated successfully!' : 'Address saved successfully!');
@@ -411,17 +335,19 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
     });
     setEditingAddress(null);
     setShowAddForm(false);
-    setCurrentLocation(null);
+    setAddressFormStep('map');
   };
 
   const handleEditAddress = (address: Address) => {
-    setFormData(address);
-    setEditingAddress(address);
+    const normalized = normalizeAddressFromApi(address);
+    setFormData(normalized);
+    setEditingAddress(normalized);
+    setAddressFormStep(coordsFromForm(normalized) ? 'details' : 'map');
     setShowAddForm(true);
   };
 
   const handleSelectAddress = (address: Address) => {
-    onLocationSelect(address);
+    onLocationSelect(normalizeAddressFromApi(address));
     onClose();
   };
 
@@ -429,6 +355,7 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
     switch (label) {
       case 'Home': return <Home className="h-5 w-5" />;
       case 'Work': return <Briefcase className="h-5 w-5" />;
+      case 'Custom': return <MapIcon className="h-5 w-5" />;
       default: return <MapIcon className="h-5 w-5" />;
     }
   };
@@ -462,7 +389,13 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
         {/* Header */}
         <div className="sticky top-0 bg-white rounded-t-xl sm:rounded-t-2xl flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 z-10">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-            {showAddForm ? (editingAddress ? 'Edit Address' : 'Add New Address') : 'Select Delivery Address'}
+            {showAddForm
+              ? addressFormStep === 'map'
+                ? 'Set location on map'
+                : editingAddress
+                  ? 'Edit address details'
+                  : 'Add address details'
+              : 'Select Delivery Address'}
           </h2>
           <button
             onClick={onClose}
@@ -474,34 +407,47 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
         </div>
 
         <div className="p-4 sm:p-6 bg-white">
-          {showAddForm ? (
-            /* Add/Edit Address Form */
+          {showAddForm && addressFormStep === 'map' ? (
+            <div className="rounded-xl bg-gray-900 p-4">
+              <CheckoutDeliveryMapPicker
+                key={editingAddress?._id || 'location-new-map'}
+                validationMode="anyRestaurant"
+                cartItems={[]}
+                initialPin={(() => {
+                  const c = coordsFromForm(formData);
+                  return c ? { latitude: c.lat, longitude: c.lng } : null;
+                })()}
+                onContinue={(payload) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    street: payload.street || prev.street || '',
+                    city: payload.city || prev.city || '',
+                    state: payload.state || prev.state || 'Delhi',
+                    pincode: payload.pincode || prev.pincode || '',
+                    coordinates: { lat: payload.latitude, lng: payload.longitude },
+                  }));
+                  setAddressFormStep('details');
+                  toast.success('Pin saved — complete your name, phone, and address below.');
+                }}
+                onCancel={() => resetForm()}
+              />
+            </div>
+          ) : showAddForm ? (
             <div className="space-y-6">
-              {/* GPS Location Button */}
-              <div className="flex justify-center">
-          <button
-            onClick={getCurrentLocation}
-                  disabled={loadingGPS}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg border-2 border-dashed transition-all duration-200 ${
-                    loadingGPS 
-                      ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-50' 
-                      : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400'
-                  }`}
-                >
-                  {loadingGPS ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Navigation className="h-5 w-5" />
-                  )}
-                  <span className="font-medium">{loadingGPS ? 'Getting your location...' : 'Use Current Location'}</span>
-                </button>
-              </div>
-              
+              <button
+                type="button"
+                onClick={() => setAddressFormStep('map')}
+                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+              >
+                <MapPin className="h-4 w-4" />
+                Change delivery pin on map
+              </button>
+
               {/* Address Type */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">Address Type</label>
-                <div className="flex space-x-3">
-                  {(['Home', 'Work', 'Other'] as const).map((type) => (
+                <div className="flex flex-wrap gap-2">
+                  {(['Home', 'Work', 'Other', 'Custom'] as const).map((type) => (
                     <button
                       key={type}
                       onClick={() => setFormData(prev => ({ ...prev, label: type }))}
@@ -614,15 +560,14 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
                 <button
-                  onClick={() => {
-                    resetForm();
-                    setShowAddForm(false);
-                  }}
+                  type="button"
+                  onClick={() => resetForm()}
                   className="flex-1 px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all duration-200 touch-target no-tap-highlight"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={saveAddress}
                   className="flex-1 px-4 sm:px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md touch-target no-tap-highlight"
                 >
@@ -635,8 +580,10 @@ export default function LocationSelector({ isOpen, onClose, onLocationSelect }: 
             <div className="space-y-4">
               {/* Add New Address Button */}
               <button
+                type="button"
                 onClick={() => {
                   resetForm();
+                  setAddressFormStep('map');
                   setShowAddForm(true);
                 }}
                 className="w-full flex items-center justify-center space-x-3 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200 text-gray-700"

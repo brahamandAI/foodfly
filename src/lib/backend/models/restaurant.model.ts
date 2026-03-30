@@ -34,6 +34,7 @@ export interface IRestaurant extends Document {
     items: any[];
   }>;
   preparationTime?: number;
+  deliveryRadius?: number; // km, default 2
 }
 
 const restaurantSchema = new Schema<IRestaurant>(
@@ -130,6 +131,12 @@ const restaurantSchema = new Schema<IRestaurant>(
     preparationTime: {
       type: Number,
       default: 30, // minutes
+    },
+    deliveryRadius: {
+      type: Number,
+      default: 2, // km
+      min: 0.5,
+      max: 50,
     },
   },
   {

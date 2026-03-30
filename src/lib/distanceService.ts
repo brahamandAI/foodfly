@@ -191,11 +191,20 @@ export const RESTAURANT_NAMES: Record<string, string> = {
   '3': 'Symposium Restaurant'
 };
 
+/** Lowercase + strip combining marks so "Café" matches "cafe" */
+function normalizeRestaurantName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .trim();
+}
+
 /**
  * Map restaurant name to numeric ID for distance calculation
  */
 export function getRestaurantNumericId(restaurantName: string): string | null {
-  const nameLower = restaurantName.toLowerCase().trim();
+  const nameLower = normalizeRestaurantName(restaurantName);
   
   if (nameLower.includes('panache')) {
     return '1';
@@ -207,7 +216,7 @@ export function getRestaurantNumericId(restaurantName: string): string | null {
   
   // Try reverse lookup
   for (const [id, name] of Object.entries(RESTAURANT_NAMES)) {
-    if (name.toLowerCase() === nameLower) {
+    if (normalizeRestaurantName(name) === nameLower) {
       return id;
     }
   }

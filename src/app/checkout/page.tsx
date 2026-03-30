@@ -26,6 +26,9 @@ import {
 import { toast } from 'react-hot-toast';
 import RealUserGuard from '@/components/RealUserGuard';
 import PaymentModal from '@/components/PaymentModal';
+import CheckoutDeliveryMapPicker from '@/components/CheckoutDeliveryMapPicker';
+import CheckoutAddressMapPreview from '@/components/CheckoutAddressMapPreview';
+import { checkCartDeliveryRadius } from '@/lib/checkoutDeliveryRadius';
 import { backupAuthentication, restoreAuthentication } from '@/lib/api';
 
 interface CartItem {
@@ -61,10 +64,53 @@ interface Address {
   state: string;
   pincode: string;
   coordinates?: {
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
+    lat?: number;
+    lng?: number;
   };
   isDefault: boolean;
+}
+
+/**
+ * Only send coordinates that belong to the selected delivery address.
+ * Device GPS is intentionally not sent as a fallback: it often does not match the
+ * typed/saved address (remote testing, VPN, stale localStorage), and the orders API
+ * trusts userLocation over geocoding — which caused false "can't deliver" errors.
+ */
+function coordsForOrder(addr: Address | null): { latitude: number; longitude: number } | undefined {
+  if (addr?.coordinates) {
+    const c = addr.coordinates;
+    const lat = typeof c.latitude === 'number' ? c.latitude : c.lat;
+    const lng = typeof c.longitude === 'number' ? c.longitude : c.lng;
+    if (typeof lat === 'number' && typeof lng === 'number' && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+      return { latitude: lat, longitude: lng };
+    }
+  }
+  return undefined;
+}
+
+const emptyAddressForm = (): Partial<Address> => ({
+  label: 'Home',
+  name: '',
+  phone: '',
+  street: '',
+  landmark: '',
+  city: '',
+  state: '',
+  pincode: '',
+  isDefault: false,
+});
+
+function initialPinFromAddress(addr: Partial<Address>): { latitude: number; longitude: number } | null {
+  const c = addr.coordinates;
+  if (!c) return null;
+  const lat = typeof c.latitude === 'number' ? c.latitude : c.lat;
+  const lng = typeof c.longitude === 'number' ? c.longitude : c.lng;
+  if (typeof lat === 'number' && typeof lng === 'number' && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+    return { latitude: lat, longitude: lng };
+  }
+  return null;
 }
 
 interface PaymentMethod {
@@ -82,6 +128,7 @@ export default function CheckoutPage() {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressFormStep, setAddressFormStep] = useState<'map' | 'details'>('map');
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [newAddress, setNewAddress] = useState<Partial<Address>>({
     label: 'Home',
@@ -122,12 +169,10 @@ export default function CheckoutPage() {
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<any>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     loadCartData();
     loadAddresses();
-    captureUserLocation();
     
     // Listen for address updates from LocationSelector
     const handleAddressUpdate = () => {
@@ -147,45 +192,6 @@ export default function CheckoutPage() {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
-
-  const captureUserLocation = async () => {
-    try {
-      // Try to get stored location first
-      const storedLocation = localStorage.getItem('userLocation');
-      if (storedLocation) {
-        const location = JSON.parse(storedLocation);
-        if (location.latitude && location.longitude) {
-          setUserLocation(location);
-          return;
-        }
-      }
-
-      // Try to get current location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const location = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            };
-            setUserLocation(location);
-            localStorage.setItem('userLocation', JSON.stringify(location));
-          },
-          (error) => {
-            console.warn('Could not get user location:', error);
-            // Location will be geocoded from address on server side
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000 // 5 minutes
-          }
-        );
-      }
-    } catch (error) {
-      console.warn('Error capturing location:', error);
-    }
-  };
 
   const loadCartData = async () => {
     try {
@@ -297,6 +303,13 @@ export default function CheckoutPage() {
     }
   };
 
+  const openNewAddressForm = () => {
+    setEditingAddress(null);
+    setAddressFormStep('map');
+    setNewAddress(emptyAddressForm());
+    setShowAddressForm(true);
+  };
+
   const handleEditAddress = (address: Address) => {
     setEditingAddress(address);
     setNewAddress({
@@ -311,12 +324,28 @@ export default function CheckoutPage() {
       isDefault: address.isDefault,
       coordinates: address.coordinates
     });
+    setAddressFormStep(initialPinFromAddress(address) ? 'details' : 'map');
     setShowAddressForm(true);
   };
 
   const saveAddress = async () => {
     if (!newAddress.name || !newAddress.phone || !newAddress.street || !newAddress.city || !newAddress.state || !newAddress.pincode) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const lat = newAddress.coordinates?.latitude ?? newAddress.coordinates?.lat;
+    const lng = newAddress.coordinates?.longitude ?? newAddress.coordinates?.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number' || Number.isNaN(lat) || Number.isNaN(lng)) {
+      toast.error('Set your delivery location on the map before saving.');
+      setAddressFormStep('map');
+      return;
+    }
+
+    const radiusCheck = checkCartDeliveryRadius(lat, lng, cart.items);
+    if (!radiusCheck.ok) {
+      toast.error('This pin is outside delivery range for your cart. Adjust it on the map.');
+      setAddressFormStep('map');
       return;
     }
 
@@ -344,12 +373,18 @@ export default function CheckoutPage() {
           city: newAddress.city,
           state: newAddress.state,
           pincode: newAddress.pincode,
-          coordinates: newAddress.coordinates ? {
-            latitude: newAddress.coordinates.latitude || newAddress.coordinates.lat,
-            longitude: newAddress.coordinates.longitude || newAddress.coordinates.lng
-          } : undefined,
+          coordinates: {
+            latitude: lat,
+            longitude: lng,
+          },
           isDefault: newAddress.isDefault || false
-        } : newAddress),
+        } : {
+          ...newAddress,
+          coordinates: {
+            latitude: lat,
+            longitude: lng,
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -371,18 +406,9 @@ export default function CheckoutPage() {
       window.dispatchEvent(new Event('addressesUpdated'));
       
       setShowAddressForm(false);
+      setAddressFormStep('map');
       setEditingAddress(null);
-      setNewAddress({
-        label: 'Home',
-        name: '',
-        phone: '',
-        street: '',
-        landmark: '',
-        city: '',
-        state: '',
-        pincode: '',
-        isDefault: false
-      });
+      setNewAddress(emptyAddressForm());
       
       toast.success(editingAddress ? 'Address updated successfully!' : 'Address saved successfully!');
     } catch (error) {
@@ -431,6 +457,17 @@ export default function CheckoutPage() {
       return;
     }
 
+    const orderCoords = coordsForOrder(selectedAddress);
+    if (!orderCoords) {
+      toast.error('Edit your address and set the delivery pin on the map so we can confirm the 2 km delivery zone.');
+      return;
+    }
+    const preOrderRadius = checkCartDeliveryRadius(orderCoords.latitude, orderCoords.longitude, cart.items);
+    if (!preOrderRadius.ok) {
+      toast.error('Selected address is outside delivery range for this cart. Choose another address or move the pin.');
+      return;
+    }
+
     setIsProcessingOrder(true);
 
     try {
@@ -460,10 +497,7 @@ export default function CheckoutPage() {
         paymentMethod: selectedPaymentMethod === 'cod' ? 'cod' : 'pending', // Set COD immediately
         specialInstructions: specialInstructions,
         totalAmount: total,
-        userLocation: selectedAddress.coordinates ? {
-          latitude: selectedAddress.coordinates.latitude,
-          longitude: selectedAddress.coordinates.longitude
-        } : userLocation // Use address coordinates if available, fallback to GPS
+        userLocation: coordsForOrder(selectedAddress)
       };
 
       console.log('Placing order with data:', orderData); // Debug log
@@ -592,10 +626,17 @@ export default function CheckoutPage() {
   };
 
   const subtotal = safeNumber(cart.subtotal);
+  const selectedPreviewCoords = selectedAddress ? initialPinFromAddress(selectedAddress) : null;
   const deliveryFee = subtotal >= 299 ? 0 : 40;
   const taxes = Math.round(subtotal * 0.05);
   const packagingFee = safeNumber(cart.totalItems) * 5;
   const total = subtotal + deliveryFee + taxes + packagingFee;
+  const totalSavings = cart.items.reduce((acc, item: any) => {
+    if (item.originalPrice && item.originalPrice > item.price) {
+      return acc + (item.originalPrice - item.price) * safeNumber(item.quantity);
+    }
+    return acc;
+  }, 0);
 
   if (isLoading) {
     return (
@@ -641,7 +682,7 @@ export default function CheckoutPage() {
                     Delivery Address
                   </h2>
                   <button
-                    onClick={() => setShowAddressForm(true)}
+                    onClick={openNewAddressForm}
                     className="flex items-center text-white hover:text-gray-300 font-semibold text-sm px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
                     style={{ fontFamily: "'Satoshi', sans-serif" }}
                   >
@@ -662,7 +703,7 @@ export default function CheckoutPage() {
                       Add your first address to continue with checkout
                     </p>
                     <button
-                      onClick={() => setShowAddressForm(true)}
+                      onClick={openNewAddressForm}
                       className="bg-yellow-400 text-[#232323] px-6 py-2.5 rounded-lg hover:bg-yellow-300 font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200"
                       style={{ fontFamily: "'Satoshi', sans-serif" }}
                     >
@@ -748,34 +789,85 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {addresses.length > 0 && selectedAddress && selectedPreviewCoords && (
+                  <div className="mt-6 border-t border-gray-700 pt-6">
+                    <h3
+                      className="mb-3 text-sm font-bold text-white"
+                      style={{ fontFamily: "'Satoshi', sans-serif" }}
+                    >
+                      Delivery on map
+                    </h3>
+                    <CheckoutAddressMapPreview
+                      cartItems={cart.items}
+                      deliveryLat={selectedPreviewCoords.latitude}
+                      deliveryLng={selectedPreviewCoords.longitude}
+                      selectionKey={`${selectedAddress._id}-${selectedPreviewCoords.latitude.toFixed(4)}-${selectedPreviewCoords.longitude.toFixed(4)}`}
+                    />
+                  </div>
+                )}
+
                 {/* Improved Add/Edit Address Form */}
                 {showAddressForm && (
                   <div className="mt-5 p-6 rounded-lg bg-gray-800">
                     <div className="flex items-center justify-between mb-5">
                       <h3 className="text-lg font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>
-                        {editingAddress ? 'Edit Address' : 'Add New Address'}
+                        {addressFormStep === 'map'
+                          ? 'Set delivery location on map'
+                          : editingAddress
+                            ? 'Edit Address'
+                            : 'Add New Address'}
                       </h3>
                       <button
                         onClick={() => {
                           setShowAddressForm(false);
+                          setAddressFormStep('map');
                           setEditingAddress(null);
-                          setNewAddress({
-                            label: 'Home',
-                            name: '',
-                            phone: '',
-                            street: '',
-                            landmark: '',
-                            city: '',
-                            state: '',
-                            pincode: '',
-                            isDefault: false
-                          });
+                          setNewAddress(emptyAddressForm());
                         }}
                         className="text-white hover:text-gray-300 touch-target"
                       >
                         <X className="h-5 w-5" />
                       </button>
                     </div>
+
+                    {addressFormStep === 'map' ? (
+                      <CheckoutDeliveryMapPicker
+                        key={editingAddress?._id || 'new-address-map'}
+                        cartItems={cart.items}
+                        initialPin={initialPinFromAddress(newAddress)}
+                        onContinue={(payload) => {
+                          setNewAddress((prev) => ({
+                            ...prev,
+                            street: payload.street || prev.street || '',
+                            city: payload.city || prev.city || '',
+                            state: payload.state || prev.state || 'Delhi',
+                            pincode: payload.pincode || prev.pincode || '',
+                            coordinates: {
+                              latitude: payload.latitude,
+                              longitude: payload.longitude,
+                            },
+                          }));
+                          setAddressFormStep('details');
+                          toast.success('Pin saved — complete name, phone, and any address tweaks below.');
+                        }}
+                        onCancel={() => {
+                          setShowAddressForm(false);
+                          setAddressFormStep('map');
+                          setEditingAddress(null);
+                          setNewAddress(emptyAddressForm());
+                        }}
+                      />
+                    ) : (
+                      <>
+                    <button
+                      type="button"
+                      onClick={() => setAddressFormStep('map')}
+                      className="mb-5 inline-flex items-center gap-2 rounded-lg border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-300 hover:bg-yellow-400/20"
+                      style={{ fontFamily: "'Satoshi', sans-serif" }}
+                    >
+                      <MapPin className="h-4 w-4" />
+                      Change delivery pin on map
+                    </button>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-300 mb-2" style={{ fontFamily: "'Satoshi', sans-serif" }}>
@@ -908,18 +1000,9 @@ export default function CheckoutPage() {
                       <button
                         onClick={() => {
                           setShowAddressForm(false);
+                          setAddressFormStep('map');
                           setEditingAddress(null);
-                          setNewAddress({
-                            label: 'Home',
-                            name: '',
-                            phone: '',
-                            street: '',
-                            landmark: '',
-                            city: '',
-                            state: '',
-                            pincode: '',
-                            isDefault: false
-                          });
+                          setNewAddress(emptyAddressForm());
                         }}
                         className="bg-gray-700 text-white px-6 py-2.5 rounded-md hover:bg-gray-600 font-semibold text-base transition-colors duration-200 touch-target"
                         style={{ fontFamily: "'Satoshi', sans-serif" }}
@@ -927,6 +1010,8 @@ export default function CheckoutPage() {
                         Cancel
                       </button>
                     </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1011,6 +1096,11 @@ export default function CheckoutPage() {
                           <p className="text-sm font-semibold text-white truncate" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                             {item.name}
                           </p>
+                          {(item as any).discount > 0 && (
+                            <span className="inline-block bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full mt-0.5">
+                              {(item as any).discount}% OFF
+                            </span>
+                          )}
                           <div className="flex items-center space-x-1.5 mt-1">
                             <span className="text-xs text-gray-400">Qty:</span>
                             <span className="text-xs font-semibold text-gray-300 bg-gray-700 px-1.5 py-0.5 rounded">
@@ -1018,6 +1108,9 @@ export default function CheckoutPage() {
                             </span>
                             <span className="text-xs text-gray-400">×</span>
                             <span className="text-xs font-medium text-gray-300">₹{safeNumber(item.price)}</span>
+                            {(item as any).originalPrice > safeNumber(item.price) && (
+                              <span className="text-xs text-gray-500 line-through">₹{(item as any).originalPrice}</span>
+                            )}
                           </div>
                         </div>
                         <p className="text-sm font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
@@ -1047,6 +1140,14 @@ export default function CheckoutPage() {
                       <span className="text-gray-300 font-medium">Packaging Fee</span>
                       <span className="font-semibold text-white">₹{packagingFee}</span>
                     </div>
+                    {totalSavings > 0 && (
+                      <div className="flex justify-between text-green-400">
+                        <span className="font-medium flex items-center gap-1">
+                          <span>🎉</span> You save
+                        </span>
+                        <span className="font-semibold">-₹{totalSavings}</span>
+                      </div>
+                    )}
                     <div className="border-t border-gray-700 pt-4 mt-4">
                       <div className="flex justify-between">
                         <span className="text-lg font-bold text-white" style={{ fontFamily: "'Satoshi', sans-serif" }}>

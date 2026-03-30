@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import LocationSelector from './LocationSelector';
 import VoiceOrder from './VoiceOrder';
 import { enhancedCartService, logout } from '@/lib/api';
+import { getCustomerLoginPath } from '@/lib/utils/auth';
 
 interface Location {
   _id?: string;
@@ -25,6 +26,10 @@ interface Location {
     lat: number;
     lng: number;
   };
+}
+
+function goToCustomerLogin(router: ReturnType<typeof useRouter>) {
+  router.push(getCustomerLoginPath());
 }
 
 export default function Header() {
@@ -557,8 +562,8 @@ export default function Header() {
                         Guest Mode
                       </div>
                       <button
-                        onClick={() => router.push('/login')}
-                        className="block w-full text-left px-4 py-3 text-green-600 hover:bg-green-50 transition-colors touch-target font-medium"
+                        onClick={() => goToCustomerLogin(router)}
+                        className="block w-full text-left px-4 py-3 text-yellow-600 hover:bg-yellow-50 transition-colors touch-target font-bold"
                       >
                         <LogIn className="h-4 w-4 inline mr-2" />
                         Sign Up / Login
@@ -600,8 +605,8 @@ export default function Header() {
               </div>
             ) : (
               <button
-                onClick={() => router.push('/login')}
-                className="hidden sm:inline-flex bg-red-600 hover:bg-red-700 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg touch-target no-tap-highlight"
+                onClick={() => goToCustomerLogin(router)}
+                className="hidden sm:inline-flex bg-yellow-400 hover:bg-yellow-300 text-[#232323] px-4 py-2 sm:px-6 sm:py-2 rounded-lg font-bold transition-all duration-200 transform hover:scale-105 hover:shadow-lg touch-target no-tap-highlight"
               >
                 Sign In
               </button>
@@ -695,8 +700,11 @@ export default function Header() {
                   <>
                     <div className="border-t border-gray-700 my-2"></div>
                     <button
-                      onClick={() => router.push('/login')}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors touch-target no-tap-highlight"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        goToCustomerLogin(router);
+                      }}
+                      className="w-full bg-yellow-400 hover:bg-yellow-300 text-[#232323] px-4 py-3 rounded-lg font-bold transition-colors touch-target no-tap-highlight"
                     >
                       Sign In
                     </button>

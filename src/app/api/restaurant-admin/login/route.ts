@@ -80,7 +80,9 @@ export async function POST(request: NextRequest) {
       restaurant: {
         _id: restaurant._id,
         name: restaurant.name,
-        isActive: restaurant.isActive
+        isActive: restaurant.isActive,
+        preparationTime: restaurant.preparationTime || 30,
+        deliveryRadius: restaurant.deliveryRadius || 2
       }
     });
 

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, UserIcon, X, User, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, UserIcon, X, User, ArrowLeft, KeyRound, Phone, Eye, EyeOff } from 'lucide-react';
+import { isValidIndianMobile } from '@/lib/phone';
 import { toast } from 'react-hot-toast';
-import { authApi, enhancedCartService } from '@/lib/api';
+import { authApi, enhancedCartService, ensureAuthInCookies } from '@/lib/api';
 import Image from 'next/image';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { backupAuthentication, restoreAuthentication } from '@/lib/api';
@@ -20,13 +21,30 @@ function LoginPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [showFallbackLogin, setShowFallbackLogin] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [authStep, setAuthStep] = useState<'main' | 'forgot' | 'reset'>('main');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
+  const [newPasswordReset, setNewPasswordReset] = useState('');
+  const [confirmNewPasswordReset, setConfirmNewPasswordReset] = useState('');
+  const [signupEmailOtp, setSignupEmailOtp] = useState('');
+  const [signupOtpSent, setSignupOtpSent] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [showResetPwd, setShowResetPwd] = useState(false);
+  const [showResetConfirmPwd, setShowResetConfirmPwd] = useState(false);
+
+  useEffect(() => {
+    setIsLogin(mode !== 'signup');
+  }, [mode]);
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
@@ -58,10 +76,102 @@ function LoginPageContent() {
       } else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'Passwords do not match';
       }
+
+      if (role !== 'delivery') {
+        if (!formData.phone?.trim()) {
+          newErrors.phone = 'Mobile number is required';
+        } else if (!isValidIndianMobile(formData.phone)) {
+          newErrors.phone = 'Enter a valid 10-digit Indian mobile (e.g. 9876543210)';
+        }
+        if (!signupOtpSent) {
+          newErrors.signupOtp = 'Send a verification code to your email first';
+        } else if (!signupEmailOtp || signupEmailOtp.length !== 6) {
+          newErrors.signupOtp = 'Enter the 6-digit code from your email';
+        }
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSendSignupOtp = async () => {
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      setErrors({ email: 'Enter a valid email first' });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/send-signup-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send code');
+      setSignupOtpSent(true);
+      setSignupEmailOtp('');
+      toast.success('Verification code sent! Check your email.');
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotSendOtp = async () => {
+    if (!forgotEmail || !/\S+@\S+\.\S+/.test(forgotEmail)) {
+      toast.error('Enter a valid email');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+      toast.success(data.message || 'If an account exists, we sent a code.');
+      setAuthStep('reset');
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordResetSubmit = async () => {
+    if (resetOtp.length !== 6 || newPasswordReset.length < 6 || newPasswordReset !== confirmNewPasswordReset) {
+      toast.error('Enter a valid 6-digit OTP and matching passwords (min 6 characters)');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail.trim().toLowerCase(),
+          otp: resetOtp,
+          newPassword: newPasswordReset,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Reset failed');
+      toast.success(data.message || 'Password updated. Sign in with your new password.');
+      setAuthStep('main');
+      setIsLogin(true);
+      setForgotEmail('');
+      setResetOtp('');
+      setNewPasswordReset('');
+      setConfirmNewPasswordReset('');
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,17 +229,26 @@ function LoginPageContent() {
            // Migrate guest addresses to database
            const { addressService } = await import('@/lib/addressService');
            await addressService.migrateGuestAddresses();
+
+          ensureAuthInCookies();
           
           // Redirect to the intended page or delivery dashboard for delivery users
           const finalRedirect = role === 'delivery' && redirectUrl === '/' ? '/delivery' : decodeURIComponent(redirectUrl);
           router.push(finalRedirect);
         }
+      } else if (role === 'delivery') {
+        toast.error('Please complete delivery partner registration on the dedicated form.');
+        router.push('/register-delivery');
+        setIsLoading(false);
+        return;
       } else {
-        // Register
+        // Register (customer — email OTP required)
         const response = await authApi.register({
           name: formData.name,
           email: formData.email,
-          password: formData.password
+          phone: formData.phone.trim(),
+          password: formData.password,
+          emailOtp: signupEmailOtp.trim(),
         });
 
         if (response.token && response.user) {
@@ -165,6 +284,8 @@ function LoginPageContent() {
            await addressService.migrateGuestAddresses();
 
            toast.success('Account created successfully!');
+
+          ensureAuthInCookies();
           
           // Redirect to the intended page or delivery dashboard for delivery users
           const finalRedirect = role === 'delivery' && redirectUrl === '/' ? '/delivery' : decodeURIComponent(redirectUrl);
@@ -255,48 +376,51 @@ function LoginPageContent() {
     // Show success message
     toast.success('Welcome! You are now logged in as a guest.');
 
+    ensureAuthInCookies();
+
     // Redirect to intended page or home
     router.push(decodeURIComponent(redirectUrl));
   };
 
-  const handleGoogleLoginSuccess = () => {
-    // Redirect to intended page after Google login
-    router.push(decodeURIComponent(redirectUrl));
+  const handleGoogleAuthComplete = () => {
+    ensureAuthInCookies();
+    const dest = redirectUrl ? decodeURIComponent(redirectUrl) : '/';
+    router.replace(dest);
   };
 
   const handleClose = () => {
-    // Check if we came from a specific page
-    if (document.referrer && document.referrer.includes(window.location.origin)) {
-      router.back();
-    } else {
-      router.push('/');
-    }
+    setIsClosing(true);
+    setTimeout(() => {
+      if (document.referrer && document.referrer.includes(window.location.origin) && !document.referrer.includes('/login')) {
+        router.back();
+      } else {
+        router.push('/');
+      }
+    }, 280);
   };
 
   const handleGoogleError = (error: string) => {
-    console.error('Google OAuth error:', error);
     setGoogleError(error);
-    setShowFallbackLogin(true);
-    
-    // Check if it's a 403 error (configuration issue)
-    if (error.includes('403') || error.includes('origin is not allowed')) {
-      toast.error('Google OAuth is not properly configured. Please use email login instead.');
-    } else {
+    // Only show toast for non-origin errors (origin-blocked is shown inline by GoogleLoginButton)
+    if (!error.includes('origin is not allowed') && !error.includes('not authorized for this domain')) {
       toast.error('Google sign-in is currently unavailable. Please use email login instead.');
     }
+    setShowFallbackLogin(false); // GoogleLoginButton handles its own fallback UI
   };
 
-  const handleGoogleSuccess = () => {
-    setGoogleError(null);
-    setShowFallbackLogin(false);
-    handleClose();
-  };
-
-  const inputClasses = `w-full px-4 py-3 pl-10 text-white placeholder-gray-400 bg-gray-800/70 border-2 border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:bg-gray-800 transition-all duration-200 shadow-sm hover:border-gray-500`;
-  const errorInputClasses = `w-full px-4 py-3 pl-10 text-white placeholder-gray-400 bg-red-900/30 border-2 border-red-500 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:bg-gray-800 transition-all duration-200 shadow-sm`;
+  const inputClasses = `w-full py-3 pr-4 pl-12 text-white placeholder-gray-400 bg-gray-800/70 border-2 border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:bg-gray-800 transition-all duration-200 shadow-sm hover:border-gray-500`;
+  const errorInputClasses = `w-full py-3 pr-4 pl-12 text-white placeholder-gray-400 bg-red-900/30 border-2 border-red-500 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:bg-gray-800 transition-all duration-200 shadow-sm`;
+  const inputPlainClasses = `w-full py-3 px-4 text-white placeholder-gray-400 bg-gray-800/70 border-2 border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 focus:bg-gray-800 transition-all duration-200 shadow-sm hover:border-gray-500`;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        transition: 'opacity 280ms ease, transform 280ms ease',
+        opacity: isClosing ? 0 : 1,
+        transform: isClosing ? 'scale(0.97)' : 'scale(1)',
+      }}
+    >
       {/* Background Images */}
       <div className="fixed inset-0 z-0 overflow-hidden">
         {/* Thali Image */}
@@ -322,11 +446,24 @@ function LoginPageContent() {
           />
         </div>
         {/* Blur Overlay */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+        <div
+          className="absolute inset-0 bg-black/40 backdrop-blur-md"
+          style={{
+            transition: 'background-color 280ms ease',
+            backgroundColor: isClosing ? 'rgba(0,0,0,0)' : undefined,
+          }}
+        />
       </div>
 
       {/* Auth Container */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl shadow-2xl border border-gray-700/50 p-8 flex flex-col items-center animate-fade-in backdrop-blur-xl bg-gray-900/90">
+      <div
+        className="relative z-10 w-full max-w-md rounded-2xl shadow-2xl border border-gray-700/50 p-8 flex flex-col items-center backdrop-blur-xl bg-gray-900/90"
+        style={{
+          transition: 'opacity 280ms ease, transform 280ms ease',
+          opacity: isClosing ? 0 : 1,
+          transform: isClosing ? 'translateY(12px) scale(0.96)' : 'translateY(0) scale(1)',
+        }}
+      >
         {/* Close/Back button */}
         <button
           onClick={handleClose}
@@ -342,7 +479,112 @@ function LoginPageContent() {
             <Image src="/images/logo.png" alt="FoodFly Logo" width={60} height={60} className="rounded-full shadow-md border-2 border-yellow-400 bg-white" />
           </div>
 
+          {authStep === 'forgot' && role !== 'delivery' && (
+            <div className="space-y-6 mb-6">
+              <div className="text-center">
+                <div className="w-14 h-14 bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <KeyRound className="h-7 w-7 text-red-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">Forgot password</h2>
+                <p className="text-gray-400 text-sm mt-2">We’ll email you a code to reset your password.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-white mb-1">Email</label>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className={inputPlainClasses}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleForgotSendOtp}
+                disabled={isLoading}
+                className="w-full py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {isLoading ? 'Sending…' : 'Send reset code'}
+              </button>
+              <button type="button" onClick={() => setAuthStep('main')} className="w-full text-gray-400 text-sm hover:text-white">
+                ← Back to sign in
+              </button>
+            </div>
+          )}
+
+          {authStep === 'reset' && role !== 'delivery' && (
+            <div className="space-y-6 mb-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-white">Set new password</h2>
+                <p className="text-gray-400 text-sm mt-2">Code sent to {forgotEmail}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-white mb-1">6-digit code</label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={resetOtp}
+                  onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
+                  className={`${inputPlainClasses} text-center text-2xl tracking-widest`}
+                  placeholder="000000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-white mb-1">New password</label>
+                <div className="relative">
+                  <input
+                    type={showResetPwd ? 'text' : 'password'}
+                    value={newPasswordReset}
+                    onChange={(e) => setNewPasswordReset(e.target.value)}
+                    className={inputPlainClasses}
+                    placeholder="At least 6 characters"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPwd(v => !v)}
+                    className="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showResetPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-white mb-1">Confirm password</label>
+                <div className="relative">
+                  <input
+                    type={showResetConfirmPwd ? 'text' : 'password'}
+                    value={confirmNewPasswordReset}
+                    onChange={(e) => setConfirmNewPasswordReset(e.target.value)}
+                    className={inputPlainClasses}
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirmPwd(v => !v)}
+                    className="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showResetConfirmPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handlePasswordResetSubmit}
+                disabled={isLoading}
+                className="w-full py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {isLoading ? 'Saving…' : 'Update password'}
+              </button>
+              <button type="button" onClick={() => setAuthStep('forgot')} className="w-full text-gray-400 text-sm hover:text-white">
+                ← Resend code
+              </button>
+            </div>
+          )}
+
           {/* Header */}
+          {authStep === 'main' && (
           <div className="text-center mb-8">
             <h2 className="text-3xl font-extrabold text-white mb-2">
               {role === 'delivery' 
@@ -359,8 +601,10 @@ function LoginPageContent() {
               }
             </p>
           </div>
+          )}
 
           {/* Form */}
+          {authStep === 'main' && (
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div className="relative">
@@ -368,8 +612,8 @@ function LoginPageContent() {
                   Full Name
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <UserIcon className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 w-12 flex items-center justify-center pointer-events-none z-10">
+                    <UserIcon className="h-5 w-5 text-gray-400 shrink-0" />
                   </div>
                   <input
                     type="text"
@@ -395,8 +639,8 @@ function LoginPageContent() {
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 w-12 flex items-center justify-center pointer-events-none z-10">
+                  <Mail className="h-5 w-5 text-gray-400 shrink-0" />
                 </div>
                 <input
                   type="email"
@@ -415,28 +659,74 @@ function LoginPageContent() {
               )}
             </div>
 
+            {!isLogin && role !== 'delivery' && (
+              <div className="relative">
+                <label className="block text-sm font-bold text-white mb-1">
+                  Mobile number
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 w-12 flex items-center justify-center pointer-events-none z-10">
+                    <Phone className="h-5 w-5 text-gray-400 shrink-0" />
+                  </div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={errors.phone ? errorInputClasses : inputClasses}
+                    disabled={isLoading}
+                    autoComplete="tel"
+                  />
+                </div>
+                {errors.phone && (
+                  <div className="mt-2 bg-red-900/30 border border-red-500 rounded-lg p-2">
+                    <p className="text-sm text-red-400 font-semibold">{errors.phone}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Password field */}
             <div className="relative">
               <label className="block text-sm font-bold text-white mb-1">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 w-12 flex items-center justify-center pointer-events-none z-10">
+                  <Lock className="h-5 w-5 text-gray-400 shrink-0" />
                 </div>
                 <input
-                  type="password"
+                  type={showPwd ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
                   className={errors.password ? errorInputClasses : inputClasses}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   disabled={isLoading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(v => !v)}
+                  className="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
               {errors.password && (
                 <div className="mt-2 bg-red-900/30 border border-red-500 rounded-lg p-2">
                   <p className="text-sm text-red-400 font-semibold">{errors.password}</p>
+                </div>
+              )}
+              {isLogin && role !== 'delivery' && (
+                <div className="mt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAuthStep('forgot')}
+                    className="text-sm text-red-400 hover:text-red-300 font-semibold"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
               )}
             </div>
@@ -448,22 +738,63 @@ function LoginPageContent() {
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 w-12 flex items-center justify-center pointer-events-none z-10">
+                    <Lock className="h-5 w-5 text-gray-400 shrink-0" />
                   </div>
                   <input
-                    type="password"
+                    type={showConfirmPwd ? 'text' : 'password'}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     className={errors.confirmPassword ? errorInputClasses : inputClasses}
-                    placeholder="••••••••"
+                    placeholder="Confirm your password"
                     disabled={isLoading}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPwd(v => !v)}
+                    className="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <div className="mt-2 bg-red-900/30 border border-red-500 rounded-lg p-2">
                     <p className="text-sm text-red-400 font-semibold">{errors.confirmPassword}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isLogin && role !== 'delivery' && (
+              <div className="rounded-xl border border-gray-600 bg-gray-800/50 p-4 space-y-3">
+                <p className="text-sm font-bold text-white">Verify your email</p>
+                <button
+                  type="button"
+                  onClick={handleSendSignupOtp}
+                  disabled={isLoading}
+                  className="w-full py-2.5 rounded-lg text-sm font-semibold border-2 border-yellow-400 text-yellow-300 hover:bg-yellow-400/10 disabled:opacity-50"
+                >
+                  {signupOtpSent ? 'Resend verification code' : 'Send verification code to email'}
+                </button>
+                {signupOtpSent && (
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-1">6-digit code</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={signupEmailOtp}
+                      onChange={(e) => {
+                        setSignupEmailOtp(e.target.value.replace(/\D/g, ''));
+                        if (errors.signupOtp) setErrors((prev) => ({ ...prev, signupOtp: '' }));
+                      }}
+                      className={`${errors.signupOtp ? errorInputClasses : inputClasses} text-center text-xl tracking-widest`}
+                      placeholder="000000"
+                    />
+                    {errors.signupOtp && (
+                      <p className="text-sm text-red-400 mt-1">{errors.signupOtp}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -485,11 +816,7 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-                isLogin 
-                  ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white hover:from-red-700 hover:to-orange-700 border-2 border-red-500/30' 
-                  : 'bg-gradient-to-r from-gray-700 to-gray-800 text-white hover:from-gray-600 hover:to-gray-700 border-2 border-gray-600'
-              }`}
+              className="w-full py-4 rounded-xl font-bold text-lg shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-yellow-400 hover:bg-yellow-300 text-[#232323]"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -522,7 +849,7 @@ function LoginPageContent() {
                   {/* Google Login Button - Enhanced visibility */}
                   <div className="bg-white rounded-xl p-1 shadow-lg">
                     <GoogleLoginButton
-                      onSuccess={handleGoogleSuccess}
+                      onSuccess={handleGoogleAuthComplete}
                       onError={handleGoogleError}
                       text="Continue with Google"
                       className="w-full bg-white hover:bg-gray-50 text-gray-700 py-3 font-bold shadow-lg rounded-xl transform hover:scale-105 transition-all duration-200 border-2 border-gray-200"
@@ -573,8 +900,10 @@ function LoginPageContent() {
               </>
             )}
           </form>
+          )}
 
           {/* Toggle between login and register */}
+          {authStep === 'main' && (
           <div className="mt-6 text-center">
             {role === 'delivery' ? (
               <div className="space-y-2">
@@ -595,13 +924,20 @@ function LoginPageContent() {
               </div>
             ) : (
               <button
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setSignupOtpSent(false);
+                  setSignupEmailOtp('');
+                  setFormData((prev) => ({ ...prev, phone: '' }));
+                  setErrors({});
+                }}
                 className="text-gray-300 hover:text-white font-bold transition-colors duration-200 underline decoration-2 underline-offset-4"
               >
                 {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
               </button>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

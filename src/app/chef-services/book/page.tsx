@@ -14,8 +14,10 @@ import {
   ArrowLeft,
   Star,
   Phone,
-  Mail
+  Mail,
+  Home
 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -409,20 +411,27 @@ function BookChefPageContent() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#232323]" style={{ fontFamily: "'Satoshi', sans-serif" }}>
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
+        <div className="bg-gray-900 shadow-lg border-b border-gray-800">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => window.history.back()}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                className="flex items-center space-x-2 text-gray-400 hover:text-yellow-400 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span>Back</span>
               </button>
+              <Link
+                href="/"
+                className="flex items-center space-x-2 text-gray-400 hover:text-yellow-400 transition-colors"
+              >
+                <Home className="h-5 w-5" />
+                <span>Home</span>
+              </Link>
               <div className="flex items-center space-x-2">
-                <ChefHat className="h-6 w-6 text-orange-500" />
+                <ChefHat className="h-6 w-6 text-yellow-400" />
                 <Image
                   src="/images/logo.png"
                   alt="FoodFly"
@@ -430,7 +439,7 @@ function BookChefPageContent() {
                   height={24}
                   className="rounded"
                 />
-                <h1 className="text-xl font-bold text-gray-900">Book a Chef</h1>
+                <h1 className="text-xl font-bold text-white">Book a Chef</h1>
               </div>
             </div>
           </div>
@@ -438,25 +447,25 @@ function BookChefPageContent() {
 
         {/* Progress Bar */}
         {step !== 5 && (
-          <div className="bg-white border-b">
+          <div className="bg-gray-900 border-b border-gray-800">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <div className="flex items-center justify-between">
                 {[1, 2, 3, 4].map((stepNumber) => (
                   <div key={stepNumber} className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step >= stepNumber ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      step >= stepNumber ? 'bg-yellow-400 text-[#232323]' : 'bg-gray-700 text-gray-400'
                     }`}>
                       {step > stepNumber ? <Check className="h-4 w-4" /> : stepNumber}
                     </div>
                     {stepNumber < 4 && (
-                      <div className={`w-16 h-1 mx-2 ${
-                        step > stepNumber ? 'bg-orange-500' : 'bg-gray-200'
+                      <div className={`w-16 h-1 mx-2 rounded-full ${
+                        step > stepNumber ? 'bg-yellow-400' : 'bg-gray-700'
                       }`} />
                     )}
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between mt-2 text-sm text-gray-600">
+              <div className="flex justify-between mt-2 text-xs text-gray-400 font-semibold">
                 <span>Event Details</span>
                 <span>Location</span>
                 <span>Budget</span>
@@ -470,33 +479,27 @@ function BookChefPageContent() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Selected Chef Display */}
           {selectedChef && step !== 5 && (
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Selected Chef</h2>
+            <div className="bg-gray-800 rounded-xl border border-yellow-400/30 p-6 mb-6">
+              <h2 className="text-base font-bold text-yellow-400 mb-4">Selected Chef</h2>
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center border-2 border-yellow-400/40">
                   {selectedChef.profilePhoto ? (
-                    <Image
-                      src={selectedChef.profilePhoto}
-                      alt={selectedChef.name}
-                      width={64}
-                      height={64}
-                      className="rounded-full object-cover"
-                    />
+                    <Image src={selectedChef.profilePhoto} alt={selectedChef.name} width={64} height={64} className="rounded-full object-cover" />
                   ) : (
-                    <ChefHat className="h-8 w-8 text-gray-400" />
+                    <ChefHat className="h-8 w-8 text-yellow-400" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900">{selectedChef.name}</h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <h3 className="text-lg font-bold text-white">{selectedChef.name}</h3>
+                  <div className="flex items-center space-x-3 text-sm text-gray-400 flex-wrap gap-y-1">
                     <div className="flex items-center space-x-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span>{selectedChef.chefProfile.rating.toFixed(1)}</span>
+                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                      <span className="text-yellow-400 font-semibold">{selectedChef.chefProfile.rating.toFixed(1)}</span>
                     </div>
                     <span>•</span>
-                    <span>{selectedChef.chefProfile.experience} years experience</span>
+                    <span>{selectedChef.chefProfile.experience} yrs exp</span>
                     <span>•</span>
-                    <span>₹{selectedChef.chefProfile.priceRange.min.toLocaleString()} - ₹{selectedChef.chefProfile.priceRange.max.toLocaleString()}</span>
+                    <span className="text-yellow-400">₹{selectedChef.chefProfile.priceRange.min.toLocaleString()} – ₹{selectedChef.chefProfile.priceRange.max.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -505,26 +508,26 @@ function BookChefPageContent() {
 
           {/* Step 1: Event Details */}
           {step === 1 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Event Details</h2>
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+              <h2 className="text-2xl font-bold text-yellow-400 mb-6">Event Details</h2>
               
               <div className="space-y-6">
                 {/* Event Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Event Type</label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-3">Event Type</label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {eventTypes.map((type) => (
                       <button
                         key={type.value}
                         onClick={() => setEventDetails(prev => ({ ...prev, type: type.value }))}
-                        className={`p-4 border rounded-lg text-left hover:border-orange-500 ${
-                          eventDetails.type === type.value 
-                            ? 'border-orange-500 bg-orange-50' 
-                            : 'border-gray-300'
+                        className={`p-4 border-2 rounded-xl text-left transition-all ${
+                          eventDetails.type === type.value
+                            ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
+                            : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-yellow-400/50'
                         }`}
                       >
                         <div className="text-2xl mb-2">{type.icon}</div>
-                        <div className="text-sm font-medium text-gray-900">{type.label}</div>
+                        <div className="text-sm font-semibold">{type.label}</div>
                       </button>
                     ))}
                   </div>
@@ -532,42 +535,42 @@ function BookChefPageContent() {
 
                 {/* Event Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Event Title</label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">Event Title</label>
                   <input
                     type="text"
                     value={eventDetails.title}
                     onChange={(e) => setEventDetails(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="e.g., John's 30th Birthday Party"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
                   />
                 </div>
 
                 {/* Event Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Event Description</label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">Event Description</label>
                   <textarea
                     value={eventDetails.description}
                     onChange={(e) => setEventDetails(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Describe your event, any special requirements, theme, etc."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 resize-none"
                   />
                 </div>
 
                 {/* Date, Duration, Guest Count */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Event Date</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Event Date & Time</label>
                     <input
                       type="datetime-local"
                       value={eventDetails.date}
                       onChange={(e) => setEventDetails(prev => ({ ...prev, date: e.target.value }))}
                       min={new Date().toISOString().slice(0, 16)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 [color-scheme:dark]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (hours)</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Duration (hours)</label>
                     <input
                       type="number"
                       value={Number.isFinite(eventDetails.duration) ? eventDetails.duration : 0}
@@ -576,13 +579,12 @@ function BookChefPageContent() {
                         const n = v === '' ? 0 : parseInt(v, 10);
                         setEventDetails(prev => ({ ...prev, duration: Number.isFinite(n) ? n : 0 }));
                       }}
-                      min="1"
-                      max="24"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                      min="1" max="24"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Guest Count</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Guest Count</label>
                     <input
                       type="number"
                       value={Number.isFinite(eventDetails.guestCount) ? eventDetails.guestCount : 0}
@@ -592,26 +594,24 @@ function BookChefPageContent() {
                         setEventDetails(prev => ({ ...prev, guestCount: Number.isFinite(n) ? n : 0 }));
                       }}
                       min="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
                     />
                   </div>
                 </div>
 
                 {/* Cuisine Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Preferred Cuisines (Optional)
-                    <span className="text-sm font-normal text-gray-600 block">Select your preferred cuisines or leave blank for chef's recommendation</span>
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-1">Preferred Cuisines <span className="text-gray-500 font-normal">(Optional)</span></label>
+                  <p className="text-xs text-gray-500 mb-3">Leave blank for chef&apos;s recommendation</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {cuisineOptions.map((cuisine) => (
                       <button
                         key={cuisine}
                         onClick={() => toggleCuisine(cuisine)}
-                        className={`px-3 py-2 border rounded-lg text-sm font-semibold transition-all ${
+                        className={`px-3 py-2 border-2 rounded-lg text-sm font-semibold transition-all ${
                           eventDetails.cuisine.includes(cuisine)
-                            ? 'border-orange-500 bg-orange-50 text-orange-800 shadow-md'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-orange-500 hover:bg-orange-50'
+                            ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
+                            : 'border-gray-600 text-gray-400 hover:border-yellow-400/50 hover:text-gray-300'
                         }`}
                       >
                         {cuisine}
@@ -619,31 +619,27 @@ function BookChefPageContent() {
                     ))}
                   </div>
                   {eventDetails.cuisine.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      No cuisines selected - chef will recommend based on your event type
-                    </p>
+                    <p className="text-xs text-gray-500 mt-2">No cuisines selected — chef will recommend</p>
                   )}
                 </div>
 
                 {/* Special Requests */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Special Requests (Optional)</label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">Special Requests <span className="text-gray-500 font-normal">(Optional)</span></label>
                   <textarea
                     value={eventDetails.specialRequests}
                     onChange={(e) => setEventDetails(prev => ({ ...prev, specialRequests: e.target.value }))}
                     placeholder="Any specific dishes, presentation style, or special requirements..."
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 resize-none"
                   />
                 </div>
 
                 {/* Dietary Restrictions */}
-                <div className="space-y-3">
-                  <label className="block text-lg font-semibold text-gray-900 mb-3">
-                    Dietary Restrictions (Optional)
-                    <span className="text-sm font-normal text-gray-600 block">Select any dietary requirements for your event</span>
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-1">Dietary Restrictions <span className="text-gray-500 font-normal">(Optional)</span></label>
+                  <p className="text-xs text-gray-500 mb-3">Select any dietary requirements for your event</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[
                       { label: 'Vegetarian', value: 'vegetarian' },
                       { label: 'Vegan', value: 'vegan' },
@@ -658,10 +654,10 @@ function BookChefPageContent() {
                         key={restriction.value}
                         type="button"
                         onClick={() => toggleDietaryRestriction(restriction.value)}
-                        className={`px-4 py-3 border-2 rounded-lg text-sm font-medium transition-all ${
+                        className={`px-3 py-2 border-2 rounded-lg text-sm font-semibold transition-all ${
                           eventDetails.dietaryRestrictions.includes(restriction.value)
-                            ? 'border-green-500 bg-green-500 text-white shadow-lg scale-105'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-green-500 hover:shadow-md'
+                            ? 'border-green-500 bg-green-500/20 text-green-400'
+                            : 'border-gray-600 text-gray-400 hover:border-green-500/50'
                         }`}
                       >
                         {restriction.label}
@@ -669,14 +665,14 @@ function BookChefPageContent() {
                     ))}
                   </div>
                   {eventDetails.dietaryRestrictions.length > 0 && (
-                    <p className="text-sm text-green-600 font-medium">
+                    <p className="text-xs text-green-400 mt-2 font-semibold">
                       ✓ {eventDetails.dietaryRestrictions.length} restriction{eventDetails.dietaryRestrictions.length > 1 ? 's' : ''} selected
                     </p>
                   )}
                 </div>
 
                 {/* Menu Customization */}
-                <div className="space-y-4">
+                <div className="border border-gray-700 rounded-xl p-4">
                   <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
@@ -686,105 +682,49 @@ function BookChefPageContent() {
                         ...prev,
                         customMenu: { ...prev.customMenu, isCustom: e.target.checked }
                       }))}
-                      className="h-5 w-5 text-orange-600 border-2 border-gray-300 rounded focus:ring-orange-500"
+                      className="h-5 w-5 accent-yellow-400"
                     />
-                    <label htmlFor="customMenu" className="text-lg font-semibold text-gray-900">
+                    <label htmlFor="customMenu" className="text-base font-bold text-white cursor-pointer">
                       🍽️ Customize Your Menu
                     </label>
                   </div>
                   
                   {eventDetails.customMenu.isCustom && (
-                    <div className="p-6 bg-orange-50 border-2 border-orange-200 rounded-lg space-y-4">
-                      <p className="text-sm text-orange-700 font-medium mb-4">
-                        Work with your chef to create a personalized menu for your event
-                      </p>
-                      
+                    <div className="mt-4 p-4 bg-yellow-400/5 border border-yellow-400/20 rounded-lg space-y-4">
+                      <p className="text-xs text-yellow-300 font-medium">Work with your chef to create a personalized menu</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Appetizers */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Appetizers</label>
-                          <textarea
-                            value={eventDetails.customMenu.appetizers.join(', ')}
-                            onChange={(e) => setEventDetails(prev => ({
-                              ...prev,
-                              customMenu: {
-                                ...prev.customMenu,
-                                appetizers: e.target.value.split(', ').filter(item => item.trim())
-                              }
-                            }))}
-                            placeholder="e.g., Bruschetta, Spring Rolls, Cheese Platter"
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                          />
-                        </div>
-
-                        {/* Main Courses */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Main Courses</label>
-                          <textarea
-                            value={eventDetails.customMenu.mainCourses.join(', ')}
-                            onChange={(e) => setEventDetails(prev => ({
-                              ...prev,
-                              customMenu: {
-                                ...prev.customMenu,
-                                mainCourses: e.target.value.split(', ').filter(item => item.trim())
-                              }
-                            }))}
-                            placeholder="e.g., Grilled Salmon, Chicken Tikka, Pasta Primavera"
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                          />
-                        </div>
-
-                        {/* Desserts */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Desserts</label>
-                          <textarea
-                            value={eventDetails.customMenu.desserts.join(', ')}
-                            onChange={(e) => setEventDetails(prev => ({
-                              ...prev,
-                              customMenu: {
-                                ...prev.customMenu,
-                                desserts: e.target.value.split(', ').filter(item => item.trim())
-                              }
-                            }))}
-                            placeholder="e.g., Chocolate Cake, Tiramisu, Fresh Fruit"
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                          />
-                        </div>
-
-                        {/* Beverages */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Beverages</label>
-                          <textarea
-                            value={eventDetails.customMenu.beverages.join(', ')}
-                            onChange={(e) => setEventDetails(prev => ({
-                              ...prev,
-                              customMenu: {
-                                ...prev.customMenu,
-                                beverages: e.target.value.split(', ').filter(item => item.trim())
-                              }
-                            }))}
-                            placeholder="e.g., Fresh Juices, Wine, Cocktails, Tea/Coffee"
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                          />
-                        </div>
+                        {[
+                          { key: 'appetizers', label: 'Preferred Appetizers', placeholder: 'e.g., Bruschetta, Spring Rolls' },
+                          { key: 'mainCourses', label: 'Main Courses', placeholder: 'e.g., Grilled Salmon, Chicken Tikka' },
+                          { key: 'desserts', label: 'Desserts', placeholder: 'e.g., Chocolate Cake, Tiramisu' },
+                          { key: 'beverages', label: 'Beverages', placeholder: 'e.g., Fresh Juices, Wine, Cocktails' },
+                        ].map(({ key, label, placeholder }) => (
+                          <div key={key}>
+                            <label className="block text-xs font-semibold text-gray-300 mb-1.5">{label}</label>
+                            <textarea
+                              value={(eventDetails.customMenu[key as keyof typeof eventDetails.customMenu] as string[]).join(', ')}
+                              onChange={(e) => setEventDetails(prev => ({
+                                ...prev,
+                                customMenu: { ...prev.customMenu, [key]: e.target.value.split(', ').filter(i => i.trim()) }
+                              }))}
+                              placeholder={placeholder}
+                              rows={2}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-400 resize-none"
+                            />
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Additional Menu Requests */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Additional Menu Requests</label>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">Additional Requests</label>
                         <textarea
                           value={eventDetails.customMenu.additionalRequests}
                           onChange={(e) => setEventDetails(prev => ({
                             ...prev,
                             customMenu: { ...prev.customMenu, additionalRequests: e.target.value }
                           }))}
-                          placeholder="Any specific cooking methods, presentation styles, or special menu requirements..."
+                          placeholder="Any specific cooking methods, presentation styles..."
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-400 resize-none"
                         />
                       </div>
                     </div>
@@ -796,71 +736,56 @@ function BookChefPageContent() {
 
           {/* Step 2: Location Details */}
           {step === 2 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Event Location</h2>
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+              <h2 className="text-2xl font-bold text-yellow-400 mb-6">Event Location</h2>
               
               <div className="space-y-6">
-                {/* Venue Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Venue Type</label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-3">Venue Type</label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {venueTypes.map((venue) => (
                       <button
                         key={venue.value}
                         onClick={() => setLocationDetails(prev => ({ ...prev, venue_type: venue.value }))}
-                        className={`p-4 border rounded-lg text-center ${
-                          locationDetails.venue_type === venue.value 
-                            ? 'border-orange-500 bg-orange-50' 
-                            : 'border-gray-300 hover:border-orange-500'
+                        className={`p-4 border-2 rounded-xl text-center transition-all font-semibold text-sm ${
+                          locationDetails.venue_type === venue.value
+                            ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400'
+                            : 'border-gray-600 text-gray-400 hover:border-yellow-400/50'
                         }`}
                       >
-                        <div className="text-sm font-medium text-gray-900">{venue.label}</div>
+                        {venue.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Address */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Address</label>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">Full Address</label>
                   <textarea
                     value={locationDetails.address}
                     onChange={(e) => setLocationDetails(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="Enter complete address including building name, street, landmark"
+                    placeholder="Building name, street, landmark..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 resize-none"
                   />
                 </div>
 
-                {/* City, State, Pincode */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                    <input
-                      type="text"
-                      value={locationDetails.city}
-                      onChange={(e) => setLocationDetails(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                    <input
-                      type="text"
-                      value={locationDetails.state}
-                      onChange={(e) => setLocationDetails(prev => ({ ...prev, state: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
-                    <input
-                      type="text"
-                      value={locationDetails.pincode}
-                      onChange={(e) => setLocationDetails(prev => ({ ...prev, pincode: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
-                    />
-                  </div>
+                  {[
+                    { key: 'city', label: 'City', value: locationDetails.city },
+                    { key: 'state', label: 'State', value: locationDetails.state },
+                    { key: 'pincode', label: 'Pincode', value: locationDetails.pincode },
+                  ].map(({ key, label, value }) => (
+                    <div key={key}>
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">{label}</label>
+                      <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => setLocationDetails(prev => ({ ...prev, [key]: e.target.value }))}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -868,13 +793,13 @@ function BookChefPageContent() {
 
           {/* Step 3: Budget */}
           {step === 3 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Budget Range</h2>
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+              <h2 className="text-2xl font-bold text-yellow-400 mb-6">Budget Range</h2>
               
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Budget (₹)</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Minimum Budget (₹)</label>
                     <input
                       type="number"
                       value={Number.isFinite(budgetDetails.min) ? budgetDetails.min : 0}
@@ -883,13 +808,12 @@ function BookChefPageContent() {
                         const n = v === '' ? 0 : parseInt(v, 10);
                         setBudgetDetails(prev => ({ ...prev, min: Number.isFinite(n) ? n : prev.min }));
                       }}
-                      min="1000"
-                      step="500"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                      min="1000" step="500"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Budget (₹)</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Maximum Budget (₹)</label>
                     <input
                       type="number"
                       value={Number.isFinite(budgetDetails.max) ? budgetDetails.max : 0}
@@ -898,9 +822,8 @@ function BookChefPageContent() {
                         const n = v === '' ? 0 : parseInt(v, 10);
                         setBudgetDetails(prev => ({ ...prev, max: Number.isFinite(n) ? n : prev.max }));
                       }}
-                      min="1000"
-                      step="500"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                      min="1000" step="500"
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
                     />
                   </div>
                 </div>
@@ -911,21 +834,21 @@ function BookChefPageContent() {
                     id="flexible"
                     checked={budgetDetails.isFlexible}
                     onChange={(e) => setBudgetDetails(prev => ({ ...prev, isFlexible: e.target.checked }))}
-                    className="h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                    className="h-4 w-4 accent-yellow-400"
                   />
-                  <label htmlFor="flexible" className="text-sm text-gray-600">
+                  <label htmlFor="flexible" className="text-sm text-gray-300 cursor-pointer">
                     My budget is flexible for the right chef
                   </label>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-blue-900 mb-2">What's included in the price?</h3>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Chef's cooking services</li>
-                    <li>• Menu planning and preparation</li>
-                    <li>• Serving and presentation</li>
-                    <li>• Basic cleanup</li>
-                    <li>• Ingredients and groceries (may vary by chef)</li>
+                <div className="bg-gray-700/50 border border-gray-600 p-4 rounded-xl">
+                  <h3 className="text-sm font-bold text-yellow-400 mb-3">What&apos;s included in the price?</h3>
+                  <ul className="text-sm text-gray-300 space-y-1.5">
+                    {['Chef\'s cooking services', 'Menu planning and preparation', 'Serving and presentation', 'Basic cleanup', 'Ingredients and groceries (may vary by chef)'].map(item => (
+                      <li key={item} className="flex items-center gap-2">
+                        <span className="text-yellow-400">•</span> {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -934,142 +857,86 @@ function BookChefPageContent() {
 
           {/* Step 4: Review */}
           {step === 4 && (
-            <div className="bg-white rounded-lg shadow-lg border-2 border-orange-200 p-8">
+            <div className="bg-gray-800 rounded-xl border-2 border-yellow-400/30 p-6">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ChefHat className="h-8 w-8 text-orange-600" />
+                <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-yellow-400/30">
+                  <ChefHat className="h-8 w-8 text-yellow-400" />
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Review Your Request</h2>
-                <p className="text-gray-600">Please review all details before submitting your chef booking request</p>
+                <h2 className="text-2xl font-black text-white mb-1">Review Your Request</h2>
+                <p className="text-gray-400 text-sm">Please review all details before submitting</p>
               </div>
 
-              {/* Phone capture for users without phone on profile */}
-              {(!JSON.parse(localStorage.getItem('user') || '{}')?.phone) && (
-                <div className="mb-8">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number (required)</label>
+              {(!JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('user') || '{}' : '{}')?.phone) && (
+                <div className="mb-6 p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-xl">
+                  <label className="block text-sm font-semibold text-yellow-400 mb-2">Contact Number (required)</label>
                   <input
                     type="tel"
                     value={userPhone}
                     onChange={(e) => setUserPhone(e.target.value)}
                     placeholder="Enter your phone number"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
                   />
-                  <p className="text-xs text-gray-500 mt-1">We need your phone number so your chef can coordinate details.</p>
+                  <p className="text-xs text-gray-500 mt-1.5">Your chef will use this to coordinate event details.</p>
                 </div>
               )}
               
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Event Summary */}
-                <div className="border border-orange-200 rounded-lg p-6 bg-gradient-to-r from-orange-50 to-red-50">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                    <Calendar className="h-5 w-5 text-orange-500 mr-2" />
-                    Event Details
+                <div className="border border-gray-700 rounded-xl p-5">
+                  <h3 className="text-base font-bold text-yellow-400 mb-4 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Event Details
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Event:</span>
-                      <span className="ml-2 font-bold text-gray-900">{eventDetails.title}</span>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Type:</span>
-                      <span className="ml-2 font-bold text-gray-900">{eventTypes.find(t => t.value === eventDetails.type)?.label}</span>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Date:</span>
-                      <span className="ml-2 font-bold text-gray-900">{new Date(eventDetails.date).toLocaleString()}</span>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Duration:</span>
-                      <span className="ml-2 font-bold text-gray-900">{eventDetails.duration} hours</span>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Guests:</span>
-                      <span className="ml-2 font-bold text-gray-900">{eventDetails.guestCount} people</span>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Cuisines:</span>
-                      <span className="ml-2 font-bold text-orange-600">{eventDetails.cuisine.join(', ')}</span>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {[
+                      { label: 'Event', value: eventDetails.title },
+                      { label: 'Type', value: eventTypes.find(t => t.value === eventDetails.type)?.label },
+                      { label: 'Date', value: eventDetails.date ? new Date(eventDetails.date).toLocaleString() : '' },
+                      { label: 'Duration', value: `${eventDetails.duration} hours` },
+                      { label: 'Guests', value: `${eventDetails.guestCount} people` },
+                      { label: 'Cuisines', value: eventDetails.cuisine.join(', ') || 'Chef\'s choice' },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-gray-700/50 rounded-lg p-3">
+                        <span className="text-gray-400 text-xs font-semibold">{label}</span>
+                        <p className="text-white font-bold text-sm mt-0.5">{value}</p>
+                      </div>
+                    ))}
                   </div>
                   {eventDetails.description && (
-                    <div className="mt-4 bg-white rounded-lg p-4 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Description:</span>
-                      <p className="mt-2 text-gray-900 font-medium">{eventDetails.description}</p>
-                    </div>
-                  )}
-                  {eventDetails.customMenu.isCustom && (
-                    <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
-                      <span className="text-gray-700 font-semibold flex items-center">
-                        🍽️ Custom Menu Requested
-                      </span>
-                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        {eventDetails.customMenu.appetizers.length > 0 && (
-                          <div>
-                            <span className="font-medium text-orange-700">Appetizers:</span>
-                            <p className="text-gray-700">{eventDetails.customMenu.appetizers.join(', ')}</p>
-                          </div>
-                        )}
-                        {eventDetails.customMenu.mainCourses.length > 0 && (
-                          <div>
-                            <span className="font-medium text-orange-700">Main Courses:</span>
-                            <p className="text-gray-700">{eventDetails.customMenu.mainCourses.join(', ')}</p>
-                          </div>
-                        )}
-                        {eventDetails.customMenu.desserts.length > 0 && (
-                          <div>
-                            <span className="font-medium text-orange-700">Desserts:</span>
-                            <p className="text-gray-700">{eventDetails.customMenu.desserts.join(', ')}</p>
-                          </div>
-                        )}
-                        {eventDetails.customMenu.beverages.length > 0 && (
-                          <div>
-                            <span className="font-medium text-orange-700">Beverages:</span>
-                            <p className="text-gray-700">{eventDetails.customMenu.beverages.join(', ')}</p>
-                          </div>
-                        )}
-                      </div>
-                      {eventDetails.customMenu.additionalRequests && (
-                        <div className="mt-3">
-                          <span className="font-medium text-orange-700">Additional Requests:</span>
-                          <p className="text-gray-700 text-sm">{eventDetails.customMenu.additionalRequests}</p>
-                        </div>
-                      )}
+                    <div className="mt-3 bg-gray-700/50 rounded-lg p-3">
+                      <span className="text-gray-400 text-xs font-semibold">Description</span>
+                      <p className="text-white text-sm mt-0.5">{eventDetails.description}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Location Summary */}
-                <div className="border border-blue-200 rounded-lg p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                    <MapPin className="h-5 w-5 text-blue-500 mr-2" />
-                    Location
+                <div className="border border-gray-700 rounded-xl p-5">
+                  <h3 className="text-base font-bold text-yellow-400 mb-4 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> Location
                   </h3>
-                  <div className="space-y-3">
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Venue Type:</span>
-                      <span className="ml-2 font-bold text-gray-900">{venueTypes.find(v => v.value === locationDetails.venue_type)?.label}</span>
+                  <div className="space-y-2">
+                    <div className="bg-gray-700/50 rounded-lg p-3">
+                      <span className="text-gray-400 text-xs font-semibold">Venue Type</span>
+                      <p className="text-white font-bold text-sm mt-0.5">{venueTypes.find(v => v.value === locationDetails.venue_type)?.label}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
-                      <span className="text-gray-700 font-semibold">Address:</span>
-                      <p className="mt-1 font-bold text-gray-900">{locationDetails.address}, {locationDetails.city}, {locationDetails.state} - {locationDetails.pincode}</p>
+                    <div className="bg-gray-700/50 rounded-lg p-3">
+                      <span className="text-gray-400 text-xs font-semibold">Address</span>
+                      <p className="text-white font-bold text-sm mt-0.5">{locationDetails.address}, {locationDetails.city}, {locationDetails.state} — {locationDetails.pincode}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Budget Summary */}
-                <div className="border border-green-200 rounded-lg p-6 bg-gradient-to-r from-green-50 to-emerald-50">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                    <DollarSign className="h-5 w-5 text-green-500 mr-2" />
-                    Budget
+                <div className="border border-gray-700 rounded-xl p-5">
+                  <h3 className="text-base font-bold text-yellow-400 mb-4 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" /> Budget
                   </h3>
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-gray-700 font-semibold">Range:</span>
-                      <span className="font-bold text-2xl text-green-600">₹{budgetDetails.min.toLocaleString()} - ₹{budgetDetails.max.toLocaleString()}</span>
-                      {budgetDetails.isFlexible && (
-                        <span className="text-orange-600 text-sm bg-orange-100 px-3 py-1 rounded-full font-semibold">Flexible</span>
-                      )}
-                    </div>
+                  <div className="bg-gray-700/50 rounded-lg p-4 flex items-center gap-4 flex-wrap">
+                    <span className="text-gray-400 text-sm font-semibold">Range:</span>
+                    <span className="font-black text-2xl text-yellow-400">₹{budgetDetails.min.toLocaleString()} – ₹{budgetDetails.max.toLocaleString()}</span>
+                    {budgetDetails.isFlexible && (
+                      <span className="text-yellow-400 text-xs bg-yellow-400/10 border border-yellow-400/30 px-3 py-1 rounded-full font-semibold">Flexible</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1078,44 +945,51 @@ function BookChefPageContent() {
 
           {/* Success Step */}
           {step === 5 && (
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="h-8 w-8 text-green-600" />
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 text-center">
+              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-green-500/40">
+                <Check className="h-10 w-10 text-green-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Request Sent Successfully!</h2>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                {preferredChefId || selectedChef?._id 
+              <h2 className="text-3xl font-black text-white mb-3">Request Sent!</h2>
+              <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm">
+                {preferredChefId || selectedChef?._id
                   ? "Your chef booking request has been sent. You'll receive a notification once the chef responds."
-                  : "Your general chef request has been sent. Available chefs will be notified and the first to accept will be assigned to your event."
+                  : "Your request has been sent to available chefs. The first to accept will be assigned to your event."
                 }
               </p>
-              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
                 <button
                   onClick={() => window.location.href = '/profile'}
-                  className="bg-orange-500 text-white py-2 px-6 rounded-lg hover:bg-orange-600 transition duration-200"
+                  className="bg-yellow-400 text-[#232323] font-bold py-3 px-8 rounded-xl hover:bg-yellow-300 transition-all"
                 >
-                  View My Requests
+                  View My Bookings
                 </button>
                 <button
                   onClick={() => window.location.href = '/chef-services'}
-                  className="border border-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-50 transition duration-200"
+                  className="border-2 border-gray-600 text-gray-300 font-semibold py-3 px-8 rounded-xl hover:border-yellow-400 hover:text-yellow-400 transition-all"
                 >
                   Book Another Chef
                 </button>
+                <Link
+                  href="/"
+                  className="border-2 border-yellow-400/50 text-yellow-400 font-semibold py-3 px-8 rounded-xl hover:bg-yellow-400 hover:text-[#232323] transition-all flex items-center justify-center gap-2"
+                >
+                  <Home className="h-4 w-4" />
+                  Go to Home
+                </Link>
               </div>
             </div>
           )}
 
           {/* Navigation Buttons */}
           {step !== 5 && (
-            <div className="flex justify-between mt-8">
+            <div className="flex justify-between mt-6">
               <button
                 onClick={prevStep}
                 disabled={step === 1}
-                className={`px-6 py-2 rounded-lg border ${
-                  step === 1 
-                    ? 'border-gray-300 text-gray-400 cursor-not-allowed' 
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                className={`px-6 py-3 rounded-xl font-semibold border-2 transition-all ${
+                  step === 1
+                    ? 'border-gray-700 text-gray-600 cursor-not-allowed'
+                    : 'border-gray-600 text-gray-300 hover:border-yellow-400 hover:text-yellow-400'
                 }`}
               >
                 Previous
@@ -1125,25 +999,25 @@ function BookChefPageContent() {
                 <button
                   onClick={nextStep}
                   disabled={!isStepValid()}
-                  className={`px-6 py-2 rounded-lg ${
+                  className={`px-8 py-3 rounded-xl font-bold transition-all ${
                     isStepValid()
-                      ? 'bg-orange-500 text-white hover:bg-orange-600'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      ? 'bg-yellow-400 text-[#232323] hover:bg-yellow-300'
+                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  Next
+                  Next →
                 </button>
               ) : (
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !isStepValid()}
-                  className={`px-6 py-2 rounded-lg ${
+                  className={`px-8 py-3 rounded-xl font-bold transition-all ${
                     loading || !isStepValid()
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-orange-500 text-white hover:bg-orange-600'
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-yellow-400 text-[#232323] hover:bg-yellow-300'
                   }`}
                 >
-                  {loading ? 'Sending Request...' : 'Send Request'}
+                  {loading ? 'Sending...' : 'Send Request'}
                 </button>
               )}
             </div>

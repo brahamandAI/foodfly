@@ -16,7 +16,11 @@ import {
   Users,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -102,6 +106,33 @@ export default function ChefDashboard() {
   const [availabilityStatus, setAvailabilityStatus] = useState<'available' | 'busy' | 'offline'>('available');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isVerified, setIsVerified] = useState<boolean>(false);
+
+  // Change password state
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showPwCurrent, setShowPwCurrent] = useState(false);
+  const [showPwNew, setShowPwNew] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
+
+  const changePassword = async () => {
+    if (!pwForm.current || !pwForm.newPw || !pwForm.confirm) { toast.error('Please fill in all fields'); return; }
+    if (pwForm.newPw.length < 8) { toast.error('New password must be at least 8 characters'); return; }
+    if (pwForm.newPw !== pwForm.confirm) { toast.error('Passwords do not match'); return; }
+    if (pwForm.current === pwForm.newPw) { toast.error('New password must be different'); return; }
+    setPwLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('chef-token') : null;
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.newPw })
+      });
+      const data = await res.json();
+      if (res.ok) { toast.success('Password changed successfully!'); setPwForm({ current: '', newPw: '', confirm: '' }); }
+      else { toast.error(data.error || 'Failed to change password'); }
+    } catch { toast.error('Failed to change password'); }
+    finally { setPwLoading(false); }
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -367,18 +398,18 @@ export default function ChefDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      {/* Header - Dark Theme */}
-      <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 shadow-2xl border-b border-gray-700">
+    <div className="min-h-screen bg-[#232323]" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+      {/* Header */}
+      <div className="bg-gray-900 shadow-2xl border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-8">
+          <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <div className="bg-gray-800/60 backdrop-blur-sm rounded-full p-3 mr-4 border border-gray-700">
-                <ChefHat className="h-8 w-8 text-orange-500" />
+              <div className="bg-yellow-400/10 rounded-full p-3 mr-4 border border-yellow-400/30">
+                <ChefHat className="h-8 w-8 text-yellow-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white tracking-wide">Chef Dashboard</h1>
-                <p className="text-gray-300 text-sm mt-1">Manage your culinary services</p>
+                <h1 className="text-2xl font-black text-white tracking-wide">Chef Dashboard</h1>
+                <p className="text-gray-400 text-sm mt-0.5">Manage your culinary services</p>
               </div>
             </div>
             
@@ -408,6 +439,19 @@ export default function ChefDashboard() {
                 </div>
               </div>
               
+              {/* Settings button */}
+              <button
+                onClick={() => setSelectedTab(selectedTab === 'settings' ? 'dashboard' : 'settings')}
+                className={`rounded-full px-5 py-3 font-semibold transition-all duration-300 shadow-lg border flex items-center gap-2 ${
+                  selectedTab === 'settings'
+                    ? 'bg-yellow-400 text-[#232323] border-yellow-400'
+                    : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80 border-gray-600'
+                }`}
+              >
+                <Settings className="h-5 w-5" />
+                Settings
+              </button>
+
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
@@ -482,17 +526,24 @@ export default function ChefDashboard() {
         <div className="bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-gray-700/50">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white flex items-center">
-              <Calendar className="h-7 w-7 mr-3 text-orange-500" />
+              <Calendar className="h-7 w-7 mr-3 text-yellow-400" />
               Recent Booking Requests
             </h2>
-            <div className="flex space-x-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadDashboardData}
+                className="p-2 rounded-lg bg-gray-800/60 text-gray-300 hover:bg-gray-700/80 border border-gray-600 hover:text-yellow-400 transition-all"
+                title="Refresh bookings"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
               {['all', 'pending', 'confirmed', 'completed'].map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setEventFilter(filter)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                     eventFilter === filter
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                      ? 'bg-yellow-400 text-[#232323] font-bold shadow-lg'
                       : 'bg-gray-800/60 text-gray-300 hover:bg-gray-700/80 border border-gray-600'
                   }`}
                 >
@@ -501,6 +552,57 @@ export default function ChefDashboard() {
               ))}
             </div>
           </div>
+
+          {/* Settings Panel */}
+          {selectedTab === 'settings' && (
+            <div className="bg-gray-900/80 backdrop-blur-md rounded-xl p-6 border border-gray-700/50 mb-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-yellow-400/10 rounded-full flex items-center justify-center border border-yellow-400/30">
+                  <Lock className="h-6 w-6 text-yellow-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">Change Password</h2>
+                  <p className="text-gray-400 text-sm">Keep your chef account secure</p>
+                </div>
+              </div>
+              <div className="space-y-4 max-w-md">
+                {[
+                  { label: 'Current Password', key: 'current', show: showPwCurrent, toggle: () => setShowPwCurrent(v => !v) },
+                  { label: 'New Password', key: 'newPw', show: showPwNew, toggle: () => setShowPwNew(v => !v) },
+                  { label: 'Confirm New Password', key: 'confirm', show: showPwConfirm, toggle: () => setShowPwConfirm(v => !v) },
+                ].map(({ label, key, show, toggle }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-semibold text-gray-300 mb-1.5">{label}</label>
+                    <div className="relative">
+                      <input
+                        type={show ? 'text' : 'password'}
+                        value={pwForm[key as keyof typeof pwForm]}
+                        onChange={(e) => setPwForm(f => ({ ...f, [key]: e.target.value }))}
+                        className={`w-full px-4 py-3 pr-12 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 ${
+                          key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm ? 'border-red-500' : 'border-gray-600'
+                        }`}
+                        placeholder={label}
+                      />
+                      <button type="button" onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors" tabIndex={-1}>
+                        {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
+                      <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={changePassword}
+                  disabled={pwLoading || !pwForm.current || !pwForm.newPw || !pwForm.confirm || pwForm.newPw !== pwForm.confirm}
+                  className="w-full mt-2 bg-yellow-400 text-[#232323] py-3 px-6 rounded-xl font-bold hover:bg-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Lock className="h-4 w-4" />
+                  {pwLoading ? 'Changing...' : 'Change Password'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
             {filteredEvents.length > 0 ? (
@@ -530,6 +632,13 @@ export default function ChefDashboard() {
                           <p className="text-gray-300">
                             <strong className="text-white">Customer:</strong> {event.customer.name}
                           </p>
+                          {event.customer.phone && (
+                            <p className="text-gray-300 flex items-center gap-1">
+                              <Phone className="h-3.5 w-3.5 text-yellow-400 flex-shrink-0" />
+                              <strong className="text-white">Phone:</strong>&nbsp;
+                              <a href={`tel:${event.customer.phone}`} className="text-yellow-400 font-semibold hover:underline">{event.customer.phone}</a>
+                            </p>
+                          )}
                           <p className="text-gray-300">
                             <strong className="text-white">Date:</strong> {new Date(event.eventDetails.date).toLocaleDateString()}
                           </p>

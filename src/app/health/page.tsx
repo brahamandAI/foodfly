@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getCustomerLoginPath } from '@/lib/utils/auth';
 import Image from 'next/image';
 import { 
   Heart, 
@@ -75,6 +77,7 @@ interface HealthyMenuItem {
 }
 
 export default function HealthPage() {
+  const router = useRouter();
   const [healthProfile, setHealthProfile] = useState<HealthProfile | null>(null);
   const [healthyRecommendations, setHealthyRecommendations] = useState<HealthyMenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -315,7 +318,8 @@ export default function HealthPage() {
             Sign in to access personalized health recommendations and track your nutrition goals.
           </p>
           <button
-            onClick={() => (window as any).showAuthPopup?.()}
+            type="button"
+            onClick={() => router.push(getCustomerLoginPath({ returnTo: '/health' }))}
             className="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Sign In to Continue

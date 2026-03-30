@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest) {
     await connectDB();
     
     const user = verifyToken(request);
-    const { restaurantId, isActive, preparationTime } = await request.json();
+    const { restaurantId, isActive, preparationTime, deliveryRadius } = await request.json();
 
     if (!restaurantId) {
       return NextResponse.json(
@@ -39,6 +39,9 @@ export async function PATCH(request: NextRequest) {
     if (preparationTime !== undefined) {
       restaurant.preparationTime = preparationTime;
     }
+    if (deliveryRadius !== undefined && deliveryRadius > 0) {
+      restaurant.deliveryRadius = deliveryRadius;
+    }
 
     await restaurant.save();
 
@@ -48,7 +51,8 @@ export async function PATCH(request: NextRequest) {
         _id: restaurant._id,
         name: restaurant.name,
         isActive: restaurant.isActive,
-        preparationTime: restaurant.preparationTime
+        preparationTime: restaurant.preparationTime,
+        deliveryRadius: restaurant.deliveryRadius
       }
     });
 

@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone || undefined,
       picture: user.picture,
       role: user.role,
       isEmailVerified: user.isEmailVerified,

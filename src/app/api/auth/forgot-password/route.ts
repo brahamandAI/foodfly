@@ -20,13 +20,20 @@ export async function POST(request: NextRequest) {
     }
 
     const otp = generateOtp();
-    saveOtp(email.toLowerCase(), otp);
+    await saveOtp(email.toLowerCase(), otp, 'reset');
 
     await sendOtpEmail(email.toLowerCase(), otp);
 
     return NextResponse.json({ message: 'OTP sent to your email address.' });
   } catch (error: any) {
     console.error('Forgot password error:', error);
+    const msg = error?.message || '';
+    if (msg.includes('SMTP_USER') && msg.includes('SMTP_PASS')) {
+      return NextResponse.json(
+        { error: 'Email service is not configured. Set SMTP_USER and SMTP_PASS in .env' },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: 'Failed to send OTP. Please try again.' }, { status: 500 });
   }
 }

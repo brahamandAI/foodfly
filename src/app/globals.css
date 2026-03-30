@@ -440,25 +440,25 @@
   font-weight: 500;
 }
 
-.modal-content-light input,
+/* Exclude [data-icon-field-input]: inner input of flex icon+field (border lives on wrapper) */
+.modal-content-light input:not([data-icon-field-input]),
 .modal-content-light textarea,
 .modal-content-light select {
   background-color: #ffffff;
   border: 1px solid var(--border-light);
   color: var(--text-dark);
   border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
   width: 100%;
   transition: all 0.2s;
 }
 
-.modal-content-light input::placeholder,
+.modal-content-light input:not([data-icon-field-input])::placeholder,
 .modal-content-light textarea::placeholder,
 .modal-content-light select::placeholder {
   color: var(--text-light);
 }
 
-.modal-content-light input:focus,
+.modal-content-light input:not([data-icon-field-input]):focus,
 .modal-content-light textarea:focus,
 .modal-content-light select:focus {
   outline: none;

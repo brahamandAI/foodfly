@@ -20,7 +20,10 @@
     "health-check": "cross-env PORT=3002 node -e \"require('http').get('http://localhost:' + (process.env.PORT || 3002) + '/api/test', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\"",
     "check-oauth": "node scripts/check-google-oauth.js",
     "fix-oauth": "node scripts/fix-google-oauth.js",
-    "test-oauth": "node scripts/test-google-oauth.js"
+    "test-oauth": "node scripts/test-google-oauth.js",
+    "cleanup:user-data": "node scripts/cleanup-user-data.mjs",
+    "seed:restaurant-admins": "node scripts/seed-restaurant-admins.mjs",
+    "seed:restaurant-admins:check": "node scripts/seed-restaurant-admins.mjs --check"
   },
   "keywords": [
     "food-delivery",

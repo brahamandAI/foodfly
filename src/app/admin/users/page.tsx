@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Ban, CheckCircle, Search } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle, Search, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface User {

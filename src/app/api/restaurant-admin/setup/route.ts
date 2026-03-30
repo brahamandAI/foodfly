@@ -126,11 +126,12 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Check if restaurant already exists
-      let restaurant = await (Restaurant as any).findOne({ owner: user._id });
-      
+      // Restaurant by owner, or by unique email (fixes orphan docs / duplicate key on email)
+      let restaurant =
+        (await (Restaurant as any).findOne({ owner: user._id })) ||
+        (await (Restaurant as any).findOne({ email: restData.email }));
+
       if (!restaurant) {
-        // Create restaurant
         restaurant = new (Restaurant as any)({
           name: restData.name,
           owner: user._id,
@@ -154,6 +155,16 @@ export async function POST(request: NextRequest) {
           isActive: true,
           preparationTime: 30
         });
+        await restaurant.save();
+      } else if (String(restaurant.owner) !== String(user._id)) {
+        restaurant.owner = user._id;
+        restaurant.name = restData.name;
+        restaurant.email = restData.email;
+        restaurant.phone = restData.phone;
+        restaurant.address = restData.address;
+        restaurant.cuisine = restData.cuisine;
+        restaurant.deliveryFee = restData.deliveryFee;
+        restaurant.minimumOrder = restData.minimumOrder;
         await restaurant.save();
       }
 

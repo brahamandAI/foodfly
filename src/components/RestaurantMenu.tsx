@@ -110,6 +110,11 @@ export default function RestaurantMenu({
     try {
       const { unifiedCartService } = await import('@/lib/api');
       
+      // item.price is already the effective (discounted) price from formatMenuCategories
+      const effectivePrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price as number);
+      const originalPrice = (item as any).originalPrice as number | undefined;
+      const discount = (item as any).discount as number | undefined;
+
       if (newQty === 0) {
         // Remove from cart
         const cartData = await unifiedCartService.getCart();
@@ -125,12 +130,14 @@ export default function RestaurantMenu({
           `${itemName.replace(/\s+/g, '_')}_menu`,
           item.name,
           `Delicious ${item.name}`,
-          typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          effectivePrice,
           newQty,
           '/images/placeholder.svg',
           restaurantId,
           restaurantName,
-          []
+          [],
+          originalPrice,
+          discount
         );
       } else {
         // Update quantity
@@ -334,9 +341,21 @@ export default function RestaurantMenu({
                     <div className="flex items-center gap-4 flex-shrink-0">
                       {/* Price - Pushed to hard right */}
                       <div className="text-right">
+                        {(item as any).discount > 0 && (
+                          <div className="mb-1">
+                            <span className="inline-block bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                              {(item as any).discount}% OFF
+                            </span>
+                          </div>
+                        )}
                         <span className="text-2xl font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                           {formatPrice(item.price)}
                         </span>
+                        {(item as any).originalPrice > 0 && (item as any).discount > 0 && (
+                          <div className="text-sm text-gray-400 line-through">
+                            {formatPrice((item as any).originalPrice)}
+                          </div>
+                        )}
                       </div>
 
                       {/* Quantity Controls */}

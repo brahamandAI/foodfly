@@ -3,10 +3,11 @@
 import React from "react";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getCustomerLoginPath } from '@/lib/utils/auth';
 import Image from 'next/image';
 import { Mic, Sparkles, Utensils, Flame } from 'lucide-react';
 import VoiceOrder from '../components/VoiceOrder';
-import AuthPopup from '../components/AuthPopup';
 import LocationSelector from '../components/LocationSelector';
 import { toast } from 'react-hot-toast';
 import SignupPopup from '../components/SignupPopup';
@@ -47,7 +48,7 @@ interface MenuItem {
 
 interface Address {
   _id?: string;
-  label: 'Home' | 'Work' | 'Other';
+  label: 'Home' | 'Work' | 'Other' | 'Custom';
   name: string;
   phone?: string;
   street?: string;
@@ -63,11 +64,11 @@ interface Address {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<Address | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showVoiceOrder, setShowVoiceOrder] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -297,9 +298,12 @@ export default function HomePage() {
     // Load default location
     loadDefaultLocation();
     
-    // Add event listeners
-    window.addEventListener('authStateChange', handleAuthStateChange);
+    window.addEventListener('authStateChanged', handleAuthStateChange as EventListener);
     window.addEventListener('cartUpdated', updateCartCount);
+    const onAddressesUpdated = () => {
+      void loadDefaultLocation();
+    };
+    window.addEventListener('addressesUpdated', onAddressesUpdated);
     
     // Listen for logout events to clear location data
     const handleLogout = () => {
@@ -311,15 +315,16 @@ export default function HomePage() {
     window.addEventListener('userLoggedOut', handleLogout);
     
     return () => {
-      window.removeEventListener('authStateChange', handleAuthStateChange);
+      window.removeEventListener('authStateChanged', handleAuthStateChange as EventListener);
       window.removeEventListener('cartUpdated', updateCartCount);
       window.removeEventListener('userLoggedOut', handleLogout);
+      window.removeEventListener('addressesUpdated', onAddressesUpdated);
     };
   }, []);
 
   const loadRestaurants = async () => {
     try {
-      const response = await fetch('/api/restaurants');
+      const response = await fetch('/api/restaurants', { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         if (data.restaurants && data.restaurants.length > 0) {
@@ -392,47 +397,49 @@ export default function HomePage() {
   };
 
   const loadDefaultLocation = async () => {
-    // For logged-in users, sync with their saved addresses
-    if (isAuthenticated) {
-      const currentUser = localStorage.getItem('user');
-      if (currentUser) {
-        try {
-          const user = JSON.parse(currentUser);
-          const userAddressKey = `user_addresses_${user.id}`;
-          const userAddresses = localStorage.getItem(userAddressKey);
-          
-          if (userAddresses) {
-            const addresses = JSON.parse(userAddresses);
-            const defaultAddress = addresses.find((addr: any) => addr.isDefault);
-            
-            if (defaultAddress) {
-              // Convert address format to match the expected Location interface
-              const locationFromAddress: Address = {
-                _id: defaultAddress._id,
-                label: defaultAddress.label,
-                name: defaultAddress.name,
-                phone: defaultAddress.phone,
-                street: defaultAddress.street,
-                landmark: defaultAddress.landmark,
-                city: defaultAddress.city,
-                state: defaultAddress.state,
-                pincode: defaultAddress.pincode,
-                isDefault: defaultAddress.isDefault,
-                coordinates: defaultAddress.coordinates
-              };
-              
-              setSelectedLocation(locationFromAddress);
-              localStorage.setItem('selectedLocation', JSON.stringify(locationFromAddress));
-              return;
-            }
+    const token = localStorage.getItem('token');
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+    if (token && loggedIn) {
+      try {
+        const res = await fetch('/api/users/addresses', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.addresses || [];
+          const { userStorage } = await import('@/lib/api');
+          userStorage.setUserAddresses(list);
+
+          const pick = list.find((a: any) => a.isDefault) || list[0];
+          if (pick) {
+            const lat = pick.coordinates?.latitude ?? pick.coordinates?.lat;
+            const lng = pick.coordinates?.longitude ?? pick.coordinates?.lng;
+            const locationFromAddress: Address = {
+              _id: pick._id,
+              label: pick.label,
+              name: pick.name,
+              phone: pick.phone,
+              street: pick.street,
+              landmark: pick.landmark,
+              city: pick.city,
+              state: pick.state,
+              pincode: pick.pincode,
+              isDefault: pick.isDefault,
+              coordinates:
+                typeof lat === 'number' && typeof lng === 'number' ? { lat, lng } : undefined,
+            };
+            setSelectedLocation(locationFromAddress);
+            localStorage.setItem('selectedLocation', JSON.stringify(locationFromAddress));
+            return;
           }
-        } catch (error) {
-          console.error('Error loading user addresses:', error);
         }
+      } catch (error) {
+        console.error('Error loading user addresses from API:', error);
       }
     }
-    
-    // For non-logged-in users, only load if previously saved
+
+    // Guests / no saved addresses: use prior selection or auto-detect
     const savedLocation = localStorage.getItem('selectedLocation');
     if (savedLocation) {
       try {
@@ -569,18 +576,9 @@ export default function HomePage() {
     }
   };
 
-  const handleAuthSuccess = () => {
-    // The AuthPopup will handle the authentication state changes
-    // We just need to close the popup and update local state
-    setShowAuthPopup(false);
-    updateCartCount();
-    loadDefaultLocation(); // Reload location after login
-    toast.success('Welcome back!');
-  };
-
   const handleAIFeatureClick = (feature: string) => {
     if (!isAuthenticated) {
-      setShowAuthPopup(true);
+      router.push(getCustomerLoginPath({ returnTo: '/' }));
       return;
     }
     
@@ -854,13 +852,6 @@ export default function HomePage() {
       </section>
 
       {/* Modals */}
-      {showAuthPopup && (
-        <AuthPopup
-          onClose={() => setShowAuthPopup(false)}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
-
       {showVoiceOrder && (
         <VoiceOrder
           isOpen={showVoiceOrder}
@@ -873,21 +864,8 @@ export default function HomePage() {
           isOpen={showLocationSelector}
           onClose={() => setShowLocationSelector(false)}
           onLocationSelect={(address: Address) => {
-            // Convert Address to the expected format for selectedLocation
-            const location: Address = {
-              _id: address._id,
-              label: address.label,
-              name: address.name,
-              phone: address.phone,
-              street: address.street,
-              landmark: address.landmark,
-              city: address.city,
-              state: address.state,
-              pincode: address.pincode,
-              isDefault: address.isDefault,
-              coordinates: address.coordinates
-            };
-            setSelectedLocation(location);
+            setSelectedLocation(address);
+            localStorage.setItem('selectedLocation', JSON.stringify(address));
             setShowLocationSelector(false);
           }}
         />

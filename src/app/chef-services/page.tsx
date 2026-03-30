@@ -17,7 +17,8 @@ import {
   Phone,
   Mail,
   Award,
-  Sparkles
+  Sparkles,
+  Home
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Cormorant_Garamond, Dancing_Script } from 'next/font/google';
@@ -146,9 +147,9 @@ export default function ChefServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#232323] flex items-center justify-center">
         <div className="text-center">
-          <ChefHat className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
+          <ChefHat className="h-12 w-12 text-yellow-400 mx-auto mb-4 animate-spin" />
           <p className="text-gray-300">Loading amazing chefs...</p>
         </div>
       </div>
@@ -156,7 +157,22 @@ export default function ChefServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <div className="min-h-screen bg-[#232323]">
+      {/* Top Navigation Bar */}
+      <div className="bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 text-gray-300 hover:text-yellow-400 transition-colors font-medium">
+          <Home className="h-5 w-5" />
+          <span>Back to Home</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/chef-services/book" className="bg-yellow-400 hover:bg-yellow-300 text-[#232323] px-4 py-2 rounded-lg font-bold text-sm transition-colors">
+            Book a Chef
+          </Link>
+          <Link href="/chef/login" className="border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-[#232323] px-4 py-2 rounded-lg font-bold text-sm transition-colors">
+            Chef Login
+          </Link>
+        </div>
+      </div>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 py-20 border-b border-gray-700">
         <div className="absolute inset-0">
@@ -170,7 +186,7 @@ export default function ChefServicesPage() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <ChefHat className="h-16 w-16 text-orange-500" />
+            <ChefHat className="h-16 w-16 text-yellow-400" />
             <div className="flex items-center space-x-2">
               <Image
                 src="/images/logo.png"
@@ -183,10 +199,10 @@ export default function ChefServicesPage() {
             </div>
           </div>
           <h1 className={`${cormorant.className} text-5xl md:text-7xl font-semibold text-white mb-4 tracking-wider uppercase`}>
-            <span className="text-orange-400">Personal</span> Chef Services
+            <span className="text-yellow-400">Personal</span> Chef Services
           </h1>
           <p className={`${dancingScript.className} text-2xl md:text-3xl text-gray-200 mb-4 flex items-center justify-center gap-3`}>
-            Culinary Excellence <Sparkles className="w-8 h-8 text-orange-500 fill-current animate-pulse" /> at Your Service
+            Culinary Excellence <Sparkles className="w-8 h-8 text-yellow-400 fill-current animate-pulse" /> at Your Service
           </p>
           <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
             Book professional chefs for your special events, parties, and celebrations.
@@ -195,13 +211,13 @@ export default function ChefServicesPage() {
           <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
             <Link
               href="/chef-services/book"
-              className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-4 px-8 rounded-full hover:from-orange-600 hover:to-red-600 transition duration-300 transform hover:scale-105 shadow-lg"
+              className="bg-yellow-400 hover:bg-yellow-300 text-[#232323] font-bold py-4 px-8 rounded-full transition duration-300 transform hover:scale-105 shadow-lg"
             >
               Book a Chef Now
             </Link>
             <Link
               href="/chef/register"
-              className="border-2 border-orange-500 text-orange-400 font-semibold py-4 px-8 rounded-full hover:bg-orange-500 hover:text-white transition duration-300 transform hover:scale-105"
+              className="border-2 border-yellow-400 text-yellow-400 font-semibold py-4 px-8 rounded-full hover:bg-yellow-400 hover:text-white transition duration-300 transform hover:scale-105"
             >
               Become a Chef Partner
             </Link>
@@ -212,7 +228,7 @@ export default function ChefServicesPage() {
             <p className="text-gray-300 text-lg mb-3">Already a chef partner?</p>
             <Link
               href="/chef/login"
-              className="inline-flex items-center space-x-2 text-orange-400 hover:text-orange-300 font-medium text-lg transition-colors"
+              className="inline-flex items-center space-x-2 text-yellow-400 hover:text-orange-300 font-medium text-lg transition-colors"
             >
               <ChefHat className="h-5 w-5" />
               <span>Chef Login</span>

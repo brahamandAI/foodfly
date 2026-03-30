@@ -18,7 +18,11 @@ import {
   Bell,
   TrendingUp,
   DollarSign,
-  Home
+  Home,
+  Tag,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -50,6 +54,7 @@ interface Restaurant {
   name: string;
   isActive: boolean;
   preparationTime?: number;
+  deliveryRadius?: number;
 }
 
 export default function RestaurantAdminDashboard() {
@@ -66,14 +71,64 @@ export default function RestaurantAdminDashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [todayRevenue, setTodayRevenue] = useState<number>(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+  // Change password state
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showPwCurrent, setShowPwCurrent] = useState(false);
+  const [showPwNew, setShowPwNew] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
+
+  const changePassword = async () => {
+    if (!pwForm.current || !pwForm.newPw || !pwForm.confirm) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+    if (pwForm.newPw.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (pwForm.newPw !== pwForm.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (pwForm.current === pwForm.newPw) {
+      toast.error('New password must be different from current');
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const token = localStorage.getItem('restaurantAdminToken');
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.newPw })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Password changed successfully!');
+        setPwForm({ current: '', newPw: '', confirm: '' });
+      } else {
+        toast.error(data.error || 'Failed to change password');
+      }
+    } catch {
+      toast.error('Failed to change password');
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
   const [newItem, setNewItem] = useState({
     name: '',
     price: '',
+    discount: 0,
     description: '',
     category: '',
     isVeg: true,
     isAvailable: true
   });
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [renamingCategory, setRenamingCategory] = useState<{ old: string; new: string } | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -366,6 +421,7 @@ export default function RestaurantAdminDashboard() {
           item: {
             name: newItem.name,
             price: parseFloat(newItem.price.toString()),
+            discount: newItem.discount || 0,
             description: newItem.description,
             isVeg: newItem.isVeg,
             isAvailable: newItem.isAvailable
@@ -379,6 +435,7 @@ export default function RestaurantAdminDashboard() {
         setNewItem({
           name: '',
           price: '',
+          discount: 0,
           description: '',
           category: '',
           isVeg: true,
@@ -431,6 +488,7 @@ export default function RestaurantAdminDashboard() {
       const fullUpdates = {
         name: updates.name || '',
         price: priceValue,
+        discount: typeof updates.discount === 'number' ? updates.discount : 0,
         category: updates.category || '',
         description: updates.description || '',
         isVeg: updates.isVeg !== undefined ? updates.isVeg : true,
@@ -510,6 +568,96 @@ export default function RestaurantAdminDashboard() {
     } catch (error: any) {
       console.error('Error deleting menu item:', error);
       toast.error(error.message || 'Failed to delete menu item');
+    }
+  };
+
+  const addCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error('Please enter a category name');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('restaurantAdminToken');
+      const restaurantData = localStorage.getItem('restaurant');
+      if (!token || !restaurantData) return;
+      const restaurant = JSON.parse(restaurantData);
+      const response = await fetch('/api/restaurant-admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ restaurantId: restaurant._id, categoryName: newCategoryName.trim() })
+      });
+      if (response.ok) {
+        toast.success('Category added!');
+        setNewCategoryName('');
+        await loadMenu();
+      } else {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to add category');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add category');
+    }
+  };
+
+  const renameCategory = async () => {
+    if (!renamingCategory || !renamingCategory.new.trim()) {
+      toast.error('Please enter a new category name');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('restaurantAdminToken');
+      const restaurantData = localStorage.getItem('restaurant');
+      if (!token || !restaurantData) return;
+      const restaurant = JSON.parse(restaurantData);
+      const response = await fetch('/api/restaurant-admin/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ restaurantId: restaurant._id, oldName: renamingCategory.old, newName: renamingCategory.new.trim() })
+      });
+      if (response.ok) {
+        toast.success('Category renamed!');
+        const prevSelected = selectedCategory;
+        setRenamingCategory(null);
+        await loadMenu();
+        if (prevSelected === renamingCategory.old) setSelectedCategory(renamingCategory.new.trim());
+        window.dispatchEvent(new Event('menuUpdated'));
+        localStorage.setItem('menuUpdated', Date.now().toString());
+        setTimeout(() => localStorage.removeItem('menuUpdated'), 100);
+      } else {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to rename category');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to rename category');
+    }
+  };
+
+  const deleteCategory = async (categoryName: string) => {
+    const cat = menu.find((c: any) => c.name === categoryName);
+    const itemCount = cat?.items?.length || 0;
+    if (!confirm(`Delete category "${categoryName}"${itemCount > 0 ? ` and all ${itemCount} item(s) in it` : ''}? This cannot be undone.`)) return;
+    try {
+      const token = localStorage.getItem('restaurantAdminToken');
+      const restaurantData = localStorage.getItem('restaurant');
+      if (!token || !restaurantData) return;
+      const restaurant = JSON.parse(restaurantData);
+      const response = await fetch(`/api/restaurant-admin/categories?restaurantId=${restaurant._id}&categoryName=${encodeURIComponent(categoryName)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        toast.success('Category deleted!');
+        if (selectedCategory === categoryName) setSelectedCategory('');
+        await loadMenu();
+        window.dispatchEvent(new Event('menuUpdated'));
+        localStorage.setItem('menuUpdated', Date.now().toString());
+        setTimeout(() => localStorage.removeItem('menuUpdated'), 100);
+      } else {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to delete category');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete category');
     }
   };
 
@@ -914,6 +1062,7 @@ export default function RestaurantAdminDashboard() {
                       setNewItem({
                         name: '',
                         price: '',
+                        discount: 0,
                         description: '',
                         category: '',
                         isVeg: true,
@@ -963,6 +1112,34 @@ export default function RestaurantAdminDashboard() {
                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                           placeholder="250"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Discount (%)
+                          {((editingItem?.discount || newItem.discount) > 0) && (
+                            <span className="ml-2 text-xs text-green-400 font-bold">
+                              → ₹{Math.round((parseFloat((editingItem?.price ?? newItem.price).toString()) || 0) * (1 - ((editingItem?.discount ?? newItem.discount) || 0) / 100))} effective
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={editingItem?.discount !== undefined ? editingItem.discount : (newItem.discount || 0)}
+                          onChange={(e) => {
+                            const val = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+                            if (editingItem) {
+                              setEditingItem({...editingItem, discount: val});
+                            } else {
+                              setNewItem({...newItem, discount: val});
+                            }
+                          }}
+                          className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                          placeholder="0"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">0 = no discount. E.g. 40 = 40% off the price.</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Category *</label>
@@ -1061,20 +1238,96 @@ export default function RestaurantAdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Category Selector */}
-                    <div className="flex items-center gap-4">
-                      <label className="text-sm font-medium text-gray-300">Select Category:</label>
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 min-w-[200px]"
-                      >
+                    {/* Category Selector + Management */}
+                    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-sm font-medium text-gray-300">Categories</label>
+                        <button
+                          onClick={() => setShowCategoryManager(v => !v)}
+                          className="text-xs text-yellow-400 hover:text-yellow-300 font-semibold flex items-center gap-1"
+                        >
+                          <Settings className="h-3 w-3" />
+                          {showCategoryManager ? 'Hide Manager' : 'Manage Categories'}
+                        </button>
+                      </div>
+
+                      {/* Category Tabs */}
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {menu.map((cat: any) => (
-                          <option key={cat.name} value={cat.name}>
-                            {cat.name} ({cat.items?.length || 0} items)
-                          </option>
+                          <button
+                            key={cat.name}
+                            onClick={() => setSelectedCategory(cat.name)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              selectedCategory === cat.name
+                                ? 'bg-yellow-400 text-[#232323]'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            {cat.name} <span className="text-xs opacity-70">({cat.items?.length || 0})</span>
+                          </button>
                         ))}
-                      </select>
+                      </div>
+
+                      {/* Category Manager */}
+                      {showCategoryManager && (
+                        <div className="border-t border-gray-700 pt-4 space-y-4">
+                          {/* Add new category */}
+                          <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Add New Category</p>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                placeholder="e.g., Desserts, Beverages"
+                                className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+                              />
+                              <button
+                                onClick={addCategory}
+                                className="px-4 py-2 bg-yellow-400 text-[#232323] font-bold rounded-lg hover:bg-yellow-500 text-sm flex items-center gap-1"
+                              >
+                                <Plus className="h-4 w-4" /> Add
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Existing categories: rename / delete */}
+                          <div>
+                            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Existing Categories</p>
+                            <div className="space-y-2">
+                              {menu.map((cat: any) => (
+                                <div key={cat.name} className="flex items-center gap-2">
+                                  {renamingCategory?.old === cat.name ? (
+                                    <>
+                                      <input
+                                        type="text"
+                                        value={renamingCategory.new}
+                                        onChange={(e) => setRenamingCategory({ old: cat.name, new: e.target.value })}
+                                        className="flex-1 px-3 py-1.5 bg-gray-700 border border-yellow-400 rounded-lg text-white text-sm focus:outline-none"
+                                        autoFocus
+                                        onKeyDown={(e) => { if (e.key === 'Enter') renameCategory(); if (e.key === 'Escape') setRenamingCategory(null); }}
+                                      />
+                                      <button onClick={renameCategory} className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700">Save</button>
+                                      <button onClick={() => setRenamingCategory(null)} className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-xs font-bold hover:bg-gray-500">Cancel</button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="flex-1 text-sm text-gray-300">{cat.name} <span className="text-gray-500 text-xs">({cat.items?.length || 0} items)</span></span>
+                                      <button onClick={() => setRenamingCategory({ old: cat.name, new: cat.name })} className="p-1.5 bg-gray-700 text-gray-300 rounded hover:bg-gray-600" title="Rename">
+                                        <Edit className="h-3.5 w-3.5" />
+                                      </button>
+                                      <button onClick={() => deleteCategory(cat.name)} className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30" title="Delete category">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Items for Selected Category */}
@@ -1121,9 +1374,21 @@ export default function RestaurantAdminDashboard() {
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-between mt-3">
-                                    <span className={`text-lg font-bold ${isOutOfStock ? 'text-red-400' : 'text-yellow-400'}`}>
-                                      ₹{typeof item.price === 'string' ? item.price : item.price}
-                                    </span>
+                                    <div>
+                                      {item.discount > 0 && (
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {item.discount}% OFF
+                                          </span>
+                                          <span className="text-gray-400 text-sm line-through">₹{typeof item.price === 'string' ? item.price : item.price}</span>
+                                        </div>
+                                      )}
+                                      <span className={`text-lg font-bold ${isOutOfStock ? 'text-red-400' : 'text-yellow-400'}`}>
+                                        ₹{item.discount > 0
+                                          ? Math.round((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (1 - item.discount / 100))
+                                          : (typeof item.price === 'string' ? item.price : item.price)}
+                                      </span>
+                                    </div>
                                     <div className="flex space-x-2">
                                       <button
                                         onClick={async () => {
@@ -1142,6 +1407,7 @@ export default function RestaurantAdminDashboard() {
                                             await updateMenuItem(itemId, {
                                               name: item.name,
                                               price: currentPrice,
+                                              discount: typeof item.discount === 'number' ? item.discount : 0,
                                               description: item.description || '',
                                               category: selectedCat.name,
                                               isVeg: item.isVeg !== undefined ? item.isVeg : true,
@@ -1178,6 +1444,7 @@ export default function RestaurantAdminDashboard() {
                                             _id: item._id || `${selectedCat.name}_${itemIdx}`,
                                             name: item.name,
                                             price: priceValue,
+                                            discount: typeof item.discount === 'number' ? item.discount : 0,
                                             description: item.description || '',
                                             category: selectedCat.name,
                                             isVeg: item.isVeg !== undefined ? item.isVeg : true,
@@ -1368,6 +1635,53 @@ export default function RestaurantAdminDashboard() {
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Max Delivery Radius (km)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={restaurant?.deliveryRadius ?? 2}
+                        onChange={async (e) => {
+                          const newRadius = parseFloat(e.target.value);
+                          if (isNaN(newRadius) || newRadius < 0.5) return;
+                          try {
+                            const token = localStorage.getItem('restaurantAdminToken');
+                            const restaurantData = localStorage.getItem('restaurant');
+                            if (!token || !restaurantData) return;
+                            const rest = JSON.parse(restaurantData);
+                            const response = await fetch('/api/restaurant-admin/status', {
+                              method: 'PATCH',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: JSON.stringify({
+                                restaurantId: rest._id,
+                                deliveryRadius: newRadius
+                              })
+                            });
+                            if (response.ok) {
+                              const updated = { ...rest, deliveryRadius: newRadius };
+                              localStorage.setItem('restaurant', JSON.stringify(updated));
+                              setRestaurant(prev => prev ? { ...prev, deliveryRadius: newRadius } : prev);
+                              toast.success('Delivery radius updated');
+                            }
+                          } catch (error) {
+                            console.error('Error updating delivery radius:', error);
+                          }
+                        }}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        min="0.5"
+                        max="50"
+                        step="0.5"
+                      />
+                      <span className="text-gray-400 text-sm whitespace-nowrap">km radius</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Customers outside this radius cannot place orders from your restaurant.</p>
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Restaurant Status</label>
                     <button
                       onClick={toggleRestaurantStatus}
@@ -1380,6 +1694,57 @@ export default function RestaurantAdminDashboard() {
                       {restaurant?.isActive ? 'Restaurant is OPEN' : 'Restaurant is CLOSED'}
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* Change Password */}
+              <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-yellow-400/10 rounded-full flex items-center justify-center">
+                    <Lock className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Change Password</h3>
+                    <p className="text-sm text-gray-400">Keep your account secure</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 max-w-md">
+                  {[
+                    { label: 'Current Password', key: 'current', show: showPwCurrent, toggle: () => setShowPwCurrent(v => !v) },
+                    { label: 'New Password', key: 'newPw', show: showPwNew, toggle: () => setShowPwNew(v => !v) },
+                    { label: 'Confirm New Password', key: 'confirm', show: showPwConfirm, toggle: () => setShowPwConfirm(v => !v) },
+                  ].map(({ label, key, show, toggle }) => (
+                    <div key={key}>
+                      <label className="block text-sm font-semibold text-gray-300 mb-1.5">{label}</label>
+                      <div className="relative">
+                        <input
+                          type={show ? 'text' : 'password'}
+                          value={pwForm[key as keyof typeof pwForm]}
+                          onChange={(e) => setPwForm(f => ({ ...f, [key]: e.target.value }))}
+                          className={`w-full px-4 py-3 pr-12 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 ${
+                            key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm ? 'border-red-500' : 'border-gray-700'
+                          }`}
+                          placeholder={label}
+                        />
+                        <button type="button" onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors" tabIndex={-1}>
+                          {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                      {key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
+                        <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                      )}
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={changePassword}
+                    disabled={pwLoading || !pwForm.current || !pwForm.newPw || !pwForm.confirm || pwForm.newPw !== pwForm.confirm}
+                    className="w-full mt-2 bg-yellow-400 text-[#232323] py-3 px-6 rounded-lg font-bold hover:bg-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Lock className="h-4 w-4" />
+                    {pwLoading ? 'Changing...' : 'Change Password'}
+                  </button>
                 </div>
               </div>
             </div>

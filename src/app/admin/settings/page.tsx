@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface SystemSettings {
@@ -37,6 +37,33 @@ export default function SettingsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Change password state
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showPwCurrent, setShowPwCurrent] = useState(false);
+  const [showPwNew, setShowPwNew] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
+
+  const changePassword = async () => {
+    if (!pwForm.current || !pwForm.newPw || !pwForm.confirm) { toast.error('Please fill in all fields'); return; }
+    if (pwForm.newPw.length < 8) { toast.error('New password must be at least 8 characters'); return; }
+    if (pwForm.newPw !== pwForm.confirm) { toast.error('Passwords do not match'); return; }
+    if (pwForm.current === pwForm.newPw) { toast.error('New password must be different'); return; }
+    setPwLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.newPw })
+      });
+      const data = await res.json();
+      if (res.ok) { toast.success('Password changed successfully!'); setPwForm({ current: '', newPw: '', confirm: '' }); }
+      else { toast.error(data.error || 'Failed to change password'); }
+    } catch { toast.error('Failed to change password'); }
+    finally { setPwLoading(false); }
+  };
 
   useEffect(() => {
     fetchSettings();
@@ -245,6 +272,54 @@ export default function SettingsPage() {
                 />
                 <span className="text-gray-300 font-semibold">Promotions & Discounts</span>
               </label>
+            </div>
+          </div>
+          {/* Change Password */}
+          <div className="bg-gray-900 border-2 border-yellow-400 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Lock className="w-6 h-6 text-yellow-400" />
+              <div>
+                <h2 className="text-xl font-black text-yellow-400">Change Password</h2>
+                <p className="text-gray-400 text-sm">Update your super admin account password</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-w-md">
+              {[
+                { label: 'Current Password', key: 'current', show: showPwCurrent, toggle: () => setShowPwCurrent(v => !v) },
+                { label: 'New Password', key: 'newPw', show: showPwNew, toggle: () => setShowPwNew(v => !v) },
+                { label: 'Confirm New Password', key: 'confirm', show: showPwConfirm, toggle: () => setShowPwConfirm(v => !v) },
+              ].map(({ label, key, show, toggle }) => (
+                <div key={key}>
+                  <label className="block text-gray-300 font-semibold mb-2">{label}</label>
+                  <div className="relative">
+                    <input
+                      type={show ? 'text' : 'password'}
+                      value={pwForm[key as keyof typeof pwForm]}
+                      onChange={(e) => setPwForm(f => ({ ...f, [key]: e.target.value }))}
+                      className={`w-full bg-[#232323] border-2 text-white px-4 py-3 pr-12 rounded-lg focus:outline-none focus:border-yellow-400 ${
+                        key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm ? 'border-red-500' : 'border-gray-700'
+                      }`}
+                      placeholder={label}
+                    />
+                    <button type="button" onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors" tabIndex={-1}>
+                      {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
+                    <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                  )}
+                </div>
+              ))}
+
+              <button
+                onClick={changePassword}
+                disabled={pwLoading || !pwForm.current || !pwForm.newPw || !pwForm.confirm || pwForm.newPw !== pwForm.confirm}
+                className="w-full mt-2 bg-yellow-400 text-[#232323] py-3 px-6 rounded-lg font-bold hover:bg-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                {pwLoading ? 'Changing...' : 'Change Password'}
+              </button>
             </div>
           </div>
         </div>

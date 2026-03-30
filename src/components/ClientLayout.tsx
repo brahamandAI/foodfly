@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
 import MobileBottomNav from './MobileBottomNav';
-import AuthPopup from './AuthPopup';
 import NotificationSystem from './NotificationSystem';
 import { initializeTestData } from '@/lib/testData';
 import { clearInvalidAuth, ensureAuthInCookies } from '@/lib/api';
+import { getCustomerLoginPath } from '@/lib/utils/auth';
 
 const PROTECTED_ROUTES = ['/cart', '/checkout', '/profile', '/orders', '/favorites', '/health'];
 
@@ -17,7 +17,6 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
@@ -66,29 +65,30 @@ export default function ClientLayout({
     };
   }, []);
 
-  const handleCloseAuthPopup = () => {
-    setShowAuthPopup(false);
-  };
-
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-    setShowAuthPopup(false);
-  };
-
-  const handleShowAuthPopup = () => {
-    // Don't show auth popup if user is already authenticated
-    if (isAuthenticated) {
-      return;
+  /** Legacy hook: open full `/login` page (same UX as header “Sign in”). */
+  const openCustomerLogin = useCallback(() => {
+    try {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      const auth = localStorage.getItem('isLoggedIn') === 'true';
+      if (token && user && auth) return;
+    } catch {
+      /* ignore */
     }
-    setShowAuthPopup(true);
-  };
+    if (isAuthenticated) return;
+    router.push(getCustomerLoginPath());
+  }, [isAuthenticated, router]);
 
-  // Make auth functions available globally
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).showAuthPopup = handleShowAuthPopup;
+      (window as any).showAuthPopup = openCustomerLogin;
     }
-  }, []);
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).showAuthPopup;
+      }
+    };
+  }, [openCustomerLogin]);
 
   // Exclude admin routes from showing Header/Footer
   const isAdminRoute = pathname?.startsWith('/restaurant-admin') || 
@@ -124,12 +124,6 @@ export default function ClientLayout({
       <Footer />
       <MobileBottomNav />
       <NotificationSystem />
-      {showAuthPopup && (
-        <AuthPopup
-          onClose={handleCloseAuthPopup}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
     </div>
   );
-} 
+}

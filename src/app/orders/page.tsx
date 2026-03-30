@@ -130,15 +130,20 @@ export default function OrdersPage() {
     }
   };
 
+  // Fetch once on mount. Filtering is 100% client-side so counts are always accurate.
   useEffect(() => {
     fetchOrders();
-  }, [selectedFilter]); // Refetch when filter changes
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const ACTIVE_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'];
+
+  // All counts computed from the full orders list — no stale count flicker
+  const allOrders = orders;
   const filterOptions = [
-    { value: 'all', label: 'All Orders', count: orders.length },
-    { value: 'active', label: 'Active Orders', count: orders.filter(o => ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(o.status)).length },
-    { value: 'delivered', label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length },
-    { value: 'cancelled', label: 'Cancelled', count: orders.filter(o => o.status === 'cancelled').length }
+    { value: 'all',       label: 'All Orders',    count: allOrders.length },
+    { value: 'active',    label: 'Active',         count: allOrders.filter(o => ACTIVE_STATUSES.includes(o.status)).length },
+    { value: 'delivered', label: 'Delivered',      count: allOrders.filter(o => o.status === 'delivered').length },
+    { value: 'cancelled', label: 'Cancelled',      count: allOrders.filter(o => o.status === 'cancelled').length },
   ];
 
   const fetchOrders = async () => {
@@ -147,20 +152,14 @@ export default function OrdersPage() {
       const authState = checkAuthState();
 
       if (!authState.isAuthenticated) {
-        console.log('Orders: No authentication found', authState);
         toast.error('Authentication required. Please login again.');
         redirectToLogin();
         return;
       }
 
-      const params = new URLSearchParams();
-      if (selectedFilter === 'cancelled') {
-        params.append('status', 'cancelled');
-      } else if (selectedFilter !== 'all') {
-        params.append('status', selectedFilter);
-      }
-
-      const response = await fetch(`/api/orders?${params.toString()}`, {
+      // Always fetch ALL orders (including cancelled); we filter client-side.
+      // This keeps the filter tab counts accurate on first load.
+      const response = await fetch('/api/orders?includeCancelled=true', {
         headers: {
           'Authorization': `Bearer ${authState.token}`,
           'Content-Type': 'application/json',
@@ -264,13 +263,18 @@ export default function OrdersPage() {
   };
 
   const filteredOrders = orders.filter(order => {
-    // Server-side filtering handles status filters, we only need to handle search
-    const matchesSearch = searchQuery === '' || 
+    // Client-side status filtering
+    const matchesFilter =
+      selectedFilter === 'all' ? true :
+      selectedFilter === 'active' ? ACTIVE_STATUSES.includes(order.status) :
+      order.status === selectedFilter;
+
+    const matchesSearch = searchQuery === '' ||
       order.restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.items.some(item => item.menuItem.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesSearch;
+    return matchesFilter && matchesSearch;
   });
 
   const formatDate = (dateString: string) => {
@@ -494,10 +498,10 @@ export default function OrdersPage() {
                                   <p className="text-sm font-semibold text-yellow-400 truncate" style={{ fontFamily: "'Satoshi', sans-serif" }}>
                                     {item.menuItem.name}
                                   </p>
-                                  <p className="text-sm text-yellow-300/80">Qty: {item.quantity}</p>
+                                  <p className="text-xs text-yellow-300/70">{item.quantity} × ₹{item.price}</p>
                                 </div>
                                 <p className="text-sm font-bold text-yellow-400" style={{ fontFamily: "'Satoshi', sans-serif" }}>
-                                  ₹{item.price}
+                                  ₹{item.quantity * item.price}
                                 </p>
                               </div>
                             ))}
@@ -525,11 +529,21 @@ export default function OrdersPage() {
                         </div>
                       </div>
 
+                      {/* Bill summary line */}
+                      {(order.subtotal > 0 || order.deliveryFee > 0 || order.tax > 0) && (
+                        <div className="flex items-center gap-4 py-2 px-3 bg-gray-700/50 rounded-lg mb-3 text-xs text-yellow-300/80 flex-wrap" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+                          {order.subtotal > 0 && <span>Items ₹{order.subtotal}</span>}
+                          {order.deliveryFee >= 0 && <span>Delivery {order.deliveryFee === 0 ? 'FREE' : `₹${order.deliveryFee}`}</span>}
+                          {order.tax > 0 && <span>Tax ₹{order.tax}</span>}
+                          <span className="font-bold text-yellow-400 ml-auto">Total ₹{order.totalAmount}</span>
+                        </div>
+                      )}
+
                       {/* Order Actions - Black & Yellow Theme */}
-                      <div className="flex items-center justify-between pt-4 border-t-2 border-gray-200">
+                      <div className="flex items-center justify-between pt-4 border-t-2 border-gray-700">
                         <div className="flex items-center space-x-3">
                           <span className="text-sm text-yellow-300 font-medium" style={{ fontFamily: "'Satoshi', sans-serif" }}>
-                            Payment: <span className="font-semibold capitalize">{order.paymentMethod.replace('_', ' ')}</span>
+                            Payment: <span className="font-semibold capitalize">{order.paymentMethod?.replace('_', ' ')}</span>
                           </span>
                           <span className={`text-sm font-semibold ${
                             order.paymentStatus === 'completed' ? 'text-green-400' : 'text-yellow-400'

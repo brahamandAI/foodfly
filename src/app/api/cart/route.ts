@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Verify authentication
     const user = verifyToken(request);
     
-    const { menuItemId, name, description, price, quantity, image, restaurantId, restaurantName, customizations } = await request.json();
+    const { menuItemId, name, description, price, quantity, image, restaurantId, restaurantName, customizations, originalPrice, discount } = await request.json();
 
     if (!menuItemId || !name || !price || !quantity || !restaurantId || !restaurantName) {
       return NextResponse.json(
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       cart.items[existingItemIndex].quantity = newQuantity;
     } else {
       // Add new item to cart
-      cart.items.push({
+      const newCartItem: any = {
         menuItemId,
         name,
         description: description || '',
@@ -118,7 +118,14 @@ export async function POST(request: NextRequest) {
         restaurantName,
         customizations: customizations || [],
         addedAt: new Date()
-      });
+      };
+      if (originalPrice !== undefined && originalPrice > price) {
+        newCartItem.originalPrice = originalPrice;
+      }
+      if (discount !== undefined && discount > 0) {
+        newCartItem.discount = discount;
+      }
+      cart.items.push(newCartItem);
     }
 
     // Save cart (pre-save hook will calculate totals)

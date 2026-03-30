@@ -34,20 +34,25 @@ export function formatMenuCategories(menuCategories: any[]): any[] {
 
   return menuCategories.map((cat: any) => ({
     name: cat.name,
-    items: (cat.items || []).map((item: any) => ({
-      _id: item._id,
-      name: item.name,
-      price: typeof item.price === 'number' 
-        ? item.price 
-        : (typeof item.price === 'string' 
-          ? item.price 
-          : item.price?.toString() || '0'),
-      description: item.description || '',
-      isVeg: item.isVeg !== undefined ? item.isVeg : true,
-      image: sanitizeImageUrl(item.image),
-      isAvailable: item.isAvailable !== undefined ? item.isAvailable : true,
-      category: item.category || cat.name
-    }))
+    items: (cat.items || []).map((item: any) => {
+      const rawPrice = typeof item.price === 'number'
+        ? item.price
+        : (typeof item.price === 'string' ? parseFloat(item.price) || 0 : 0);
+      const discount = typeof item.discount === 'number' ? Math.max(0, Math.min(100, item.discount)) : 0;
+      const discountedPrice = discount > 0 ? Math.round(rawPrice * (1 - discount / 100)) : rawPrice;
+      return {
+        _id: item._id,
+        name: item.name,
+        price: discountedPrice,
+        originalPrice: discount > 0 ? rawPrice : undefined,
+        discount: discount > 0 ? discount : undefined,
+        description: item.description || '',
+        isVeg: item.isVeg !== undefined ? item.isVeg : true,
+        image: sanitizeImageUrl(item.image),
+        isAvailable: item.isAvailable !== undefined ? item.isAvailable : true,
+        category: item.category || cat.name
+      };
+    })
   }));
 }
 
